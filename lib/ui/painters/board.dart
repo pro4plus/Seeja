@@ -7,7 +7,16 @@ import 'tabaq.dart';
 class BoardPainter extends CustomPainter {
   final int size;
   final bool centreOccupied;
-  const BoardPainter({required this.size, this.centreOccupied = false});
+
+  /// عند false لا يُرسم اللوح الرملي (يُستبدل بصورة نسيج الرمل
+  /// تحته)؛ الحُفر ونجمة الوسطى تُرسمان دائماً.
+  final bool drawSlab;
+
+  const BoardPainter({
+    required this.size,
+    this.centreOccupied = false,
+    this.drawSlab = true,
+  });
 
   static Offset pitCenter(Size boardSize, int cells, int r, int c) {
     final inner = boardSize.shortestSide - 16;
@@ -25,18 +34,38 @@ class BoardPainter extends CustomPainter {
     canvas.drawRRect(RRect.fromRectAndRadius(rect.translate(0, 8), const Radius.circular(28)), shadow);
 
     // حواف غير منتظمة، كقطعة رمل وضعت باليد.
-    final slab = _slabPath(rect, 0);
-    canvas.drawPath(slab, Paint()..color = const Color(0xFFDDB66E));
-    canvas.drawPath(_slabPath(rect.deflate(4), 1), Paint()..color = SudaneseTheme.sand);
+    if (drawSlab) {
+      final slab = _slabPath(rect, 0);
+      canvas.drawPath(slab, Paint()..color = const Color(0xFFDDB66E));
+      canvas.drawPath(
+          _slabPath(rect.deflate(4), 1), Paint()..color = SudaneseTheme.sand);
 
-    final rng = math.Random(422);
-    for (var i = 0; i < 260; i++) {
-      final p = Offset(rect.left + 8 + rng.nextDouble() * (side - 16), rect.top + 8 + rng.nextDouble() * (side - 16));
-      final color = i.isEven ? SudaneseTheme.sandDark : const Color(0xFFF2D49A);
-      canvas.drawCircle(p, 0.45 + rng.nextDouble() * 1.3, Paint()..color = color.withValues(alpha: 0.24 + rng.nextDouble() * 0.22));
+      final rng = math.Random(422);
+      for (var i = 0; i < 260; i++) {
+        final p = Offset(rect.left + 8 + rng.nextDouble() * (side - 16),
+            rect.top + 8 + rng.nextDouble() * (side - 16));
+        final color =
+            i.isEven ? SudaneseTheme.sandDark : const Color(0xFFF2D49A);
+        canvas.drawCircle(
+            p,
+            0.45 + rng.nextDouble() * 1.3,
+            Paint()
+              ..color = color.withValues(
+                  alpha: 0.24 + rng.nextDouble() * 0.22));
+      }
+      canvas.drawPath(
+          _slabPath(rect.deflate(3), 2),
+          Paint()
+            ..color = const Color(0xFF9F773E)
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 2.4);
+      canvas.drawPath(
+          _slabPath(rect.deflate(7), 3),
+          Paint()
+            ..color = Colors.white.withValues(alpha: 0.25)
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 1.2);
     }
-    canvas.drawPath(_slabPath(rect.deflate(3), 2), Paint()..color = const Color(0xFF9F773E)..style = PaintingStyle.stroke..strokeWidth = 2.4);
-    canvas.drawPath(_slabPath(rect.deflate(7), 3), Paint()..color = Colors.white.withValues(alpha: 0.25)..style = PaintingStyle.stroke..strokeWidth = 1.2);
 
     final inner = side - 16;
     final cell = inner / size;
@@ -78,5 +107,8 @@ class BoardPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant BoardPainter oldDelegate) => oldDelegate.size != size || oldDelegate.centreOccupied != centreOccupied;
+  bool shouldRepaint(covariant BoardPainter oldDelegate) =>
+      oldDelegate.size != size ||
+      oldDelegate.centreOccupied != centreOccupied ||
+      oldDelegate.drawSlab != drawSlab;
 }

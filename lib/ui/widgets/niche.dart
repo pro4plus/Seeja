@@ -4,7 +4,7 @@
 import 'package:flutter/material.dart';
 
 import '../../theme/sudanese_theme.dart';
-import '../painters/elder.dart';
+import 'game_images.dart';
 
 class OpponentNiche extends StatefulWidget {
   final ElderKind kind;
@@ -98,11 +98,12 @@ class _OpponentNicheState extends State<OpponentNiche>
                           ? _nod.value * 2
                           : (1 - _nod.value) * 2;
                       return RepaintBoundary(
-                        child: CustomPaint(
-                          size: const Size(78, 100),
-                          painter: ElderPainter(
+                        child: Transform.rotate(
+                          angle: nod * 0.12,
+                          child: OpponentPortrait(
                             kind: widget.kind,
-                            tilt: nod * 0.12,
+                            width: 78,
+                            height: 100,
                           ),
                         ),
                       );

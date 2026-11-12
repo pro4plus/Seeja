@@ -1,9 +1,11 @@
 // شخصيات الحوش السوداني: رسومات متجهة تفصيلية، بملامح وملابس وحياكة واضحة.
+// متقاعد في v5 (الشاشات تستخدم صوراً مولّدة) لكنه مصحَّح: بلا عيون
+// وبلا نظارات — قاعدة v5: كل الوجوه بلا عيون.
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-enum ElderKind { young, teacher, elder }
+import '../widgets/game_images.dart';
 
 class ElderPainter extends CustomPainter {
   final ElderKind kind;
@@ -91,7 +93,6 @@ class ElderPainter extends CustomPainter {
       case ElderKind.teacher:
         _paintMoustache(canvas);
         _paintImma(canvas, large: false);
-        _paintGlasses(canvas);
         break;
       case ElderKind.elder:
         _paintBeard(canvas);
@@ -103,11 +104,7 @@ class ElderPainter extends CustomPainter {
   }
 
   void _paintFace(Canvas canvas) {
-    final eye = Paint()..color = _skinDark;
-    canvas.drawOval(Rect.fromCenter(center: const Offset(42, 38), width: 4.5, height: 2.2), eye);
-    canvas.drawOval(Rect.fromCenter(center: const Offset(58, 38), width: 4.5, height: 2.2), eye);
-    canvas.drawCircle(const Offset(42, 38), 0.8, Paint()..color = Colors.white);
-    canvas.drawCircle(const Offset(58, 38), 0.8, Paint()..color = Colors.white);
+    // بلا عيون (قاعدة v5) — الأنف والفم فقط.
     final nose = Paint()..color = _skinDark..style = PaintingStyle.stroke..strokeWidth = 1.5..strokeCap = StrokeCap.round;
     canvas.drawPath(Path()..moveTo(50, 39)..quadraticBezierTo(47, 46, 51, 46), nose);
     canvas.drawArc(Rect.fromCenter(center: const Offset(50, 49), width: 10, height: 5), 0.15, math.pi - 0.3, false,
@@ -166,15 +163,6 @@ class ElderPainter extends CustomPainter {
       canvas.drawLine(Offset(x, 18), Offset(x, 26), stitch);
     }
     canvas.drawCircle(const Offset(50, 20), 2, Paint()..color = _gold);
-  }
-
-  void _paintGlasses(Canvas canvas) {
-    final frame = Paint()..color = _skinDark..strokeWidth = 2.2..style = PaintingStyle.stroke;
-    canvas.drawCircle(const Offset(40, 38), 7.7, frame);
-    canvas.drawCircle(const Offset(60, 38), 7.7, frame);
-    canvas.drawLine(const Offset(47.7, 38), const Offset(52.3, 38), frame);
-    canvas.drawLine(const Offset(32.3, 38), const Offset(29, 35), frame);
-    canvas.drawLine(const Offset(67.7, 38), const Offset(71, 35), frame);
   }
 
   @override

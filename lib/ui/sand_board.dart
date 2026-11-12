@@ -12,6 +12,7 @@ import '../theme/sudanese_theme.dart';
 import 'painters/board.dart';
 import 'painters/pebble.dart';
 import 'painters/tabaq.dart';
+import 'widgets/game_images.dart';
 
 /// إشارات حركات ترسلها الشاشة إلى اللوحة (أرقام متسلسلة).
 class BoardFx {
@@ -238,6 +239,16 @@ class _SandBoardState extends State<SandBoard>
               height: boardPx,
               child: Stack(
                 children: [
+                  // ---- نسيج الرمل (صورة) تحت اللوح ----
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(28),
+                    child: Image.asset(
+                      sandTexture,
+                      width: boardPx,
+                      height: boardPx,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
                   // ---- اللوح الرملي والحُفَر ----
                   RepaintBoundary(
                     child: CustomPaint(
@@ -245,6 +256,7 @@ class _SandBoardState extends State<SandBoard>
                       painter: BoardPainter(
                         size: size,
                         centreOccupied: !isCentreEmpty,
+                        drawSlab: false,
                       ),
                     ),
                   ),

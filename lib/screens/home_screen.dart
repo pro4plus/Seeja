@@ -1,6 +1,7 @@
-// الرئيسية v4: الحوش. الجدار المبيّض والباب المقوّس
-// والشيخ في الباب، ولوحة رمل للعرض تتحرك كل 6 ثوانٍ،
-// ولوحا خشب للعب، وروابط أسفل الصفحة.
+// الرئيسية v5: الحوش بصورة مولّدة (الجزء العلوي منها
+// جدار وباب وسماء غسق)، والشيخ صورة في الباب، ولوحة رمل
+// للعرض تتحرك كل 6 ثوانٍ، ولوحا خشب للعب، وروابط أسفل الصفحة.
+// التخطيط كما في v4 (جدار 42% فوق، برش ممتد تحت).
 import 'dart:async';
 import 'dart:math' as math;
 
@@ -11,11 +12,9 @@ import '../l10n/strings.dart';
 import '../services/settings_store.dart';
 import '../theme/sudanese_theme.dart';
 import '../ui/painters/board.dart';
-import '../ui/painters/elder.dart';
-import '../ui/painters/mat.dart';
 import '../ui/painters/pebble.dart';
-import '../ui/painters/wall.dart';
 import '../ui/sheets.dart';
+import '../ui/widgets/game_images.dart';
 import '../ui/widgets/plank_button.dart';
 import '../ui/widgets/wood_token.dart';
 import 'setup_screen.dart';
@@ -27,25 +26,7 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen>
-    with TickerProviderStateMixin {
-  late final AnimationController _sway;
-
-  @override
-  void initState() {
-    super.initState();
-    _sway = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 4),
-    )..repeat();
-  }
-
-  @override
-  void dispose() {
-    _sway.dispose();
-    super.dispose();
-  }
-
+class _HomeScreenState extends State<HomeScreen> {
   Strings get s => Strings(AppSettings.instance.isArabic);
 
   void _goSetup(bool vsComputer) {
@@ -74,21 +55,17 @@ class _HomeScreenState extends State<HomeScreen>
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
-                    RepaintBoundary(
-                      child: AnimatedBuilder(
-                        animation: _sway,
-                        builder: (context, child) {
-                          return CustomPaint(
-                            painter: WallPainter(
-                              sunT: 1.0,
-                              palmSway: math.sin(_sway.value * 2 * math.pi) *
-                                  0.03,
-                              // الباب تحت منطقة العنوان.
-                              doorTopFraction: 0.34,
-                              doorHeightFraction: 0.59,
-                            ),
-                          );
-                        },
+                    // الجزء العلوي فقط من صورة الحوش (جدار +
+                    // إفريز أحمر + باب + سماء غسق).
+                    ClipRect(
+                      child: Align(
+                        alignment: Alignment.topCenter,
+                        heightFactor: 0.51,
+                        child: Image.asset(
+                          bgHome,
+                          fit: BoxFit.fitWidth,
+                          width: double.infinity,
+                        ),
                       ),
                     ),
                     // العنوان.
@@ -136,16 +113,20 @@ class _HomeScreenState extends State<HomeScreen>
                         onPressed: () => showSettingsSheet(context, s),
                       ),
                     ),
-                    // الشيخ في الباب.
+                    // الشيخ في الباب (صورة بلا عيون).
                     Positioned(
                       bottom: wallH * 0.10,
-                      left: (size.width - 100) / 2,
-                      child: const RepaintBoundary(
-                        child: CustomPaint(
-                          size: Size(100, 130),
-                          painter: ElderPainter(
-                            kind: ElderKind.elder,
-                          ),
+                      left: (size.width - 110) / 2,
+                      child: ClipRRect(
+                        borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(55),
+                        ),
+                        child: Image.asset(
+                          portraitElder,
+                          width: 110,
+                          height: 140,
+                          fit: BoxFit.cover,
+                          alignment: Alignment.topCenter,
                         ),
                       ),
                     ),
@@ -157,10 +138,10 @@ class _HomeScreenState extends State<HomeScreen>
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
-                    const RepaintBoundary(
-                      child: CustomPaint(
-                        painter: MatPainter(),
-                      ),
+                    // البرش: نسيج قش مولّد (reed_mat.webp).
+                    Image.asset(
+                      reedMat,
+                      fit: BoxFit.cover,
                     ),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20),

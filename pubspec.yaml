@@ -24,9 +24,9 @@ flutter:
   assets:
     - assets/images/bg_home.webp
     - assets/images/bg_wall.webp
-    - assets/images/portrait_young.webp
-    - assets/images/portrait_teacher.webp
-    - assets/images/portrait_elder.webp
+    - assets/images/portrait_young.png
+    - assets/images/portrait_teacher.png
+    - assets/images/portrait_elder.png
     - assets/images/sand_texture.webp
     - assets/images/reed_mat.webp
     - assets/sounds/ui_tap.wav

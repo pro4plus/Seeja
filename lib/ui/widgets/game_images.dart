@@ -13,9 +13,9 @@ const String sandTexture = 'assets/images/sand_texture.webp';
 /// نسيج البرش في الرئيسية (1600×1600).
 const String reedMat = 'assets/images/reed_mat.webp';
 
-const String portraitYoung = 'assets/images/portrait_young.webp';
-const String portraitTeacher = 'assets/images/portrait_teacher.webp';
-const String portraitElder = 'assets/images/portrait_elder.webp';
+const String portraitYoung = 'assets/images/portrait_young.png';
+const String portraitTeacher = 'assets/images/portrait_teacher.png';
+const String portraitElder = 'assets/images/portrait_elder.png';
 
 String portraitAsset(ElderKind kind) {
   switch (kind) {

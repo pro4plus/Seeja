@@ -61,6 +61,63 @@ Offset _centreOf(WidgetTester tester, int r, int c) {
 }
 
 void main() {
+  // تشخيص (مؤقت): هل تحميل صور PNG مسبقاً يعلّق؟ شاشة فارغة
+  // + precache للصور الثلاث فقط، بلا لقطة.
+  testWidgets('تشخيص: تحميل صور PNG مسبقاً',
+      (WidgetTester tester) async {
+    await _setPhone(tester);
+    await tester.pumpWidget(const MaterialApp(home: SizedBox()));
+    await _precache(
+        tester, [portraitYoung, portraitTeacher, portraitElder]);
+    expect(true, isTrue);
+  }, timeout: const Timeout(Duration(minutes: 1)));
+
+  // تشخيص (مؤقت): هل التقاط لقطة ذهبية لصورة PNG وحدها يعلّق؟
+  testWidgets('تشخيص: لقطة ذهبية لصورة PNG فقط',
+      (WidgetTester tester) async {
+    await _setPhone(tester);
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: OpponentPortrait(
+              kind: ElderKind.teacher,
+              width: 92,
+              height: 118,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await _precache(tester, [portraitTeacher]);
+    await _pumpTimes(tester, 2, 500);
+    await expectLater(
+      find.byType(OpponentPortrait),
+      matchesGoldenFile('goldens/diag_portrait.png'),
+    );
+  }, timeout: const Timeout(Duration(minutes: 1)));
+
+  // تشخيص (مؤقت): ضابط — لقطة ذهبية لخلفية webp معروفة أنها تعمل.
+  testWidgets('تشخيص: لقطة ذهبية لخلفية فقط',
+      (WidgetTester tester) async {
+    await _setPhone(tester);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Image.asset(bgWall, fit: BoxFit.cover),
+        ),
+      ),
+    );
+    await tester.pump();
+    await _precache(tester, [bgWall]);
+    await _pumpTimes(tester, 2, 500);
+    await expectLater(
+      find.byType(Image),
+      matchesGoldenFile('goldens/diag_bgwall.png'),
+    );
+  }, timeout: const Timeout(Duration(minutes: 1)));
+
   testWidgets('لقطة الرئيسية', (WidgetTester tester) async {
     await _setPhone(tester);
     await tester.pumpWidget(const SeegaGame());

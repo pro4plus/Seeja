@@ -44,7 +44,9 @@ Future<void> _precache(
   final context = tester.element(find.byType(MaterialApp));
   for (final asset in assets) {
     print('STEP precache: loading $asset');
-    await precacheImage(AssetImage(asset), context);
+    // تحميل حقيقي خارج FakeAsync: بدونه يعلّق فك ترميز الصورة
+    // ولا يكتمل أبداً داخل اختبار الودجت.
+    await tester.runAsync(() => precacheImage(AssetImage(asset), context));
     print('STEP precache: loaded $asset');
   }
 }

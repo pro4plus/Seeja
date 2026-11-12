@@ -1,72 +1,23 @@
-// إعدادات اللعبة المحفوظة: الصوت + مستوى الصوت + الاهتزاز + اللغة.
-// تُحفظ في shared_preferences وتُحمَّل مرة واحدة عند بدء التطبيق.
-// أي فشل في التخزين يُتجاهل بصمت وتُستخدم القيم الافتراضية.
-import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class AppSettings extends ChangeNotifier {
-  static final AppSettings instance = AppSettings._();
+class SettingsStore {
+  static late SharedPreferences _prefs;
+  static Future<void> init() async => _prefs = await SharedPreferences.getInstance();
 
-  AppSettings._();
+  static bool get soundEnabled => _prefs.getBool('sound_enabled') ?? true;
+  static Future<void> setSoundEnabled(bool v) => _prefs.setBool('sound_enabled', v);
+  static double get soundVolume => _prefs.getDouble('sound_volume') ?? 0.85;
+  static Future<void> setSoundVolume(double v) => _prefs.setDouble('sound_volume', v);
+  static bool get hapticsEnabled => _prefs.getBool('haptics_enabled') ?? true;
+  static Future<void> setHapticsEnabled(bool v) => _prefs.setBool('haptics_enabled', v);
+  static bool get isArabic => _prefs.getBool('is_arabic') ?? true;
+  static Future<void> setArabic(bool v) => _prefs.setBool('is_arabic', v);
 
-  bool soundOn = true;
-  double volume = 0.8;
-  bool hapticsOn = true;
-  bool isArabic = true;
+  static int get wins => _prefs.getInt('stats_wins') ?? 0;
+  static int get losses => _prefs.getInt('stats_losses') ?? 0;
+  static int get draws => _prefs.getInt('stats_draws') ?? 0;
 
-  bool _loaded = false;
-  bool get loaded => _loaded;
-
-  SharedPreferences? _prefs;
-
-  Future<void> load() async {
-    try {
-      _prefs = await SharedPreferences.getInstance();
-      soundOn = _prefs!.getBool('soundOn') ?? true;
-      volume = _prefs!.getDouble('volume') ?? 0.8;
-      hapticsOn = _prefs!.getBool('hapticsOn') ?? true;
-      isArabic = _prefs!.getBool('isArabic') ?? true;
-    } catch (_) {
-      // الافتراضيات تكفي — لا توقف اللعبة بسبب التخزين.
-    }
-    _loaded = true;
-    notifyListeners();
-  }
-
-  Future<void> _save() async {
-    try {
-      final p = _prefs ??= await SharedPreferences.getInstance();
-      await p.setBool('soundOn', soundOn);
-      await p.setDouble('volume', volume);
-      await p.setBool('hapticsOn', hapticsOn);
-      await p.setBool('isArabic', isArabic);
-    } catch (_) {}
-  }
-
-  Future<void> setSoundOn(bool value) async {
-    if (soundOn == value) return;
-    soundOn = value;
-    notifyListeners();
-    await _save();
-  }
-
-  Future<void> setVolume(double value) async {
-    volume = value.clamp(0.0, 1.0);
-    notifyListeners();
-    await _save();
-  }
-
-  Future<void> setHapticsOn(bool value) async {
-    if (hapticsOn == value) return;
-    hapticsOn = value;
-    notifyListeners();
-    await _save();
-  }
-
-  Future<void> setArabic(bool value) async {
-    if (isArabic == value) return;
-    isArabic = value;
-    notifyListeners();
-    await _save();
-  }
+  static Future<void> recordWin() => _prefs.setInt('stats_wins', wins + 1);
+  static Future<void> recordLoss() => _prefs.setInt('stats_losses', losses + 1);
+  static Future<void> recordDraw() => _prefs.setInt('stats_draws', draws + 1);
 }

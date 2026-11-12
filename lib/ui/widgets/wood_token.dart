@@ -1,66 +1,41 @@
-// زر خشبي دائري (§5.3): قرص خشب بحافة قش وأيقونة كريمية
-// منقوشة. للقائمة والصوت والإعدادات والرجوع والتلميح والتراجع.
 import 'package:flutter/material.dart';
-
 import '../../theme/sudanese_theme.dart';
+import '../../game/sound_manager.dart';
 
-class WoodToken extends StatefulWidget {
+class WoodToken extends StatelessWidget {
   final IconData icon;
-  final VoidCallback? onPressed;
+  final String? label;
+  final VoidCallback onTap;
   final double size;
-  final String? tooltip;
 
-  const WoodToken({
-    super.key,
-    required this.icon,
-    this.onPressed,
-    this.size = 52,
-    this.tooltip,
-  });
-
-  @override
-  State<WoodToken> createState() => _WoodTokenState();
-}
-
-class _WoodTokenState extends State<WoodToken> {
-  bool _down = false;
+  const WoodToken({super.key, required this.icon, this.label, required this.onTap, this.size = 50});
 
   @override
   Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      label: widget.tooltip,
-      child: GestureDetector(
-        onTapDown: (_) => setState(() => _down = true),
-        onTapUp: (_) {
-          setState(() => _down = false);
-          widget.onPressed?.call();
-        },
-        onTapCancel: () => setState(() => _down = false),
-        child: AnimatedScale(
-          scale: _down ? 0.92 : 1.0,
-          duration: const Duration(milliseconds: 90),
-          child: Container(
-            width: widget.size,
-            height: widget.size,
+    return GestureDetector(
+      onTap: () {
+        SoundManager.tap();
+        onTap();
+      },
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: size,
+            height: size,
             decoration: BoxDecoration(
+              color: SudaneseTheme.mudBrickDark,
               shape: BoxShape.circle,
-              color: SudaneseTheme.wood,
-              border: Border.all(
-                color: SudaneseTheme.straw,
-                width: 2.5,
-              ),
-              boxShadow: SudaneseTheme.hardShadow(),
+              border: Border.all(color: SudaneseTheme.straw, width: 3),
+              boxShadow: const [BoxShadow(color: SudaneseTheme.earthBlack, offset: Offset(0, 3), blurRadius: 0)],
             ),
-            child: Center(
-              child: Icon(
-                widget.icon,
-                color: SudaneseTheme.cream,
-                size: widget.size * 0.48,
-              ),
-            ),
+            child: Icon(icon, color: SudaneseTheme.cream, size: size * 0.52),
           ),
-        ),
+          if (label != null) ...[
+            const SizedBox(height: 4),
+            Text(label!, style: const TextStyle(color: SudaneseTheme.earthBlack, fontSize: 13, fontWeight: FontWeight.bold)),
+          ]
+        ],
       ),
     );
   }

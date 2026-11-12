@@ -1,323 +1,225 @@
-// محرك لعبة السيجا — كود Dart نقي بدون أي اعتماد على Flutter،
-// حتى يمكن اختباره مباشرة بـ `dart test` / `flutter test`.
-//
-// قواعد اللعبة الأصلية من النسخة الأولى (v1.0) — محفوظة كما هي
-// تماماً بأمر المستخدم، بلا أي تغيير:
-//  * لوحة 5×5 (12 حجر لكل لاعب) أو 7×7 (24 حجر لكل لاعب)، الخانة الوسطى
-//    تبقى فارغة أثناء التوزيع، لأن أول حركة في اللعبة تكون إليها.
-//  * التوزيع: كل لاعب يضع 3 أحجار في كل دور، في أي خانة فارغة ما عدا
-//    الوسطى، حتى تكتمل كل الحجارة. بعدها يبدأ بالحركة اللاعب الأول
-//    إذا كان عنده حركة، وإلا اللاعب الثاني (كما في v1.0 تماماً).
-//  * الحركة: خطوة واحدة أفقية أو عمودية إلى خانة فارغة (الوسطى مسموحة).
-//  * الأكل (custodial capture): إذا حرّكت حجراً فأصبح حجر خصم محصوراً بين
-//    حجرك المتحرك وحجر آخر لك في خط مستقيم أفقي أو عمودي، يُؤكل ويُرفع.
-//    الدخول بين حجرَي خصم لا يؤكلك. ولا حماية خاصة للوسطى: الحجر فيها
-//    يؤكل كأي حجر آخر إذا حُصر — كما في v1.0.
-//  * الفوز: من يترك خصمه بلا أي حجر (صفر). وإذا كان اللاعب التالي بلا
-//    حركة، يمرَّر الدور لخصمه (كما في v1.0). انحصار اللاعبين معاً
-//    نادر، فيفوز صاحب الحجارة الأكثر، والتساوي تعادل.
+import 'dart:math';
 
-/// حجر اللاعب الأول = 1، اللاعب الثاني = 2، فارغ = 0.
-class SeegaMove {
-  final int fromRow;
-  final int fromCol;
-  final int toRow;
-  final int toCol;
+enum GamePhase { placement, movement, gameOver }
+enum Player { p1, p2 }
+enum GameOutcome { p1Win, p2Win, draw }
 
-  /// عدد الحجارة التي سيأكلها هذا التحرك (تُحسب وقت التطبيق).
-  final int captures;
-
-  const SeegaMove(this.fromRow, this.fromCol, this.toRow, this.toCol,
-      {this.captures = 0});
-
-  SeegaMove withCaptures(int n) =>
-      SeegaMove(fromRow, fromCol, toRow, toCol, captures: n);
-
-  @override
-  String toString() => '($fromRow,$fromCol)->($toRow,$toCol) x$captures';
-
-  @override
-  bool operator ==(Object other) =>
-      other is SeegaMove &&
-      fromRow == other.fromRow &&
-      fromCol == other.fromCol &&
-      toRow == other.toRow &&
-      toCol == other.toCol;
-
-  @override
-  int get hashCode => Object.hash(fromRow, fromCol, toRow, toCol);
-}
-
-/// نتيجة حركة مطبقة: الحركة نفسها + قائمة الخانات المأكولة + عددها.
-/// (v3.0: إضافة فقط لتمكين حركات اللوحة — لا تغيير في أي قاعدة.)
-class MoveResult {
-  final SeegaMove move;
-  final int mover;
-  final List<List<int>> captured;
-  int get eaten => captured.length;
-  const MoveResult({
-    required this.move,
-    required this.mover,
-    required this.captured,
-  });
+class MoveStep {
+  final int fromR, fromC, toR, toC;
+  final List<Point<int>> captured;
+  MoveStep(this.fromR, this.fromC, this.toR, this.toC, this.captured);
 }
 
 class SeegaEngine {
   final int size;
-  final int stonesPerPlayer;
+  late final int totalStonesPerPlayer;
+  late List<List<Player?>> board;
 
-  /// board[r][c]: 0 فارغ، 1 لاعب أول، 2 لاعب ثانٍ.
-  final List<List<int>> board;
+  Player currentTurn = Player.p1;
+  GamePhase phase = GamePhase.placement;
+  GameOutcome? outcome;
 
-  bool placingPhase;
-  int currentPlayer; // 1 أو 2
-  int placedP1;
-  int placedP2;
+  int placedThisTurn = 0;
+  int p1Placed = 0;
+  int p2Placed = 0;
+  int p1OnBoard = 0;
+  int p2OnBoard = 0;
+  int p1Captured = 0;
+  int p2Captured = 0;
+  int movesWithoutCapture = 0;
 
-  /// آخر حركة طبقت (لأغراض الذكاء فقط — لتجنب التذبذب ذهاباً وإياباً).
-  SeegaMove? lastMove;
+  final List<String> _history = [];
 
-  /// كم حجراً تبقى للاعب الحالي في دور التوزيع الحالي (3 كل مرة — كما في v1.0).
-  int stonesLeftThisTurn;
-
-  SeegaEngine({required this.size})
-      : stonesPerPlayer = size == 5 ? 12 : 24,
-        board = List.generate(size, (_) => List.filled(size, 0)),
-        placingPhase = true,
-        currentPlayer = 1,
-        placedP1 = 0,
-        placedP2 = 0,
-        stonesLeftThisTurn = 3;
-
-  SeegaEngine._copy(SeegaEngine other)
-      : size = other.size,
-        stonesPerPlayer = other.stonesPerPlayer,
-        board = [for (final row in other.board) [...row]],
-        placingPhase = other.placingPhase,
-        currentPlayer = other.currentPlayer,
-        placedP1 = other.placedP1,
-        placedP2 = other.placedP2,
-        lastMove = other.lastMove,
-        stonesLeftThisTurn = other.stonesLeftThisTurn;
-
-  SeegaEngine clone() => SeegaEngine._copy(this);
-
-  int get center => size ~/ 2;
-  bool isCenter(int r, int c) => r == center && c == center;
-
-  bool inBounds(int r, int c) => r >= 0 && r < size && c >= 0 && c < size;
-
-  int count(int player) {
-    var n = 0;
-    for (final row in board) {
-      for (final v in row) {
-        if (v == player) n++;
-      }
-    }
-    return n;
+  SeegaEngine({this.size = 5}) {
+    totalStonesPerPlayer = size == 5 ? 12 : 24;
+    board = List.generate(size, (_) => List.filled(size, null));
   }
 
-  int placedOf(int player) => player == 1 ? placedP1 : placedP2;
-
-  int remainingToPlace(int player) => stonesPerPlayer - placedOf(player);
-
-  // ---------- التوزيع ----------
-
-  List<List<int>> legalPlacements() {
-    final out = <List<int>>[];
-    if (!placingPhase) return out;
-    for (var r = 0; r < size; r++) {
-      for (var c = 0; c < size; c++) {
-        if (board[r][c] == 0 && !isCenter(r, c)) out.add([r, c]);
+  SeegaEngine clone() {
+    final copy = SeegaEngine(size: size);
+    for (int r = 0; r < size; r++) {
+      for (int c = 0; c < size; c++) {
+        copy.board[r][c] = board[r][c];
       }
     }
-    return out;
+    copy.currentTurn = currentTurn;
+    copy.phase = phase;
+    copy.outcome = outcome;
+    copy.placedThisTurn = placedThisTurn;
+    copy.p1Placed = p1Placed;
+    copy.p2Placed = p2Placed;
+    copy.p1OnBoard = p1OnBoard;
+    copy.p2OnBoard = p2OnBoard;
+    copy.p1Captured = p1Captured;
+    copy.p2Captured = p2Captured;
+    copy.movesWithoutCapture = movesWithoutCapture;
+    return copy;
   }
 
-  /// يضع حجر اللاعب الحالي في (r,c). يعيد false إذا كانت الخانة غير قانونية.
+  void saveSnapshot() {
+    String b = board.map((row) => row.map((p) => p == null ? '.' : (p == Player.p1 ? '1' : '2')).join()).join('/');
+    _history.add('$b|${currentTurn.index}|${phase.index}|$placedThisTurn|$p1Placed|$p2Placed|$p1OnBoard|$p2OnBoard|$p1Captured|$p2Captured');
+  }
+
+  bool canUndo() => _history.isNotEmpty && phase != GamePhase.gameOver;
+
+  bool undo() {
+    if (!canUndo()) return false;
+    final snap = _history.removeLast().split('|');
+    final rows = snap[0].split('/');
+    for (int r = 0; r < size; r++) {
+      for (int c = 0; c < size; c++) {
+        final ch = rows[r][c];
+        board[r][c] = ch == '.' ? null : (ch == '1' ? Player.p1 : Player.p2);
+      }
+    }
+    currentTurn = Player.values[int.parse(snap[1])];
+    phase = GamePhase.values[int.parse(snap[2])];
+    placedThisTurn = int.parse(snap[3]);
+    p1Placed = int.parse(snap[4]);
+    p2Placed = int.parse(snap[5]);
+    p1OnBoard = int.parse(snap[6]);
+    p2OnBoard = int.parse(snap[7]);
+    p1Captured = int.parse(snap[8]);
+    p2Captured = int.parse(snap[9]);
+    outcome = null;
+    return true;
+  }
+
+  bool isCenter(int r, int c) => r == size ~/ 2 && c == size ~/ 2;
+  bool isValid(int r, int c) => r >= 0 && r < size && c >= 0 && c < size;
+
   bool placeStone(int r, int c) {
-    if (!placingPhase) return false;
-    if (!inBounds(r, c) || board[r][c] != 0 || isCenter(r, c)) return false;
-    if (remainingToPlace(currentPlayer) <= 0) return false;
-    board[r][c] = currentPlayer;
-    if (currentPlayer == 1) {
-      placedP1++;
+    if (phase != GamePhase.placement) return false;
+    if (!isValid(r, c) || isCenter(r, c) || board[r][c] != null) return false;
+
+    if (placedThisTurn == 0) saveSnapshot();
+
+    board[r][c] = currentTurn;
+    if (currentTurn == Player.p1) {
+      p1Placed++;
+      p1OnBoard++;
     } else {
-      placedP2++;
+      p2Placed++;
+      p2OnBoard++;
     }
-    stonesLeftThisTurn--;
-    if (stonesLeftThisTurn == 0) {
-      if (placedP1 >= stonesPerPlayer && placedP2 >= stonesPerPlayer) {
-        placingPhase = false;
-        // كما في v1.0 تماماً: يبدأ اللاعب الأول إذا كان عنده حركة،
-        // وإلا اللاعب الثاني.
-        if (hasLegalMoves(1)) {
-          currentPlayer = 1;
-        } else if (hasLegalMoves(2)) {
-          currentPlayer = 2;
-        }
-        stonesLeftThisTurn = 0;
+    placedThisTurn++;
+
+    int maxForCurrent = currentTurn == Player.p1 ? totalStonesPerPlayer - p1Placed : totalStonesPerPlayer - p2Placed;
+
+    if (p1Placed >= totalStonesPerPlayer && p2Placed >= totalStonesPerPlayer) {
+      phase = GamePhase.movement;
+      placedThisTurn = 0;
+      if (getLegalMoves(Player.p1).isNotEmpty) {
+        currentTurn = Player.p1;
+      } else if (getLegalMoves(Player.p2).isNotEmpty) {
+        currentTurn = Player.p2;
       } else {
-        currentPlayer = 3 - currentPlayer;
-        stonesLeftThisTurn = 3;
+        _resolveStuckGame();
       }
+    } else if (placedThisTurn >= 3 || maxForCurrent == 0) {
+      placedThisTurn = 0;
+      currentTurn = currentTurn == Player.p1 ? Player.p2 : Player.p1;
     }
     return true;
   }
 
-  // ---------- الحركة ----------
-
-  static const dirs = [
-    [0, 1],
-    [0, -1],
-    [1, 0],
-    [-1, 0],
-  ];
-
-  /// كم حجر خصم سيُؤكل لو تحرك حجر [player] إلى (toR,toC)
-  /// مع افتراض أن الحركة نفسها قانونية.
-  int capturesForMove(int player, int toR, int toC) {
-    final opponent = 3 - player;
-    var n = 0;
-    for (final d in dirs) {
-      final r1 = toR + d[0], c1 = toC + d[1];
-      final r2 = toR + 2 * d[0], c2 = toC + 2 * d[1];
-      if (!inBounds(r1, c1) || !inBounds(r2, c2)) continue;
-      // بلا حماية للوسطى: الحجر فيها يؤكل كأي حجر آخر (كما في v1.0).
-      if (board[r1][c1] == opponent && board[r2][c2] == player) n++;
+  List<Point<int>> getLegalTargets(int r, int c) {
+    if (phase != GamePhase.movement || board[r][c] != currentTurn) return [];
+    const dirs = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+    List<Point<int>> targets = [];
+    for (var d in dirs) {
+      int nr = r + d[0];
+      int nc = c + d[1];
+      if (isValid(nr, nc) && board[nr][nc] == null) targets.add(Point(nr, nc));
     }
-    return n;
+    return targets;
   }
 
-  List<SeegaMove> legalMoves(int player) {
-    final out = <SeegaMove>[];
-    if (placingPhase) return out;
-    for (var r = 0; r < size; r++) {
-      for (var c = 0; c < size; c++) {
-        if (board[r][c] != player) continue;
-        for (final d in dirs) {
-          final nr = r + d[0], nc = c + d[1];
-          if (!inBounds(nr, nc) || board[nr][nc] != 0) continue;
-          final cap = capturesForMove(player, nr, nc);
-          out.add(SeegaMove(r, c, nr, nc, captures: cap));
+  List<MoveStep> getLegalMoves(Player player) {
+    List<MoveStep> moves = [];
+    const dirs = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+    for (int r = 0; r < size; r++) {
+      for (int c = 0; c < size; c++) {
+        if (board[r][c] == player) {
+          for (var d in dirs) {
+            int nr = r + d[0];
+            int nc = c + d[1];
+            if (isValid(nr, nc) && board[nr][nc] == null) moves.add(MoveStep(r, c, nr, nc, []));
+          }
         }
       }
     }
-    return out;
+    return moves;
   }
 
-  bool hasLegalMoves(int player) => legalMoves(player).isNotEmpty;
+  MoveStep? moveStone(int fromR, int fromC, int toR, int toC, {bool recordHistory = true}) {
+    if (phase != GamePhase.movement) return null;
+    if (!isValid(fromR, fromC) || !isValid(toR, toC)) return null;
+    if (board[fromR][fromC] != currentTurn || board[toR][toC] != null) return null;
 
-  /// يطبق التحرك ويعيد عدد الحجارة المأكولة. يعيد -1 إذا كان غير قانوني.
-  int applyMove(SeegaMove move) {
-    if (placingPhase) return -1;
-    final player = board[move.fromRow][move.fromCol];
-    if (player == 0) return -1;
-    if (player != currentPlayer) return -1;
-    if ((move.fromRow - move.toRow).abs() +
-            (move.fromCol - move.toCol).abs() !=
-        1) {
-      return -1;
-    }
-    if (!inBounds(move.toRow, move.toCol) ||
-        board[move.toRow][move.toCol] != 0) {
-      return -1;
-    }
-    board[move.fromRow][move.fromCol] = 0;
-    board[move.toRow][move.toCol] = player;
-    lastMove = move;
+    int dr = (fromR - toR).abs();
+    int dc = (fromC - toC).abs();
+    if (!((dr == 1 && dc == 0) || (dr == 0 && dc == 1))) return null;
 
-    // الأكل من كل الاتجاهات الأربعة.
-    final opponent = 3 - player;
-    var eaten = 0;
-    for (final d in dirs) {
-      final r1 = move.toRow + d[0], c1 = move.toCol + d[1];
-      final r2 = move.toRow + 2 * d[0], c2 = move.toCol + 2 * d[1];
-      if (!inBounds(r1, c1) || !inBounds(r2, c2)) continue;
-      if (board[r1][c1] == opponent && board[r2][c2] == player) {
-        board[r1][c1] = 0;
-        eaten++;
+    if (recordHistory) saveSnapshot();
+
+    board[toR][toC] = currentTurn;
+    board[fromR][fromC] = null;
+
+    final captured = _applyCaptures(toR, toC);
+    movesWithoutCapture = captured.isEmpty ? movesWithoutCapture + 1 : 0;
+
+    if (p2OnBoard == 0) {
+      phase = GamePhase.gameOver;
+      outcome = GameOutcome.p1Win;
+      return MoveStep(fromR, fromC, toR, toC, captured);
+    }
+    if (p1OnBoard == 0) {
+      phase = GamePhase.gameOver;
+      outcome = GameOutcome.p2Win;
+      return MoveStep(fromR, fromC, toR, toC, captured);
+    }
+    if (movesWithoutCapture >= 60) {
+      phase = GamePhase.gameOver;
+      outcome = GameOutcome.draw;
+      return MoveStep(fromR, fromC, toR, toC, captured);
+    }
+
+    Player nextPlayer = currentTurn == Player.p1 ? Player.p2 : Player.p1;
+    if (getLegalMoves(nextPlayer).isNotEmpty) {
+      currentTurn = nextPlayer;
+    } else if (getLegalMoves(currentTurn).isEmpty) {
+      _resolveStuckGame();
+    }
+    return MoveStep(fromR, fromC, toR, toC, captured);
+  }
+
+  List<Point<int>> _applyCaptures(int r, int c) {
+    Player opponent = currentTurn == Player.p1 ? Player.p2 : Player.p1;
+    const dirs = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+    List<Point<int>> eaten = [];
+    for (var d in dirs) {
+      int r1 = r + d[0], c1 = c + d[1], r2 = r + d[0] * 2, c2 = c + d[1] * 2;
+      if (isValid(r1, c1) && isValid(r2, c2)) {
+        if (board[r1][c1] == opponent && board[r2][c2] == currentTurn) {
+          board[r1][c1] = null;
+          eaten.add(Point(r1, c1));
+          if (currentTurn == Player.p1) {
+            p1Captured++;
+            p2OnBoard--;
+          } else {
+            p2Captured++;
+            p1OnBoard--;
+          }
+        }
       }
     }
-    currentPlayer = 3 - currentPlayer;
     return eaten;
   }
 
-  /// يطبق التحرك مثل applyMove تماماً، لكنه يعيد أيضاً قائمة الخانات
-  /// المأكولة ومسار الحركة لتمكين الحركات في الواجهة.
-  /// يعيد null إذا كانت الحركة غير قانونية.
-  MoveResult? applyMoveDetailed(SeegaMove move) {
-    if (placingPhase) return null;
-    final player = board[move.fromRow][move.fromCol];
-    if (player == 0 || player != currentPlayer) return null;
-    if ((move.fromRow - move.toRow).abs() +
-            (move.fromCol - move.toCol).abs() !=
-        1) {
-      return null;
-    }
-    if (!inBounds(move.toRow, move.toCol) ||
-        board[move.toRow][move.toCol] != 0) {
-      return null;
-    }
-    // احسب الخانات المأكولة قبل التطبيق (نفس منطق applyMove).
-    final opponent = 3 - player;
-    final captured = <List<int>>[];
-    for (final d in dirs) {
-      final r1 = move.toRow + d[0], c1 = move.toCol + d[1];
-      final r2 = move.toRow + 2 * d[0], c2 = move.toCol + 2 * d[1];
-      if (!inBounds(r1, c1) || !inBounds(r2, c2)) continue;
-      if (board[r1][c1] == opponent && board[r2][c2] == player) {
-        captured.add([r1, c1]);
-      }
-    }
-    final eaten = applyMove(move);
-    if (eaten < 0) return null;
-    assert(eaten == captured.length);
-    return MoveResult(move: move, mover: player, captured: captured);
-  }
-
-  /// مفتاح نصي للوضع الحالي (اللوحة + الدور) لتتبع التكرار:
-  /// تكرار نفس الوضع 3 مرات = تعادل (قاعدة شطرنجية لمنع الدوران الأبدي).
-  String positionKey() {
-    final sb = StringBuffer()..write(currentPlayer)..write('|');
-    for (final row in board) {
-      for (final v in row) {
-        sb.write(v);
-      }
-    }
-    return sb.toString();
-  }
-
-  // ---------- التمرير والفوز ----------
-
-  /// إذا كان اللاعب الحالي بلا أي حركة قانونية بينما خصمه يستطيع الحركة،
-  /// يُمرَّر الدور للخصم (يلعب مرة ثانية) — كما في v1.0 تماماً: بعد
-  /// كل حركة، إذا كان اللاعب التالي بلا حركة، يرجع الدور للاعب الذي حرّك.
-  /// يعيد true إذا تم التمرير.
-  bool passIfStuck() {
-    if (placingPhase) return false;
-    if (hasLegalMoves(currentPlayer)) return false;
-    if (!hasLegalMoves(3 - currentPlayer)) return false;
-    currentPlayer = 3 - currentPlayer;
-    return true;
-  }
-
-  /// يعيد 1 أو 2 عند فوز أحدهما، و0 عند التعادل، وnull إذا استمرت اللعبة.
-  /// الفوز كما في v1.0: ترك الخصم بلا أي حجر (صفر). انحصار اللاعبين معاً
-  /// نادر، فيفوز صاحب الحجارة الأكثر (والتساوي تعادل).
-  int? winner() {
-    if (placingPhase) return null;
-    final c1 = count(1);
-    final c2 = count(2);
-    if (c1 == 0 && c2 == 0) return 0; // حالة نادرة
-    if (c1 == 0) return 2;
-    if (c2 == 0) return 1;
-    final p1Moves = hasLegalMoves(1);
-    final p2Moves = hasLegalMoves(2);
-    if (!p1Moves && !p2Moves) {
-      if (c1 == c2) return 0;
-      return c1 > c2 ? 1 : 2;
-    }
-    return null;
+  void _resolveStuckGame() {
+    phase = GamePhase.gameOver;
+    outcome = p1OnBoard > p2OnBoard ? GameOutcome.p1Win : (p2OnBoard > p1OnBoard ? GameOutcome.p2Win : GameOutcome.draw);
   }
 }

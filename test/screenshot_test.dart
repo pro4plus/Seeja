@@ -4,6 +4,7 @@
 // لعبة جديدة 5×5 ضد الكمبيوتر (وسط)، وشاشة النتيجة.
 // ضخّات يدوية متكررة بدل pumpAndSettle: مؤقت لوحة العرض (6 ثوانٍ)
 // والمؤقتات المتكررة تمنع الاستقرار.
+// طبعات STEP لتحديد مكان التعليق بدقة في سجل CI.
 import 'package:alseeja/game/seega_ai.dart';
 import 'package:alseeja/game/turn_controller.dart';
 import 'package:alseeja/main.dart';
@@ -61,18 +62,21 @@ Offset _centreOf(WidgetTester tester, int r, int c) {
 }
 
 void main() {
-  // تشخيص (مؤقت): هل تحميل صور PNG مسبقاً يعلّق؟ شاشة فارغة
+  // تشخيص: هل تحميل صور PNG مسبقاً يعلّق؟ شاشة فارغة
   // + precache للصور الثلاث فقط، بلا لقطة.
   testWidgets('تشخيص: تحميل صور PNG مسبقاً',
       (WidgetTester tester) async {
     await _setPhone(tester);
     await tester.pumpWidget(const MaterialApp(home: SizedBox()));
+    print('STEP diag-precache: pumped');
     await _precache(
         tester, [portraitYoung, portraitTeacher, portraitElder]);
+    print('STEP diag-precache: precache done');
     expect(true, isTrue);
+    print('STEP diag-precache: done');
   }, timeout: const Timeout(Duration(minutes: 1)));
 
-  // تشخيص (مؤقت): هل التقاط لقطة ذهبية لصورة PNG وحدها يعلّق؟
+  // تشخيص: هل التقاط لقطة ذهبية لصورة PNG وحدها يعلّق؟
   testWidgets('تشخيص: لقطة ذهبية لصورة PNG فقط',
       (WidgetTester tester) async {
     await _setPhone(tester);
@@ -89,16 +93,20 @@ void main() {
         ),
       ),
     );
+    print('STEP diag-portrait-golden: pumped');
     await tester.pump();
     await _precache(tester, [portraitTeacher]);
+    print('STEP diag-portrait-golden: precache done');
     await _pumpTimes(tester, 2, 500);
+    print('STEP diag-portrait-golden: pumps done');
     await expectLater(
       find.byType(OpponentPortrait),
       matchesGoldenFile('goldens/diag_portrait.png'),
     );
+    print('STEP diag-portrait-golden: golden done');
   }, timeout: const Timeout(Duration(minutes: 1)));
 
-  // تشخيص (مؤقت): ضابط — لقطة ذهبية لخلفية webp معروفة أنها تعمل.
+  // تشخيص: ضابط — لقطة ذهبية لخلفية webp معروفة أنها تعمل.
   testWidgets('تشخيص: لقطة ذهبية لخلفية فقط',
       (WidgetTester tester) async {
     await _setPhone(tester);
@@ -109,28 +117,37 @@ void main() {
         ),
       ),
     );
+    print('STEP diag-bgwall-golden: pumped');
     await tester.pump();
     await _precache(tester, [bgWall]);
+    print('STEP diag-bgwall-golden: precache done');
     await _pumpTimes(tester, 2, 500);
+    print('STEP diag-bgwall-golden: pumps done');
     await expectLater(
       find.byType(Image),
       matchesGoldenFile('goldens/diag_bgwall.png'),
     );
+    print('STEP diag-bgwall-golden: golden done');
   }, timeout: const Timeout(Duration(minutes: 1)));
 
   testWidgets('لقطة الرئيسية', (WidgetTester tester) async {
     await _setPhone(tester);
     await tester.pumpWidget(const SeegaGame());
+    print('STEP home: pumped');
     await tester.pump(const Duration(milliseconds: 500));
     await _precache(tester, [bgHome, portraitElder, reedMat]);
+    print('STEP home: precache done');
     // شاشة البداية 2.2 ث ثم الانتقال إلى الرئيسية.
     await tester.pump(const Duration(milliseconds: 2600));
     await _pumpTimes(tester, 2, 500);
+    print('STEP home: pumps done');
     expect(find.text('العب ضد الكمبيوتر'), findsOneWidget);
+    print('STEP home: expect done');
     await expectLater(
       find.byType(HomeScreen),
       matchesGoldenFile('goldens/home.png'),
     );
+    print('STEP home: golden done');
   }, timeout: const Timeout(Duration(minutes: 2)));
 
   testWidgets('لقطة الإعداد ضد الكمبيوتر',
@@ -139,15 +156,20 @@ void main() {
     await tester.pumpWidget(
       const MaterialApp(home: SetupScreen(vsComputer: true)),
     );
+    print('STEP setup: pumped');
     await tester.pump();
     await _precache(
         tester, [bgWall, portraitYoung, portraitTeacher, portraitElder]);
+    print('STEP setup: precache done');
     await _pumpTimes(tester, 2, 500);
+    print('STEP setup: pumps done');
     expect(find.text('اجلس للعب'), findsOneWidget);
+    print('STEP setup: expect done');
     await expectLater(
       find.byType(SetupScreen),
       matchesGoldenFile('goldens/setup.png'),
     );
+    print('STEP setup: golden done');
   }, timeout: const Timeout(Duration(minutes: 2)));
 
   testWidgets('لقطة لعبة جديدة 5×5 ضد الكمبيوتر',
@@ -170,14 +192,19 @@ void main() {
         ),
       ),
     );
+    print('STEP game: pumped');
     await tester.pump();
     await _precache(tester, [bgWall, sandTexture, portraitTeacher]);
+    print('STEP game: precache done');
     await _pumpTimes(tester, 2, 500);
+    print('STEP game: pumps done');
     expect(find.textContaining('ضع 3 أحجار'), findsOneWidget);
+    print('STEP game: expect done');
     await expectLater(
       find.byType(GameScreen),
       matchesGoldenFile('goldens/game.png'),
     );
+    print('STEP game: golden done');
   }, timeout: const Timeout(Duration(minutes: 2)));
 
   testWidgets('لقطة شاشة النتيجة', (WidgetTester tester) async {
@@ -206,9 +233,11 @@ void main() {
         ),
       ),
     );
+    print('STEP result: pumped');
     controller.debugSyncAfterExternalSetup();
     await tester.pump();
     await _precache(tester, [bgWall, sandTexture]);
+    print('STEP result: precache done');
     await tester.tapAt(_centreOf(tester, 1, 4));
     await tester.pump();
     await tester.tapAt(_centreOf(tester, 1, 3));
@@ -218,10 +247,13 @@ void main() {
     await tester.pump(const Duration(milliseconds: 500));
     await tester.pump(const Duration(milliseconds: 500));
     await tester.pump();
+    print('STEP result: pumps done');
     expect(find.text('اللاعب 1 فاز!'), findsOneWidget);
+    print('STEP result: expect done');
     await expectLater(
       find.byType(GameScreen),
       matchesGoldenFile('goldens/result.png'),
     );
+    print('STEP result: golden done');
   }, timeout: const Timeout(Duration(minutes: 2)));
 }

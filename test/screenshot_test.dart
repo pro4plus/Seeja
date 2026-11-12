@@ -15,6 +15,7 @@ import 'package:alseeja/screens/setup_screen.dart';
 import 'package:alseeja/ui/sand_board.dart';
 import 'package:alseeja/ui/widgets/game_images.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 const _gameVsComputer = GameConfig(
@@ -37,6 +38,37 @@ Future<void> _setPhone(WidgetTester tester) async {
   tester.view.physicalSize = const Size(780, 1688);
   tester.view.devicePixelRatio = 2.0;
   addTearDown(tester.view.reset);
+}
+
+/// تحميل الخطوط يدوياً داخل runAsync (مرة واحدة لكل عملية اختبار):
+/// مثل الصور، تحميل الخطوط من المحرك يتعطّل داخل اختبار الودجت،
+/// فتظهر النصوص والأيقونات مربعات فارغة في اللقطات الذهبية.
+var _fontsLoaded = false;
+
+Future<void> _loadFonts(WidgetTester tester) async {
+  if (_fontsLoaded) return;
+  _fontsLoaded = true;
+  await tester.runAsync(() async {
+    final reem = FontLoader('ReemKufi')
+      ..addFont(rootBundle.load('assets/fonts/ReemKufi-700.ttf'));
+    await reem.load();
+    print('STEP fonts: ReemKufi loaded');
+    final tajawal = FontLoader('Tajawal')
+      ..addFont(rootBundle.load('assets/fonts/Tajawal-Medium.ttf'))
+      ..addFont(rootBundle.load('assets/fonts/Tajawal-Bold.ttf'))
+      ..addFont(rootBundle.load('assets/fonts/Tajawal-ExtraBold.ttf'));
+    await tajawal.load();
+    print('STEP fonts: Tajawal loaded');
+    try {
+      final icons = FontLoader('MaterialIcons')
+        ..addFont(rootBundle
+            .load('packages/flutter/fonts/MaterialIcons-Regular.otf'));
+      await icons.load();
+      print('STEP fonts: MaterialIcons loaded');
+    } catch (e) {
+      print('STEP fonts: MaterialIcons failed: $e');
+    }
+  });
 }
 
 Future<void> _precache(
@@ -70,6 +102,7 @@ void main() {
   // تشخيص أ: هل تحميل bgWall وحدها (أول استدعاء) يعلّق؟
   testWidgets('تشخيص أ: تحميل bgWall وحدها',
       (WidgetTester tester) async {
+    await _loadFonts(tester);
     await _setPhone(tester);
     await tester.pumpWidget(const MaterialApp(home: SizedBox()));
     print('STEP diag-a: pumped');

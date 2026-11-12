@@ -1,0 +1,27 @@
+name: Screenshots v5
+
+# لقطات ذهبية لإعادة التصميم البصري v5: فحص + اختبارات كاملة،
+# ثم تحديث اللقطات الأربع ورفعها كأرتيفاكت — حتى لو فشل
+# خطوة سابقة، تُرفع اللقطات لمراجعتها.
+on:
+  push:
+    branches: [visual-redesign-v5]
+
+jobs:
+  screenshots:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.35.7"
+          channel: stable
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test
+      - run: flutter test --update-goldens integration_test/screenshot_test.dart
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: screenshots-v5
+          path: integration_test/goldens/

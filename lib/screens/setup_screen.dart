@@ -1,4 +1,5 @@
-// شاشة الإعداد "اجلس للعب" (§6.3 + لوحة التصميم):
+// شاشة الإعداد v5 "اجلس للعب": خلفية جدار الحوش بصورة
+// مولّدة مع تعتيم خفيف لقراءة النصوص. باقي التخطيط كما في v4.
 // شاشة واحدة بلا تمرير عند 390×844. ضد الكمبيوتر: ثلاث كوات
 // (ود البلد/الأستاذ/الشيخ) ثم لوحتان مصغرتان ثم صينية الحجارة.
 // لاعبان: الصينية للاعب 1 ثم تنزلق وتعود للاعب 2.
@@ -11,9 +12,9 @@ import '../l10n/strings.dart';
 import '../services/settings_store.dart';
 import '../theme/sudanese_theme.dart';
 import '../ui/painters/board.dart';
-import '../ui/painters/elder.dart';
 import '../ui/painters/pebble.dart';
 import '../ui/painters/tabaq.dart';
+import '../ui/widgets/game_images.dart';
 import '../ui/widgets/niche.dart';
 import '../ui/widgets/wood_token.dart';
 import 'game_screen.dart';
@@ -111,13 +112,10 @@ class _SetupScreenState extends State<SetupScreen>
       animation: AppSettings.instance,
       builder: (context, child) {
         return Scaffold(
-          body: Stack(
-            fit: StackFit.expand,
-            children: [
-              const RepaintBoundary(
-                child: CustomPaint(painter: _SetupMatPainter()),
-              ),
-              SafeArea(
+          body: DuskBackdrop(
+            image: bgWall,
+            dim: 0.28,
+            child: SafeArea(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Column(
@@ -315,9 +313,8 @@ class _SetupScreenState extends State<SetupScreen>
                   ),
                 ),
               ),
-            ],
-          ),
-        );
+            ),
+          );
       },
     );
   }
@@ -336,31 +333,6 @@ class _SectionLabel extends StatelessWidget {
       textAlign: TextAlign.right,
     );
   }
-}
-
-/// خلفية الإعداد: برش أغمق قليلاً من الرئيسية.
-class _SetupMatPainter extends CustomPainter {
-  const _SetupMatPainter();
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    canvas.drawRect(
-      Offset.zero & size,
-      Paint()..color = const Color(0xFFD3AC62),
-    );
-    for (var x = 0.0; x < size.width; x += 6) {
-      canvas.drawLine(
-        Offset(x, 0),
-        Offset(x, size.height),
-        Paint()
-          ..color = SudaneseTheme.mudBrick.withValues(alpha: 0.10)
-          ..strokeWidth = 1.2,
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 /// لوحة مصغرة على لوح كريمي؛ المختارة بإطار أحمر.

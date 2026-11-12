@@ -1,6 +1,7 @@
-// شاشة اللعب v4: البرش كامل الشاشة. مقعد الخصم أعلى،
-// لوحة الرمل في الوسط، سطر الدور نصاً بلا صندوق،
-// صحون الطين والفوانيس، وصفحة النتيجة المقوّسة.
+// شاشة اللعب v5: خلفية جدار الحوش بصورة مولّدة، والخصم
+// صورة بلا عيون. باقي التخطيط كما في v4: البرش كامل الشاشة.
+// مقعد الخصم أعلى، لوحة الرمل في الوسط، سطر الدور نصاً بلا
+// صندوق، صحون الطين والفوانيس، وصفحة النتيجة المقوّسة.
 import 'dart:async';
 import 'dart:math' as math;
 
@@ -13,15 +14,14 @@ import '../l10n/strings.dart';
 import '../services/settings_store.dart';
 import '../theme/sudanese_theme.dart';
 import '../ui/painters/confetti.dart';
-import '../ui/painters/elder.dart';
 import '../ui/painters/lantern.dart';
-import '../ui/painters/mat.dart';
 import '../ui/painters/pebble.dart';
 import '../ui/painters/tabaq.dart';
 import '../ui/sand_board.dart';
 import '../ui/sheets.dart';
 import '../ui/widgets/arched_sheet.dart';
 import '../ui/widgets/bowl_counter.dart';
+import '../ui/widgets/game_images.dart';
 import '../ui/widgets/plank_button.dart';
 import '../ui/widgets/wood_token.dart';
 
@@ -223,14 +223,12 @@ class _GameScreenState extends State<GameScreen>
           final isGameOver = controller.phase == TurnPhase.gameOver;
 
           final content = Scaffold(
-            body: Stack(
-              fit: StackFit.expand,
-              children: [
-                const RepaintBoundary(
-                  child: CustomPaint(
-                    painter: MatPainter(topThread: true, fringe: true),
-                  ),
-                ),
+            body: DuskBackdrop(
+              image: bgWall,
+              dim: 0.30,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
                 SafeArea(
                   child: Column(
                     children: [
@@ -308,7 +306,8 @@ class _GameScreenState extends State<GameScreen>
                   ),
                 // شاشة النتيجة.
                 if (isGameOver) _resultOverlay(),
-              ],
+                ],
+              ),
             ),
           );
           return content;
@@ -810,13 +809,17 @@ class _OpponentFigure extends StatelessWidget {
         final tiltValue = thinking
             ? math.sin(tilt.value * 2 * math.pi) * 0.10
             : 0.0;
+        final bowOffset = bowing ? bow.value * 10 : 0.0;
         return RepaintBoundary(
-          child: CustomPaint(
-            size: const Size(92, 118),
-            painter: ElderPainter(
-              kind: kind,
-              tilt: tiltValue,
-              bow: bowing ? bow.value : 0,
+          child: Transform.translate(
+            offset: Offset(0, bowOffset),
+            child: Transform.rotate(
+              angle: tiltValue,
+              child: OpponentPortrait(
+                kind: kind,
+                width: 92,
+                height: 118,
+              ),
             ),
           ),
         );

@@ -31,11 +31,11 @@ class PebblePainter extends CustomPainter {
     canvas.save();
     canvas.clipPath(pebble);
     canvas.drawOval(Rect.fromCenter(center: center + Offset(-r * .24, -r * .28), width: r * 1.15, height: r * .95), Paint()..color = def.light.withValues(alpha: .52));
-    canvas.drawOval(Rect.fromCenter(center: center + Offset(r * .22, r * .48), width: r * 1.2, height: r * .62), Paint()..color = def.dark.withValues(alpha: .58));
+    canvas.drawOval(Rect.fromCenter(center: center + Offset(r * .22, r * .48), width: r * 1.2, height: r * .62), Paint()..color = def.dark.withValues(alpha: .72));
     canvas.restore();
     canvas.drawPath(pebble, Paint()..color = def.dark.withValues(alpha: .65)..style = PaintingStyle.stroke..strokeWidth = 1.25);
-    canvas.drawOval(Rect.fromCenter(center: center + Offset(-r * .28, -r * .43), width: r * .42, height: r * .21), Paint()..color = Colors.white.withValues(alpha: .86));
-    canvas.drawCircle(center + Offset(-r * .1, -r * .12), r * .07, Paint()..color = Colors.white.withValues(alpha: .38));
+    canvas.drawOval(Rect.fromCenter(center: center + Offset(-r * .28, -r * .43), width: r * .48, height: r * .24), Paint()..color = Colors.white.withValues(alpha: .95));
+    canvas.drawCircle(center + Offset(-r * .1, -r * .12), r * .07, Paint()..color = Colors.white.withValues(alpha: .50));
   }
 
   @override

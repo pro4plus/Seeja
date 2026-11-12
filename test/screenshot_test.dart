@@ -43,7 +43,9 @@ Future<void> _precache(
     WidgetTester tester, List<String> assets) async {
   final context = tester.element(find.byType(MaterialApp));
   for (final asset in assets) {
+    print('STEP precache: loading $asset');
     await precacheImage(AssetImage(asset), context);
+    print('STEP precache: loaded $asset');
   }
 }
 
@@ -63,72 +65,32 @@ Offset _centreOf(WidgetTester tester, int r, int c) {
 }
 
 void main() {
-  // تشخيص: هل تحميل صور PNG مسبقاً يعلّق؟ شاشة فارغة
-  // + precache للصور الثلاث فقط، بلا لقطة.
-  testWidgets('تشخيص: تحميل صور PNG مسبقاً',
+  // تشخيص أ: هل تحميل bgWall وحدها (أول استدعاء) يعلّق؟
+  testWidgets('تشخيص أ: تحميل bgWall وحدها',
       (WidgetTester tester) async {
     await _setPhone(tester);
     await tester.pumpWidget(const MaterialApp(home: SizedBox()));
-    print('STEP diag-precache: pumped');
-    await _precache(
-        tester, [portraitYoung, portraitTeacher, portraitElder]);
-    print('STEP diag-precache: precache done');
-    expect(true, isTrue);
-    print('STEP diag-precache: done');
-  }, timeout: const Timeout(Duration(minutes: 1)));
-
-  // تشخيص: هل التقاط لقطة ذهبية لصورة PNG وحدها يعلّق؟
-  testWidgets('تشخيص: لقطة ذهبية لصورة PNG فقط',
-      (WidgetTester tester) async {
-    await _setPhone(tester);
-    await tester.pumpWidget(
-      const MaterialApp(
-        home: Scaffold(
-          body: Center(
-            child: OpponentPortrait(
-              kind: ElderKind.teacher,
-              width: 92,
-              height: 118,
-            ),
-          ),
-        ),
-      ),
-    );
-    print('STEP diag-portrait-golden: pumped');
+    print('STEP diag-a: pumped');
     await tester.pump();
-    await _precache(tester, [portraitTeacher]);
-    print('STEP diag-portrait-golden: precache done');
-    await _pumpTimes(tester, 2, 500);
-    print('STEP diag-portrait-golden: pumps done');
-    await expectLater(
-      find.byType(OpponentPortrait),
-      matchesGoldenFile('goldens/diag_portrait.png'),
-    );
-    print('STEP diag-portrait-golden: golden done');
-  }, timeout: const Timeout(Duration(minutes: 1)));
-
-  // تشخيص: ضابط — لقطة ذهبية لخلفية webp معروفة أنها تعمل.
-  testWidgets('تشخيص: لقطة ذهبية لخلفية فقط',
-      (WidgetTester tester) async {
-    await _setPhone(tester);
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: Image.asset(bgWall, fit: BoxFit.cover),
-        ),
-      ),
-    );
-    print('STEP diag-bgwall-golden: pumped');
-    await tester.pump();
+    print('STEP diag-a: pump done');
     await _precache(tester, [bgWall]);
-    print('STEP diag-bgwall-golden: precache done');
-    await _pumpTimes(tester, 2, 500);
-    print('STEP diag-bgwall-golden: pumps done');
-    await expectLater(
-      find.byType(Image),
-      matchesGoldenFile('goldens/diag_bgwall.png'),
-    );
-    print('STEP diag-bgwall-golden: golden done');
+    print('STEP diag-a: precache done');
+    expect(true, isTrue);
+    print('STEP diag-a: done');
+  }, timeout: const Timeout(Duration(minutes: 1)));
+
+  // تشخيص ب: هل تحميل صورة شخصية PNG وحدها يعلّق؟
+  testWidgets('تشخيص ب: تحميل صورة شخصية وحدها',
+      (WidgetTester tester) async {
+    await _setPhone(tester);
+    await tester.pumpWidget(const MaterialApp(home: SizedBox()));
+    print('STEP diag-b: pumped');
+    await tester.pump();
+    print('STEP diag-b: pump done');
+    await _precache(tester, [portraitTeacher]);
+    print('STEP diag-b: precache done');
+    expect(true, isTrue);
+    print('STEP diag-b: done');
   }, timeout: const Timeout(Duration(minutes: 1)));
 
   testWidgets('لقطة الرئيسية', (WidgetTester tester) async {
@@ -136,6 +98,7 @@ void main() {
     await tester.pumpWidget(const SeegaGame());
     print('STEP home: pumped');
     await tester.pump(const Duration(milliseconds: 500));
+    print('STEP home: pump done');
     await _precache(tester, [bgHome, portraitElder, reedMat]);
     print('STEP home: precache done');
     // شاشة البداية 2.2 ث ثم الانتقال إلى الرئيسية.
@@ -159,6 +122,7 @@ void main() {
     );
     print('STEP setup: pumped');
     await tester.pump();
+    print('STEP setup: pump done');
     await _precache(
         tester, [bgWall, portraitYoung, portraitTeacher, portraitElder]);
     print('STEP setup: precache done');
@@ -195,6 +159,7 @@ void main() {
     );
     print('STEP game: pumped');
     await tester.pump();
+    print('STEP game: pump done');
     await _precache(tester, [bgWall, sandTexture, portraitTeacher]);
     print('STEP game: precache done');
     await _pumpTimes(tester, 2, 500);
@@ -237,6 +202,7 @@ void main() {
     print('STEP result: pumped');
     controller.debugSyncAfterExternalSetup();
     await tester.pump();
+    print('STEP result: pump done');
     await _precache(tester, [bgWall, sandTexture]);
     print('STEP result: precache done');
     await tester.tapAt(_centreOf(tester, 1, 4));

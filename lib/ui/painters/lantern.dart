@@ -79,6 +79,21 @@ class LanternPainter extends CustomPainter {
         w * 0.12,
         Paint()..color = const Color(0xFFFFE9A8),
       );
+      // انعكاس زجاجي طولي على الجانب الأيسر.
+      final reflection = Paint()
+        ..color = Colors.white.withValues(alpha: 0.42)
+        ..strokeWidth = 1.6
+        ..strokeCap = StrokeCap.round;
+      canvas.drawLine(
+        Offset(cx - w * 0.20, h * 0.38),
+        Offset(cx - w * 0.23, h * 0.61),
+        reflection,
+      );
+      canvas.drawCircle(
+        Offset(cx + w * 0.16, h * 0.43),
+        w * 0.035,
+        Paint()..color = Colors.white.withValues(alpha: 0.62),
+      );
     }
     // قضبان الجسم.
     final bar = Paint()

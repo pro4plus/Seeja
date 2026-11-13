@@ -435,15 +435,23 @@ class _GameScreenState extends State<GameScreen>
                       bottom: Radius.circular(12),
                     ),
                     border: Border.all(
-                      color: SudaneseTheme.sunGold,
-                      width: 1.6,
+                      color: oppTurn
+                          ? SudaneseTheme.sunGold
+                          : SudaneseTheme.wood.withValues(alpha: 0.72),
+                      width: oppTurn ? 2.2 : 1.4,
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.25),
-                        blurRadius: 9,
+                        color: Colors.black.withValues(alpha: oppTurn ? 0.34 : 0.20),
+                        blurRadius: oppTurn ? 13 : 8,
                         offset: const Offset(0, 4),
                       ),
+                      if (oppTurn)
+                        BoxShadow(
+                          color: SudaneseTheme.sunGold.withValues(alpha: 0.25),
+                          blurRadius: 15,
+                          spreadRadius: 1,
+                        ),
                     ],
                   ),
                   child: Align(
@@ -588,23 +596,43 @@ class _GameScreenState extends State<GameScreen>
 
   Widget _playerZone() {
     final controller = _controller;
+    final myTurn = controller.engine.currentPlayer == 1 &&
+        controller.phase != TurnPhase.gameOver;
     final canHint = controller.isHumanTurn && !controller.isPlacing;
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
       decoration: BoxDecoration(
-        color: SudaneseTheme.cream.withValues(alpha: 0.76),
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: myTurn
+              ? [
+                  const Color(0xFFFFF4D5),
+                  const Color(0xFFE9C987),
+                ]
+              : [
+                  SudaneseTheme.cream.withValues(alpha: 0.72),
+                  const Color(0xFFD9C49A).withValues(alpha: 0.72),
+                ],
+        ),
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: SudaneseTheme.wood.withValues(alpha: 0.65),
-          width: 1.4,
+          color: myTurn ? SudaneseTheme.sunGold : SudaneseTheme.wood.withValues(alpha: 0.55),
+          width: myTurn ? 2.2 : 1.4,
         ),
         boxShadow: [
           BoxShadow(
-            color: SudaneseTheme.earthBlack.withValues(alpha: 0.16),
-            blurRadius: 10,
+            color: SudaneseTheme.earthBlack.withValues(alpha: myTurn ? 0.24 : 0.13),
+            blurRadius: myTurn ? 13 : 8,
             offset: const Offset(0, 4),
           ),
+          if (myTurn)
+            BoxShadow(
+              color: SudaneseTheme.sunGold.withValues(alpha: 0.22),
+              blurRadius: 16,
+              spreadRadius: 1,
+            ),
         ],
       ),
       child: FittedBox(

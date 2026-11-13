@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400">
+  <rect width="400" height="400" fill="#8A6A47"/>
+  <g>
+    <rect x="0" width="34" height="400" fill="#96754F"/>
+    <rect x="36" width="30" height="400" fill="#7E5F3E"/>
+    <rect x="68" width="36" height="400" fill="#8F6E4A"/>
+    <rect x="106" width="28" height="400" fill="#7A5C3B"/>
+    <rect x="136" width="34" height="400" fill="#96754F"/>
+    <rect x="172" width="30" height="400" fill="#84643F"/>
+    <rect x="204" width="36" height="400" fill="#8F6E4A"/>
+    <rect x="242" width="28" height="400" fill="#7A5C3B"/>
+    <rect x="272" width="34" height="400" fill="#96754F"/>
+    <rect x="308" width="30" height="400" fill="#84643F"/>
+    <rect x="340" width="36" height="400" fill="#8F6E4A"/>
+    <rect x="378" width="22" height="400" fill="#7A5C3B"/>
+  </g>
+  <g fill="none" stroke="#5E432A" stroke-width="3" opacity="0.85">
+    <path d="M34,0 L34,400 M66,0 L66,400 M104,0 L104,400 M134,0 L134,400 M170,0 L170,400
+             M202,0 L202,400 M240,0 L240,400 M270,0 L270,400 M306,0 L306,400 M338,0 L338,400
+             M376,0 L376,400"/>
+  </g>
+  <g fill="none" stroke="#A9855C" stroke-width="2" opacity="0.6">
+    <path d="M20,0 L20,400 M50,0 L50,400 M88,0 L88,400 M120,0 L120,400 M152,0 L152,400
+             M186,0 L186,400 M222,0 L222,400 M256,0 L256,400 M290,0 L290,400 M322,0 L322,400
+             M358,0 L358,400 M390,0 L390,400"/>
+  </g>
+  <g fill="none" stroke="#6E5233" stroke-width="1.6" opacity="0.35">
+    <path d="M40,0 C44,120 36,240 40,400 M112,0 C116,140 108,260 112,400
+             M186,0 C190,120 182,250 186,400 M252,0 C256,130 248,255 252,400 M330,0 C334,125 326,245 330,400"/>
+  </g>
+</svg>

@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 380" width="300" height="380">
+  <defs>
+    <linearGradient id="gframe" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#C79A3E"/>
+      <stop offset="0.45" stop-color="#F0C766"/>
+      <stop offset="1" stop-color="#A87A28"/>
+    </linearGradient>
+  </defs>
+  <path d="M150,18 C232,18 288,78 288,158 L288,372 L12,372 L12,158 C12,78 68,18 150,18 Z" fill="#000000" opacity="0.22" transform="translate(8,10)"/>
+  <path d="M150,18 C232,18 288,78 288,158 L288,372 L12,372 L12,158 C12,78 68,18 150,18 Z" fill="url(#gframe)"/>
+  <path d="M150,44 C214,44 258,94 258,156 L258,346 L42,346 L42,156 C42,94 86,44 150,44 Z" fill="#241609"/>
+  <path d="M150,58 C204,58 242,100 242,154 L242,340 L58,340 L58,154 C58,100 96,58 150,58 Z" fill="#3A2418"/>
+  <path d="M150,58 C204,58 242,100 242,154" stroke="#F0C766" stroke-width="7" fill="none"/>
+  <path d="M58,154 L58,340" stroke="#F0C766" stroke-width="7" fill="none"/>
+  <path d="M242,154 L242,340" stroke="#A87A28" stroke-width="7" fill="none"/>
+  <rect x="4" y="330" width="292" height="14" rx="6" fill="#F0C766"/>
+  <rect x="0" y="342" width="300" height="38" rx="8" fill="url(#gframe)"/>
+  <rect x="14" y="352" width="272" height="18" rx="5" fill="#3A2418" opacity="0.8"/>
+</svg>

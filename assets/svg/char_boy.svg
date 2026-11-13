@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 360" width="320" height="360">
+  <!-- ود البلد (الصبي التاجر) — بشرة بنية، كحية صغيرة مطرزة، جلباب أبيض، ابتسامة خفيفة -->
+  <defs>
+    <linearGradient id="thobeShadeB" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#E0D2B2"/>
+      <stop offset="0.2" stop-color="#F6F1E0"/>
+      <stop offset="0.64" stop-color="#FCF8EC"/>
+      <stop offset="1" stop-color="#DCCEB0"/>
+    </linearGradient>
+    <linearGradient id="skinB" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#B8794D"/>
+      <stop offset="0.55" stop-color="#C98F5E"/>
+      <stop offset="1" stop-color="#A86840"/>
+    </linearGradient>
+  </defs>
+
+  <!-- الجلباب -->
+  <path d="M40,360 L48,300 C56,264 100,248 160,248 C220,248 264,264 272,300 L280,360 Z" fill="url(#thobeShadeB)"/>
+  <path d="M160,248 C144,250 130,256 122,266 L134,288 L160,272 Z" fill="#FFFFFF" opacity="0.9"/>
+  <path d="M160,248 C176,250 190,256 198,266 L186,288 L160,272 Z" fill="#EDE4CD" opacity="0.95"/>
+  <path d="M160,250 L144,274 L160,283 L176,274 Z" fill="#E9E0C6"/>
+  <path d="M160,250 L148,272 L160,278 L172,272 Z" fill="#FCF8EC"/>
+  <line x1="160" y1="279" x2="160" y2="360" stroke="#CBBB99" stroke-width="2" opacity="0.7"/>
+  <circle cx="160" cy="302" r="2.5" fill="#CBBF9E"/>
+  <circle cx="160" cy="324" r="2.5" fill="#CBBF9E"/>
+  <path d="M74,280 C68,304 66,332 67,360" stroke="#CBBB99" stroke-width="2.2" fill="none" opacity="0.55"/>
+  <path d="M246,280 C252,304 254,332 253,360" stroke="#CBBB99" stroke-width="2.2" fill="none" opacity="0.55"/>
+
+  <!-- الرقبة -->
+  <path d="M139,202 h42 v40 h-42 Z" fill="#A86840"/>
+  <path d="M139,202 h42 v12 h-42 Z" fill="#8A5634"/>
+
+  <!-- الرأس -->
+  <path d="M160,88 C196,88 212,114 212,146 C212,184 190,212 160,212 C130,212 108,184 108,146 C108,114 124,88 160,88 Z" fill="url(#skinB)"/>
+  <path d="M188,94 C205,104 212,124 212,146 C212,184 190,212 160,212 C186,192 196,168 196,146 C196,124 193,106 188,94 Z" fill="#8A5634" opacity="0.35"/>
+  <ellipse cx="108" cy="150" rx="6.5" ry="10" fill="#B8794D"/>
+  <ellipse cx="212" cy="150" rx="6.5" ry="10" fill="#B8794D"/>
+
+  <!-- الشعر الأسود الجانبي -->
+  <path d="M108,142 C106,112 124,88 160,88 C196,88 214,112 212,142 C208,126 198,112 182,106 C166,100 132,102 118,114 C112,120 108,130 108,142 Z" fill="#2A1A12"/>
+
+  <!-- الكحية المطرزة -->
+  <path d="M108,120 C110,84 130,64 160,64 C190,64 210,84 212,120 C196,110 178,104 160,104 C142,104 124,110 108,120 Z" fill="#E3CBA4"/>
+  <path d="M108,120 C124,110 142,104 160,104 C178,104 196,110 212,120 L212,130 C196,120 178,114 160,114 C142,114 124,120 108,130 Z" fill="#B3261E"/>
+  <path d="M108,130 C124,120 142,114 160,114 C178,114 196,120 212,130" stroke="#7E1712" stroke-width="2" fill="none" opacity="0.6"/>
+  <!-- زخرفة هندسية على الكحية -->
+  <g fill="#8A5A2B" opacity="0.55">
+    <path d="M124,86 l5,0 0,5 -5,0 z M132,80 l5,0 0,5 -5,0 z M140,86 l5,0 0,5 -5,0 z"/>
+    <path d="M164,86 l5,0 0,5 -5,0 z M172,80 l5,0 0,5 -5,0 z M180,86 l5,0 0,5 -5,0 z"/>
+  </g>
+  <path d="M116,96 C134,88 186,88 204,96" stroke="#C9A876" stroke-width="2" fill="none" opacity="0.6"/>
+
+  <!-- الحاجبان -->
+  <path d="M128,134 C134,130 145,130 151,134" stroke="#2A1A12" stroke-width="3.2" fill="none" stroke-linecap="round"/>
+  <path d="M169,134 C175,130 186,130 192,134" stroke="#2A1A12" stroke-width="3.2" fill="none" stroke-linecap="round"/>
+
+  <!-- العينان -->
+  <ellipse cx="139" cy="149" rx="4.6" ry="5.2" fill="#241609"/>
+  <ellipse cx="181" cy="149" rx="4.6" ry="5.2" fill="#241609"/>
+  <circle cx="140.6" cy="147" r="1.5" fill="#FFFFFF" opacity="0.92"/>
+  <circle cx="182.6" cy="147" r="1.5" fill="#FFFFFF" opacity="0.92"/>
+
+  <!-- الأنف -->
+  <path d="M158,156 C155,166 156,169 162,169" stroke="#8A5634" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+
+  <!-- الشارب الخفيف -->
+  <path d="M143,172 C148,169 155,169 160,171 C165,169 172,169 177,172 C171,177 149,177 143,172 Z" fill="#3A2418" opacity="0.8"/>
+
+  <!-- الابتسامة -->
+  <path d="M146,186 C152,193 168,193 174,186" stroke="#5E3319" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <path d="M148,186 C154,190 166,190 172,186" stroke="#FFFFFF" stroke-width="2" fill="none" opacity="0.5" stroke-linecap="round"/>
+</svg>

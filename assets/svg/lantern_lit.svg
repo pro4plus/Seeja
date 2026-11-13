@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 280" width="200" height="280">
+  <defs>
+    <radialGradient id="glow" cx="0.5" cy="0.55" r="0.5">
+      <stop offset="0" stop-color="#FFD87A" stop-opacity="0.85"/>
+      <stop offset="0.55" stop-color="#F6B93B" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#F6B93B" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="glass" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFF0B8"/>
+      <stop offset="0.5" stop-color="#F7C64A"/>
+      <stop offset="1" stop-color="#E39A1E"/>
+    </linearGradient>
+  </defs>
+  <circle cx="100" cy="150" r="100" fill="url(#glow)"/>
+  <!-- مقبض -->
+  <path d="M78,44 C78,14 122,14 122,44" stroke="#3A2418" stroke-width="8" fill="none" stroke-linecap="round"/>
+  <!-- الغطاء -->
+  <path d="M56,74 L144,74 L122,44 L78,44 Z" fill="#3A2418"/>
+  <rect x="72" y="68" width="56" height="10" rx="5" fill="#4E3120"/>
+  <!-- جسم الزجاج -->
+  <path d="M54,86 L146,86 L134,206 L66,206 Z" fill="url(#glass)"/>
+  <path d="M100,86 L100,206" stroke="#3A2418" stroke-width="5" opacity="0.75"/>
+  <path d="M72,96 L78,196" stroke="#FFFFFF" stroke-width="7" opacity="0.35" stroke-linecap="round"/>
+  <!-- القضبان -->
+  <path d="M54,86 L146,86" stroke="#3A2418" stroke-width="7"/>
+  <path d="M66,206 L134,206" stroke="#3A2418" stroke-width="7"/>
+  <path d="M60,150 L140,150" stroke="#3A2418" stroke-width="4" opacity="0.55"/>
+  <!-- القاعدة -->
+  <rect x="56" y="204" width="88" height="18" rx="5" fill="#3A2418"/>
+  <rect x="48" y="220" width="104" height="16" rx="6" fill="#4E3120"/>
+  <!-- اللهب -->
+  <path d="M100,58 C92,46 100,36 100,30 C100,38 110,46 104,58 Z" fill="#FFD87A"/>
+</svg>

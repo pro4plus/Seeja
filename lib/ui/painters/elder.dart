@@ -52,6 +52,35 @@ class ElderPainter extends CustomPainter {
       ..quadraticBezierTo(78, 62, 50, 57)
       ..close();
     canvas.drawPath(robe, Paint()..color = _robe);
+    // حواف الجلابية وتطريز طرفها السفلي.
+    final robeEdge = Paint()
+      ..color = _robeShade
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5;
+    canvas.drawPath(
+      Path()
+        ..moveTo(10, 124)
+        ..quadraticBezierTo(50, 119, 90, 124),
+      robeEdge,
+    );
+    final hem = Paint()..color = _turquoise..strokeWidth = 1.5;
+    for (var x = 17.0; x <= 83; x += 8) {
+      canvas.drawLine(Offset(x, 120), Offset(x + 2, 124), hem);
+      canvas.drawCircle(Offset(x + 4, 121), 1.1, Paint()..color = _red);
+    }
+    // درز الكتف وخياطة الكمّين.
+    final seam = Paint()
+      ..color = _robeShade.withValues(alpha: 0.85)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.2;
+    canvas.drawPath(
+      Path()
+        ..moveTo(16, 83)
+        ..quadraticBezierTo(24, 73, 35, 70)
+        ..moveTo(84, 83)
+        ..quadraticBezierTo(76, 73, 65, 70),
+      seam,
+    );
     final fold = Paint()
       ..color = _robeShade
       ..strokeWidth = 1.4
@@ -76,11 +105,35 @@ class ElderPainter extends CustomPainter {
     canvas.rotate(tilt + bow * 0.30);
     canvas.translate(-50, -58);
 
-    // الرقبة والوجه مع ظل جانبي.
+    // الرقبة والأذنان والوجه بتدرج ظل أوضح.
     canvas.drawRect(const Rect.fromLTWH(43, 49, 14, 15), Paint()..color = _skinDark);
+    canvas.drawOval(
+      Rect.fromCenter(center: const Offset(29, 39), width: 8, height: 13),
+      Paint()..color = _skinDark,
+    );
+    canvas.drawOval(
+      Rect.fromCenter(center: const Offset(71, 39), width: 8, height: 13),
+      Paint()..color = _skinDark,
+    );
     canvas.drawCircle(const Offset(50, 37), 20.5, Paint()..color = _skin);
-    canvas.drawArc(Rect.fromCircle(center: const Offset(47, 34), radius: 16), math.pi, math.pi * 0.8, false,
-        Paint()..color = _skinLight.withValues(alpha: 0.45)..style = PaintingStyle.stroke..strokeWidth = 4);
+    canvas.drawArc(
+      Rect.fromCircle(center: const Offset(47, 34), radius: 16),
+      math.pi,
+      math.pi * 0.8,
+      false,
+      Paint()
+        ..color = _skinLight.withValues(alpha: 0.45)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 4,
+    );
+    canvas.drawOval(
+      Rect.fromCenter(center: const Offset(39, 46), width: 7, height: 3),
+      Paint()..color = _skinLight.withValues(alpha: 0.35),
+    );
+    canvas.drawOval(
+      Rect.fromCenter(center: const Offset(61, 46), width: 7, height: 3),
+      Paint()..color = _skinDark.withValues(alpha: 0.16),
+    );
 
     _paintFace(canvas);
     switch (kind) {
@@ -103,6 +156,12 @@ class ElderPainter extends CustomPainter {
   }
 
   void _paintFace(Canvas canvas) {
+    final brow = Paint()
+      ..color = _skinDark
+      ..strokeWidth = 1.7
+      ..strokeCap = StrokeCap.round;
+    canvas.drawLine(const Offset(37, 33), const Offset(45, 32), brow);
+    canvas.drawLine(const Offset(55, 32), const Offset(63, 33), brow);
     final eye = Paint()..color = _skinDark;
     canvas.drawOval(Rect.fromCenter(center: const Offset(42, 38), width: 4.5, height: 2.2), eye);
     canvas.drawOval(Rect.fromCenter(center: const Offset(58, 38), width: 4.5, height: 2.2), eye);

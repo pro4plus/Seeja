@@ -702,7 +702,7 @@ class _GameScreenState extends State<GameScreen>
 
     final btnW = math.min(
       MediaQuery.of(context).size.width * 0.72,
-      300,
+      300.0,
     );
     return Stack(
       fit: StackFit.expand,

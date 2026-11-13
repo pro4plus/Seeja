@@ -1,6 +1,6 @@
-// الرئيسية v4: الحوش. الجدار المبيّض والباب المقوّس
-// والشيخ في الباب، ولوحة رمل للعرض تتحرك كل 6 ثوانٍ،
-// ولوحا خشب للعب، وروابط أسفل الصفحة.
+// الرئيسية: حزمة التصميم — جدار وباب وشيخ وشعار من الصور،
+// ولوحة رمل للعرض تتحرك كل 6 ثوانٍ، ولوحا خشب للعب،
+// وروابط أسفل الصفحة.
 import 'dart:async';
 import 'dart:math' as math;
 
@@ -10,14 +10,8 @@ import '../game/sound_manager.dart';
 import '../l10n/strings.dart';
 import '../services/settings_store.dart';
 import '../theme/sudanese_theme.dart';
-import '../ui/painters/board.dart';
-import '../ui/painters/elder.dart';
-import '../ui/painters/mat.dart';
-import '../ui/painters/pebble.dart';
-import '../ui/painters/wall.dart';
+import '../ui/design_kit.dart';
 import '../ui/sheets.dart';
-import '../ui/widgets/plank_button.dart';
-import '../ui/widgets/wood_token.dart';
 import 'setup_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -27,25 +21,7 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen>
-    with TickerProviderStateMixin {
-  late final AnimationController _sway;
-
-  @override
-  void initState() {
-    super.initState();
-    _sway = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 4),
-    )..repeat();
-  }
-
-  @override
-  void dispose() {
-    _sway.dispose();
-    super.dispose();
-  }
-
+class _HomeScreenState extends State<HomeScreen> {
   Strings get s => Strings(AppSettings.instance.isArabic);
 
   void _goSetup(bool vsComputer) {
@@ -60,178 +36,202 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-    final wallH = size.height * 0.42;
     return AnimatedBuilder(
       animation: AppSettings.instance,
       builder: (context, child) {
+        final double btnW = math.min(size.width * 0.80, 340);
+        final double doorW = math.min(size.width * 0.56, 280);
+        final double logoW = math.min(size.width * 0.62, 320);
         return Scaffold(
-          body: Column(
+          body: Stack(
+            fit: StackFit.expand,
             children: [
-              // ---- الجدار والباب ----
-              SizedBox(
-                height: wallH,
-                width: double.infinity,
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    RepaintBoundary(
-                      child: AnimatedBuilder(
-                        animation: _sway,
-                        builder: (context, child) {
-                          return CustomPaint(
-                            painter: WallPainter(
-                              sunT: 1.0,
-                              palmSway: math.sin(_sway.value * 2 * math.pi) *
-                                  0.03,
-                              // الباب تحت منطقة العنوان.
-                              doorTopFraction: 0.34,
-                              doorHeightFraction: 0.59,
+              Image.asset(
+                DesignKit.bgHome,
+                fit: BoxFit.cover,
+              ),
+              SingleChildScrollView(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: size.height),
+                  child: Column(
+                    children: [
+                      // زر الإعدادات أعلى اليسار.
+                      Padding(
+                        padding: const EdgeInsets.only(
+                          top: 12,
+                          left: 12,
+                          right: 12,
+                        ),
+                        child: Row(
+                          children: [
+                            _TokenButton(
+                              asset: DesignKit.tokenSettings,
+                              label: s.settings,
+                              onTap: () =>
+                                  showSettingsSheet(context, s),
                             ),
-                          );
-                        },
+                          ],
+                        ),
                       ),
-                    ),
-                    // العنوان.
-                    Positioned(
-                      top: 14,
-                      left: 0,
-                      right: 0,
-                      child: Column(
+                      // الشعار.
+                      Image.asset(
+                        DesignKit.logo,
+                        width: logoW,
+                        semanticLabel: s.homeTitle,
+                      ),
+                      const SizedBox(height: 2),
+                      // الباب والشيخ، وبينهما أطباق الجدار.
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          FittedBox(
-                            fit: BoxFit.scaleDown,
-                            child: Text(
-                              s.homeTitle,
-                              style: SudaneseTheme.display.copyWith(
-                                fontSize: 62,
-                                color: SudaneseTheme.indigo,
-                                shadows: const [
-                                  Shadow(
-                                    color: SudaneseTheme.tabaqRed,
-                                    offset: Offset(3, 4),
-                                  ),
-                                ],
-                              ),
-                            ),
+                          const _PlateColumn(
+                            plates: [
+                              DesignKit.plateRainbow,
+                              DesignKit.plateRed,
+                              DesignKit.plateStar,
+                            ],
                           ),
-                          Text(
-                            s.homeSubtitle,
-                            style: SudaneseTheme.bodyBold.copyWith(
-                              fontSize: 16,
-                              color: SudaneseTheme.ink,
-                            ),
-                            textAlign: TextAlign.center,
+                          const SizedBox(width: 6),
+                          Image.asset(
+                            DesignKit.doorWithElder,
+                            width: doorW,
+                          ),
+                          const SizedBox(width: 6),
+                          const _PlateColumn(
+                            plates: [
+                              DesignKit.plateRainbow,
+                              DesignKit.plateStar,
+                              DesignKit.plateRed,
+                            ],
                           ),
                         ],
                       ),
-                    ),
-                    // زر الإعدادات أعلى اليسار.
-                    Positioned(
-                      top: 12,
-                      left: 12,
-                      child: WoodToken(
-                        icon: Icons.tune,
-                        size: 48,
-                        tooltip: s.settings,
-                        onPressed: () => showSettingsSheet(context, s),
-                      ),
-                    ),
-                    // الشيخ في الباب.
-                    Positioned(
-                      bottom: wallH * 0.10,
-                      left: (size.width - 100) / 2,
-                      child: const RepaintBoundary(
-                        child: CustomPaint(
-                          size: Size(100, 130),
-                          painter: ElderPainter(
-                            kind: ElderKind.elder,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              // ---- البرش: لوحة العرض واللوحان والروابط ----
-              Expanded(
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    const RepaintBoundary(
-                      child: CustomPaint(
-                        painter: MatPainter(),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: Column(
-                        children: [
-                          const SizedBox(height: 6),
-                          Expanded(
-                            child: Center(
+                      const SizedBox(height: 10),
+                      // شريط الحصيرة مع لوحة العرض المتحركة.
+                      SizedBox(
+                        height: 140,
+                        width: double.infinity,
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            Image.asset(
+                              DesignKit.rugStripes,
+                              fit: BoxFit.cover,
+                            ),
+                            Center(
                               child: _DemoBoard(
                                 onTap: () => _goSetup(true),
                               ),
                             ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      _Entrance(
+                        delay: 0,
+                        fromLeft: true,
+                        child: KitImageButton(
+                          asset: DesignKit.btnPlankRed,
+                          semanticLabel: s.playVsComputer,
+                          width: btnW,
+                          onPressed: () => _goSetup(true),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      _Entrance(
+                        delay: 80,
+                        fromLeft: false,
+                        child: KitImageButton(
+                          asset: DesignKit.btnPlankDark,
+                          semanticLabel: s.playVsFriend,
+                          width: btnW,
+                          onPressed: () => _goSetup(false),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      // روابط أسفل الصفحة (منطقة لمس 48dp).
+                      // Wrap لا Row: عند 360 بكسل أو خط مكبّر
+                      // تلتف الروابط على سطرين بدل التجاوز.
+                      Wrap(
+                        alignment: WrapAlignment.center,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          _FooterLink(
+                            label: s.howToPlay,
+                            onTap: () => showHowToPlaySheet(context, s),
                           ),
-                          _Entrance(
-                            delay: 0,
-                            fromLeft: true,
-                            child: PlankButton(
-                              label: s.playVsComputer,
-                              caption: s.playVsComputerCaption,
-                              kind: PlankKind.red,
-                              onPressed: () => _goSetup(true),
-                            ),
+                          Text(' · ', style: SudaneseTheme.bodyBold),
+                          _FooterLink(
+                            label: s.aboutGame,
+                            onTap: () => showAboutSheet(context, s),
                           ),
-                          const SizedBox(height: 12),
-                          _Entrance(
-                            delay: 80,
-                            fromLeft: false,
-                            child: PlankButton(
-                              label: s.playVsFriend,
-                              caption: s.playVsFriendCaption,
-                              kind: PlankKind.dark,
-                              onPressed: () => _goSetup(false),
-                            ),
+                          Text(' · ', style: SudaneseTheme.bodyBold),
+                          _FooterLink(
+                            label: s.tiktokLink,
+                            onTap: () => showAboutSheet(context, s),
                           ),
-                          const SizedBox(height: 10),
-                          // روابط أسفل الصفحة (منطقة لمس 48dp).
-                          // Wrap لا Row: عند 360 بكسل أو خط مكبّر
-                          // تلتف الروابط على سطرين بدل التجاوز.
-                          Wrap(
-                            alignment: WrapAlignment.center,
-                            crossAxisAlignment: WrapCrossAlignment.center,
-                            children: [
-                              _FooterLink(
-                                label: s.howToPlay,
-                                onTap: () => showHowToPlaySheet(context, s),
-                              ),
-                              Text(' · ',
-                                  style: SudaneseTheme.bodyBold),
-                              _FooterLink(
-                                label: s.aboutGame,
-                                onTap: () => showAboutSheet(context, s),
-                              ),
-                              Text(' · ',
-                                  style: SudaneseTheme.bodyBold),
-                              _FooterLink(
-                                label: s.tiktokLink,
-                                onTap: () => showAboutSheet(context, s),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
                         ],
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 8),
+                    ],
+                  ),
                 ),
               ),
             ],
           ),
         );
       },
+    );
+  }
+}
+
+/// زر دائري من صورة (إعدادات ونحوها): منطقة لمس 48dp.
+class _TokenButton extends StatelessWidget {
+  final String asset;
+  final String label;
+  final VoidCallback onTap;
+
+  const _TokenButton({
+    required this.asset,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: const EdgeInsets.all(4),
+        child: Image.asset(
+          asset,
+          width: 48,
+          height: 48,
+          semanticLabel: label,
+        ),
+      ),
+    );
+  }
+}
+
+/// عمود أطباق جدار (3 أطباق مكدسة) بجانب الباب.
+class _PlateColumn extends StatelessWidget {
+  final List<String> plates;
+
+  const _PlateColumn({required this.plates});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (var i = 0; i < plates.length; i++) ...[
+          if (i > 0) const SizedBox(height: 6),
+          Image.asset(plates[i], width: 40, height: 40),
+        ],
+      ],
     );
   }
 }
@@ -413,9 +413,10 @@ class _DemoBoardState extends State<_DemoBoard> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final side = math.min(
-            math.min(constraints.maxWidth, constraints.maxHeight), 300.0);
-        final cell = (side - 16) / 5;
-        final pebblePx = cell * 0.72;
+            math.min(constraints.maxWidth, constraints.maxHeight),
+            124.0);
+        final pitch = DesignKit.holePitchPx(5, side);
+        final pebblePx = pitch * 0.88;
         return GestureDetector(
           onTap: widget.onTap,
           child: SizedBox(
@@ -423,32 +424,29 @@ class _DemoBoardState extends State<_DemoBoard> {
             height: side,
             child: Stack(
               children: [
-                RepaintBoundary(
-                  child: CustomPaint(
-                    size: Size(side, side),
-                    painter:
-                        const BoardPainter(size: 5, centreOccupied: false),
-                  ),
+                Image.asset(
+                  DesignKit.boardAsset(5),
+                  width: side,
+                  height: side,
+                  fit: BoxFit.fill,
                 ),
                 for (var i = 0; i < _pebbles.length; i++)
                   AnimatedPositioned(
                     duration: const Duration(milliseconds: 400),
                     curve: Curves.easeInOut,
-                    left: 8 +
-                        (_pebbles[i][2] + 0.5) * cell -
+                    left: DesignKit.holeCenter(
+                              5, side, _pebbles[i][1], _pebbles[i][2])
+                          .dx -
                         pebblePx / 2,
-                    top: 8 +
-                        (_pebbles[i][1] + 0.5) * cell -
+                    top: DesignKit.holeCenter(
+                              5, side, _pebbles[i][1], _pebbles[i][2])
+                          .dy -
                         pebblePx / 2,
                     width: pebblePx,
                     height: pebblePx,
-                    child: RepaintBoundary(
-                      child: CustomPaint(
-                        painter: PebblePainter(
-                          def: SudaneseTheme.pebbles[
-                              _pebbles[i][0] == 1 ? 0 : 1],
-                        ),
-                      ),
+                    child: Image.asset(
+                      DesignKit.pebbleAsset(
+                          _pebbles[i][0] == 1 ? 0 : 1),
                     ),
                   ),
               ],

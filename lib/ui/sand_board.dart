@@ -1,6 +1,8 @@
-// لوحة الرمل التفاعلية: حُفَر وحصى مرسومة بالكود، مع كل
-// الحركات (§7): سقوط، انزلاق، أكل، اهتزاز، موجة، تلميح، أثر.
-// الخلية تُحسب من المساحة الداخلية (boardPx − 16) — درس v3.1.
+// لوحة الرمل التفاعلية: صورة اللوحة من حزمة التصميم،
+// والحصى صور، مع كل الحركات (§7): سقوط، انزلاق، أكل،
+// اهتزاز، موجة، تلميح، أثر.
+// هندسة الثقوب مقاسة من PNG (1040×1040): مركز الخلية
+// (r,c) = DesignKit.holeCenter — لا حشوة 8px بعد اليوم.
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -9,9 +11,7 @@ import '../game/seega_engine.dart';
 import '../game/turn_controller.dart';
 import '../l10n/strings.dart';
 import '../theme/sudanese_theme.dart';
-import 'painters/board.dart';
-import 'painters/pebble.dart';
-import 'painters/tabaq.dart';
+import 'design_kit.dart';
 
 /// إشارات حركات ترسلها الشاشة إلى اللوحة (أرقام متسلسلة).
 class BoardFx {
@@ -184,8 +184,8 @@ class _SandBoardState extends State<SandBoard>
     widget.onFxDone();
   }
 
-  PebbleDef _pebbleFor(int player) => SudaneseTheme.pebbles[
-      player == 1 ? widget.p1Pebble : widget.p2Pebble];
+  int _pebbleIndex(int player) =>
+      player == 1 ? widget.p1Pebble : widget.p2Pebble;
 
   List<List<int>> _destinations() {
     final sel = widget.controller.selectedTile;
@@ -215,9 +215,11 @@ class _SandBoardState extends State<SandBoard>
         builder: (context, constraints) {
           final boardPx =
               math.min(constraints.maxWidth, constraints.maxHeight);
-          // اللوحة لها حشوة 8px من كل جهة (درس v3.1).
-          final innerPx = boardPx - 16;
-          final cell = innerPx / size;
+          // خطوة الشبكة بالبكسلات (مقاسة من PNG).
+          final pitch = DesignKit.holePitchPx(size, boardPx);
+          // مركز خلية (r,c) داخل مربع اللوحة.
+          Offset hole(int r, int c) =>
+              DesignKit.holeCenter(size, boardPx, r, c);
           final sel = widget.controller.selectedTile;
           final lastMove = engine.lastMove;
 
@@ -238,20 +240,28 @@ class _SandBoardState extends State<SandBoard>
               height: boardPx,
               child: Stack(
                 children: [
-                  // ---- اللوح الرملي والحُفَر ----
-                  RepaintBoundary(
-                    child: CustomPaint(
-                      size: Size(boardPx, boardPx),
-                      painter: BoardPainter(
-                        size: size,
-                        centreOccupied: !isCentreEmpty,
+                  // ---- صورة اللوحة ----
+                  Image.asset(
+                    DesignKit.boardAsset(size),
+                    width: boardPx,
+                    height: boardPx,
+                    fit: BoxFit.fill,
+                  ),
+                  // ---- نجمة الوسط (عندما تكون الحفرة فارغة) ----
+                  if (isCentreEmpty)
+                    Positioned(
+                      left: hole(centre, centre).dx - pitch * 0.45,
+                      top: hole(centre, centre).dy - pitch * 0.45,
+                      width: pitch * 0.9,
+                      height: pitch * 0.9,
+                      child: IgnorePointer(
+                        child: Image.asset(DesignKit.markerCentre),
                       ),
                     ),
-                  ),
                   // ---- مناطق النقر على الحُفَر (الخلية كاملة) ----
-                  ..._buildPitTargets(size, cell),
-                  // ---- حلقات الوجهات القانونية ----
-                  ..._buildDestinationRings(destinations, cell),
+                  ..._buildPitTargets(size, pitch, hole),
+                  // ---- علامات الوجهات القانونية ----
+                  ..._buildDestinationRings(destinations, pitch, hole),
                   // ---- أثر الحركة الأخيرة (1.2 ث) ----
                   if (lastMove != null)
                     AnimatedBuilder(
@@ -261,26 +271,40 @@ class _SandBoardState extends State<SandBoard>
                         if (t >= 1 && _trailController.isCompleted) {
                           return const SizedBox.shrink();
                         }
+                        final dest = hole(
+                            lastMove.toRow, lastMove.toCol);
+                        final markerPx = pitch * 0.8;
                         return IgnorePointer(
-                          child: CustomPaint(
-                            size: Size(boardPx, boardPx),
-                            painter: _TrailPainter(
-                              from: Offset(
-                                8 + (lastMove.fromCol + 0.5) * cell,
-                                8 + (lastMove.fromRow + 0.5) * cell,
+                          child: Stack(
+                            children: [
+                              CustomPaint(
+                                size: Size(boardPx, boardPx),
+                                painter: _TrailPainter(
+                                  from: hole(
+                                      lastMove.fromRow, lastMove.fromCol),
+                                  to: dest,
+                                  opacity: (1 - t) * 0.7,
+                                ),
                               ),
-                              to: Offset(
-                                8 + (lastMove.toCol + 0.5) * cell,
-                                8 + (lastMove.toRow + 0.5) * cell,
+                              Positioned(
+                                left: dest.dx - markerPx / 2,
+                                top: dest.dy - markerPx / 2,
+                                width: markerPx,
+                                height: markerPx,
+                                child: Opacity(
+                                  opacity: (1 - t) * 0.7,
+                                  child: Image.asset(
+                                    DesignKit.markerLastMove,
+                                  ),
+                                ),
                               ),
-                              opacity: (1 - t) * 0.7,
-                            ),
+                            ],
                           ),
                         );
                       },
                     ),
                   // ---- الحصى ----
-                  ..._buildPebbles(size, cell, sel),
+                  ..._buildPebbles(size, pitch, hole, sel),
                   // ---- حجر الانزلاق (فوق الحصى) ----
                   if (_slidingMove != null)
                     AnimatedBuilder(
@@ -289,21 +313,19 @@ class _SandBoardState extends State<SandBoard>
                         final t = Curves.easeInOutCubic.transform(
                             _slideController.value);
                         final m = _slidingMove!.move;
-                        final from = Offset(
-                            8 + (m.fromCol + 0.5) * cell,
-                            8 + (m.fromRow + 0.5) * cell);
-                        final to = Offset(
-                            8 + (m.toCol + 0.5) * cell,
-                            8 + (m.toRow + 0.5) * cell);
+                        final from =
+                            hole(m.fromRow, m.fromCol);
+                        final to = hole(m.toRow, m.toCol);
                         final pos = Offset.lerp(from, to, t)!;
-                        final pebblePx = cell * 0.78;
+                        final pebblePx = pitch * 0.88;
                         return Positioned(
                           left: pos.dx - pebblePx / 2,
                           top: pos.dy - pebblePx / 2,
                           child: Transform.scale(
                             scale: 1 + 0.08 * math.sin(t * math.pi),
                             child: _pebbleImage(
-                                _pebbleFor(_slidingMove!.mover), pebblePx),
+                                _pebbleIndex(_slidingMove!.mover),
+                                pebblePx),
                           ),
                         );
                       },
@@ -315,7 +337,7 @@ class _SandBoardState extends State<SandBoard>
                       builder: (context, child) {
                         final t = _captureController.value;
                         final captured = _capturingMove!.captured;
-                        final pebblePx = cell * 0.78;
+                        final pebblePx = pitch * 0.88;
                         final widgets = <Widget>[];
                         for (var i = 0; i < captured.length; i++) {
                           final sq = captured[i];
@@ -328,11 +350,10 @@ class _SandBoardState extends State<SandBoard>
                           final scale = 1 - lt;
                           final opacity = 1 - lt;
                           final rotation = lt * 0.44; // ~25°
-                          final cx = 8 + (sq[1] + 0.5) * cell;
-                          final cy = 8 + (sq[0] + 0.5) * cell;
+                          final c = hole(sq[0], sq[1]);
                           widgets.add(Positioned(
-                            left: cx - pebblePx / 2,
-                            top: cy - pebblePx / 2,
+                            left: c.dx - pebblePx / 2,
+                            top: c.dy - pebblePx / 2,
                             child: Opacity(
                               opacity: opacity.clamp(0.0, 1.0),
                               child: Transform.rotate(
@@ -340,7 +361,8 @@ class _SandBoardState extends State<SandBoard>
                                 child: Transform.scale(
                                   scale: scale.clamp(0.0, 1.0),
                                   child: _pebbleImage(
-                                    _pebbleFor(3 - _capturingMove!.mover),
+                                    _pebbleIndex(
+                                        3 - _capturingMove!.mover),
                                     pebblePx,
                                   ),
                                 ),
@@ -350,23 +372,19 @@ class _SandBoardState extends State<SandBoard>
                           // شظايا قش/ذهب.
                           widgets.add(Positioned.fill(
                             child: _Fragments(
-                              origin: Offset(cx, cy),
+                              origin: c,
                               progress: lt,
                             ),
                           ));
                           // موجة صدمة من حجر الهبوط.
                           widgets.add(Positioned.fill(
                             child: _Shockwave(
-                              origin: Offset(
-                                8 +
-                                    (_capturingMove!.move.toCol + 0.5) *
-                                        cell,
-                                8 +
-                                    (_capturingMove!.move.toRow + 0.5) *
-                                        cell,
+                              origin: hole(
+                                _capturingMove!.move.toRow,
+                                _capturingMove!.move.toCol,
                               ),
                               progress: t,
-                              maxRadius: cell * 0.9,
+                              maxRadius: pitch * 0.9,
                             ),
                           ));
                         }
@@ -374,9 +392,10 @@ class _SandBoardState extends State<SandBoard>
                           final m = _capturingMove!.move;
                           final dx =
                               math.sin(t * math.pi * 4) * 2 * (1 - t);
+                          final dest = hole(m.toRow, m.toCol);
                           widgets.add(Positioned(
-                            left: 8 + (m.toCol + 0.5) * cell - 14 + dx,
-                            top: 8 + (m.toRow + 0.5) * cell - cell * 0.55,
+                            left: dest.dx - 14 + dx,
+                            top: dest.dy - pitch * 0.55,
                             child: Container(
                               width: 28,
                               height: 28,
@@ -420,14 +439,10 @@ class _SandBoardState extends State<SandBoard>
                           child: CustomPaint(
                             size: Size(boardPx, boardPx),
                             painter: _HintPainter(
-                              from: Offset(
-                                8 + (_hintMove!.fromCol + 0.5) * cell,
-                                8 + (_hintMove!.fromRow + 0.5) * cell,
-                              ),
-                              to: Offset(
-                                8 + (_hintMove!.toCol + 0.5) * cell,
-                                8 + (_hintMove!.toRow + 0.5) * cell,
-                              ),
+                              from: hole(_hintMove!.fromRow,
+                                  _hintMove!.fromCol),
+                              to: hole(_hintMove!.toRow,
+                                  _hintMove!.toCol),
                               alpha: pulse,
                             ),
                           ),
@@ -441,12 +456,11 @@ class _SandBoardState extends State<SandBoard>
                       builder: (context, child) {
                         final t = Curves.easeOutCubic.transform(
                             _waveController.value);
-                        final centrePx = boardPx / 2;
                         return IgnorePointer(
                           child: CustomPaint(
                             size: Size(boardPx, boardPx),
                             painter: _WavePainter(
-                              centre: Offset(centrePx, centrePx),
+                              centre: hole(centre, centre),
                               radius: t * boardPx * 0.7,
                               alpha: (1 - t) * 0.6,
                             ),
@@ -463,12 +477,13 @@ class _SandBoardState extends State<SandBoard>
                         final t = _shakeController.value;
                         final r = _shakingSquare![0];
                         final c = _shakingSquare![1];
+                        final centrePx = hole(r, c);
                         return Positioned(
-                          left: 8 + c * cell,
-                          top: 8 + r * cell,
+                          left: centrePx.dx - pitch / 2,
+                          top: centrePx.dy - pitch / 2,
                           child: Container(
-                            width: cell,
-                            height: cell,
+                            width: pitch,
+                            height: pitch,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               color: SudaneseTheme.tabaqRed
@@ -487,15 +502,20 @@ class _SandBoardState extends State<SandBoard>
     );
   }
 
-  List<Widget> _buildPitTargets(int size, double cell) {
+  List<Widget> _buildPitTargets(
+    int size,
+    double pitch,
+    Offset Function(int r, int c) hole,
+  ) {
     final widgets = <Widget>[];
     for (var r = 0; r < size; r++) {
       for (var c = 0; c < size; c++) {
+        final centrePx = hole(r, c);
         widgets.add(Positioned(
-          left: 8 + c * cell,
-          top: 8 + r * cell,
-          width: cell,
-          height: cell,
+          left: centrePx.dx - pitch / 2,
+          top: centrePx.dy - pitch / 2,
+          width: pitch,
+          height: pitch,
           child: GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTap: () => widget.onTapPit(r, c),
@@ -512,17 +532,22 @@ class _SandBoardState extends State<SandBoard>
   }
 
   List<Widget> _buildDestinationRings(
-      List<List<int>> destinations, double cell) {
+    List<List<int>> destinations,
+    double pitch,
+    Offset Function(int r, int c) hole,
+  ) {
     final widgets = <Widget>[];
     for (final d in destinations) {
       final r = d[0];
       final c = d[1];
+      final centrePx = hole(r, c);
+      final markerPx = pitch * 0.9;
       widgets.add(Positioned(
-        left: 8 + c * cell,
-        top: 8 + r * cell,
-        width: cell,
-        height: cell,
-        // الحلقة زخرفية فقط: يجب ألا تبتلع النقر على الحفرة.
+        left: centrePx.dx - markerPx / 2,
+        top: centrePx.dy - markerPx / 2,
+        width: markerPx,
+        height: markerPx,
+        // العلامة زخرفية فقط: يجب ألا تبتلع النقر على الحفرة.
         child: IgnorePointer(
           child: AnimatedBuilder(
             animation: _pulseController,
@@ -530,9 +555,7 @@ class _SandBoardState extends State<SandBoard>
               final s = 0.92 + _pulseController.value * 0.16;
               return Transform.scale(
                 scale: s,
-                child: CustomPaint(
-                  painter: _DestRingPainter(),
-                ),
+                child: Image.asset(DesignKit.markerDestination),
               );
             },
           ),
@@ -542,10 +565,15 @@ class _SandBoardState extends State<SandBoard>
     return widgets;
   }
 
-  List<Widget> _buildPebbles(int size, double cell, List<int>? sel) {
+  List<Widget> _buildPebbles(
+    int size,
+    double pitch,
+    Offset Function(int r, int c) hole,
+    List<int>? sel,
+  ) {
     final engine = widget.engine;
     final widgets = <Widget>[];
-    final pebblePx = cell * 0.78;
+    final pebblePx = pitch * 0.88;
     for (var r = 0; r < size; r++) {
       for (var c = 0; c < size; c++) {
         final value = engine.board[r][c];
@@ -567,34 +595,35 @@ class _SandBoardState extends State<SandBoard>
         final isShaking = _shakingSquare != null &&
             _shakingSquare![0] == r &&
             _shakingSquare![1] == c;
-        final cx = 8 + (c + 0.5) * cell;
-        final cy = 8 + (r + 0.5) * cell;
+        final centrePx = hole(r, c);
 
-        Widget pebble = _pebbleImage(_pebbleFor(value), pebblePx);
+        Widget pebble = _pebbleImage(
+            value == 1 ? widget.p1Pebble : widget.p2Pebble, pebblePx);
 
-        // الحصاة المحددة: حلقة ذهبية + رفع 12% + ظل أطول.
+        // الحصاة المحددة: حلقة ذهبية من الحزمة + رفع 12%.
         if (isSelected) {
           pebble = AnimatedBuilder(
             animation: _breathController,
             builder: (context, child) {
               final breath = 0.5 + _breathController.value * 0.5;
-              return Container(
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: SudaneseTheme.sunGold
-                          .withValues(alpha: 0.35 + breath * 0.4),
-                      blurRadius: 14,
-                      spreadRadius: 3,
+              return SizedBox(
+                width: pebblePx,
+                height: pebblePx,
+                child: Stack(
+                  alignment: Alignment.center,
+                  clipBehavior: Clip.none,
+                  children: [
+                    Opacity(
+                      opacity: 0.65 + breath * 0.35,
+                      child: Image.asset(
+                        DesignKit.markerSelected,
+                        width: pebblePx * 1.3,
+                        height: pebblePx * 1.3,
+                      ),
                     ),
+                    child!,
                   ],
-                  border: Border.all(
-                    color: SudaneseTheme.sunGold,
-                    width: 3,
-                  ),
                 ),
-                child: child,
               );
             },
             child: pebble,
@@ -678,8 +707,8 @@ class _SandBoardState extends State<SandBoard>
         }
 
         widgets.add(Positioned(
-          left: cx - pebblePx / 2,
-          top: cy - pebblePx / 2,
+          left: centrePx.dx - pebblePx / 2,
+          top: centrePx.dy - pebblePx / 2,
           // النقر على الحصاة نفسها يختارها (درس v3.1).
           child: GestureDetector(
             behavior: HitTestBehavior.translucent,
@@ -692,11 +721,11 @@ class _SandBoardState extends State<SandBoard>
     return widgets;
   }
 
-  Widget _pebbleImage(PebbleDef def, double px) {
+  Widget _pebbleImage(int pebbleIndex, double px) {
     return SizedBox(
       width: px,
       height: px,
-      child: CustomPaint(painter: PebblePainter(def: def)),
+      child: Image.asset(DesignKit.pebbleAsset(pebbleIndex)),
     );
   }
 
@@ -716,33 +745,6 @@ class _SandBoardState extends State<SandBoard>
     }
     return parts.join('، ');
   }
-}
-
-class _DestRingPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final r = size.width * 0.36;
-    // ملء أخضر شاحب.
-    canvas.drawCircle(
-      center,
-      r,
-      Paint()
-        ..color = SudaneseTheme.palmGreen.withValues(alpha: 0.18),
-    );
-    // حلقة خضراء متقطعة.
-    paintDashedCircle(
-      canvas,
-      center,
-      r,
-      SudaneseTheme.palmGreen,
-      2.5,
-      dashes: 14,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 class _TrailPainter extends CustomPainter {

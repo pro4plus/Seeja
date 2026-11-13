@@ -1,25 +1,27 @@
-// كوّة الخصم (§5.3 + لوحة التصميم): قوس داكن فيه الشخصية،
-// وتحتها بطاقة قش بالاسم والمستوى. المختارة مضيئة بإطار
-// ذهبي، والأخريات معتمة. عند الاختيار تومئ الشخصية برأسها.
+// كوّة الخصم في شاشة الإعداد: صورة الكوّة الكاملة من حزمة
+// التصميم (إطار + صورة + اسم + مستوى)، مع إطار ذهبي
+// وإيماءة خفيفة عند الاختيار.
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
-import '../../theme/sudanese_theme.dart';
-import '../painters/elder.dart';
+import '../../game/seega_ai.dart';
+import '../design_kit.dart';
 
 class OpponentNiche extends StatefulWidget {
-  final ElderKind kind;
+  final Difficulty difficulty;
   final String name;
   final String level;
   final bool selected;
-  final VoidCallback? onTap;
+  final VoidCallback onTap;
 
   const OpponentNiche({
     super.key,
-    required this.kind,
+    required this.difficulty,
     required this.name,
     required this.level,
     required this.selected,
-    this.onTap,
+    required this.onTap,
   });
 
   @override
@@ -57,91 +59,37 @@ class _OpponentNicheState extends State<OpponentNiche>
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: widget.onTap,
-      child: Opacity(
-        opacity: widget.selected ? 1.0 : 0.72,
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: const BorderRadius.vertical(
-              top: Radius.circular(70),
-              bottom: Radius.circular(16),
-            ),
-            border: widget.selected
-                ? Border.all(color: SudaneseTheme.sunGold, width: 3)
-                : Border.all(color: Colors.transparent, width: 3),
-            boxShadow: widget.selected
-                ? [
-                    BoxShadow(
-                      color: SudaneseTheme.sunGold.withValues(alpha: 0.45),
-                      blurRadius: 16,
-                      spreadRadius: 2,
-                    ),
-                  ]
-                : null,
-          ),
-          child: ClipRRect(
-            borderRadius: const BorderRadius.vertical(
-              top: Radius.circular(67),
-              bottom: Radius.circular(13),
-            ),
-            child: Container(
-              color: widget.selected
-                  ? const Color(0xFF5A3A22)
-                  : const Color(0xFF3A2418),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const SizedBox(height: 10),
-                  AnimatedBuilder(
-                    animation: _nod,
-                    builder: (context, child) {
-                      final nod = _nod.value < 0.5
-                          ? _nod.value * 2
-                          : (1 - _nod.value) * 2;
-                      return RepaintBoundary(
-                        child: CustomPaint(
-                          size: const Size(78, 100),
-                          painter: ElderPainter(
-                            kind: widget.kind,
-                            tilt: nod * 0.12,
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                  Container(
-                    width: double.infinity,
-                    color: SudaneseTheme.straw.withValues(alpha: 0.9),
-                    padding:
-                        const EdgeInsets.symmetric(vertical: 5),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Text(
-                            widget.name,
-                            style: SudaneseTheme.heading.copyWith(
-                              fontSize: 17,
-                              color: SudaneseTheme.ink,
-                            ),
-                          ),
-                        ),
-                        FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Text(
-                            widget.level,
-                            style: SudaneseTheme.caption.copyWith(
-                              color: SudaneseTheme.ink
-                                  .withValues(alpha: 0.75),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+      child: AnimatedBuilder(
+        animation: _nod,
+        builder: (context, child) {
+          final angle = math.sin(_nod.value * math.pi) * 0.05;
+          return Transform.rotate(angle: angle, child: child);
+        },
+        child: AnimatedScale(
+          scale: widget.selected ? 1.04 : 1.0,
+          duration: const Duration(milliseconds: 180),
+          child: Stack(
+            children: [
+              Image.asset(
+                DesignKit.nicheLabelFor(widget.difficulty),
+                semanticLabel: '${widget.name} · ${widget.level}',
               ),
-            ),
+              if (widget.selected)
+                Positioned.fill(
+                  child: Align(
+                    alignment: Alignment.topCenter,
+                    child: FractionallySizedBox(
+                      // الإطار الذهبي يغطي أعلى 780 صفاً من
+                      // صورة الكوّة (860 صفاً).
+                      heightFactor: 780 / 860,
+                      widthFactor: 1.0,
+                      child: Image.asset(
+                        DesignKit.nicheFrameSelected,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
           ),
         ),
       ),

@@ -10,6 +10,7 @@ import 'package:alseeja/game/turn_controller.dart';
 import 'package:alseeja/l10n/strings.dart';
 import 'package:alseeja/screens/game_screen.dart';
 import 'package:alseeja/theme/sudanese_theme.dart';
+import 'package:alseeja/ui/design_kit.dart';
 import 'package:alseeja/ui/sand_board.dart';
 import 'package:alseeja/ui/widgets/bowl_counter.dart';
 import 'package:flutter/material.dart';
@@ -32,13 +33,12 @@ const _configTwoPlayer = GameConfig(
   p2Pebble: 1,
 );
 
-/// مركز حفرة (r,c) في لوحة الرمل: اللوحة مربعة بحشوة 8px،
-/// والخلية تُحسب من المساحة الداخلية (العرض − 16).
+/// مركز حفرة (r,c) في لوحة الرمل: هندسة الثقوب مقاسة من
+/// صورة اللوحة (DesignKit.holeCenter) — لا حشوة 8px بعد اليوم.
 Offset centreOf(WidgetTester tester, int r, int c) {
   final boardRect = tester.getRect(find.byType(SandBoard));
-  final cell = (boardRect.width - 16) / 5;
   return boardRect.topLeft +
-      Offset(8 + (c + 0.5) * cell, 8 + (r + 0.5) * cell);
+      DesignKit.holeCenter(5, boardRect.width, r, c);
 }
 
 bool _hasGoldRing() {
@@ -46,13 +46,11 @@ bool _hasGoldRing() {
       .descendant(
         of: find.byType(SandBoard),
         matching: find.byWidgetPredicate((w) =>
-            w is Container &&
-            w.decoration is BoxDecoration &&
-            (w.decoration as BoxDecoration).border is Border &&
-            ((w.decoration as BoxDecoration).border as Border)
-                    .top
-                    .color ==
-                SudaneseTheme.sunGold),
+            w is Image &&
+            w.image is AssetImage &&
+            (w.image as AssetImage)
+                .assetName
+                .contains('marker_selected_ring')),
       )
       .evaluate()
       .isNotEmpty;
@@ -63,9 +61,11 @@ bool _hasDestRings() {
       .descendant(
         of: find.byType(SandBoard),
         matching: find.byWidgetPredicate((w) =>
-            w is CustomPaint &&
-            w.painter != null &&
-            w.painter.runtimeType.toString().contains('DestRing')),
+            w is Image &&
+            w.image is AssetImage &&
+            (w.image as AssetImage)
+                .assetName
+                .contains('marker_destination')),
       )
       .evaluate()
       .isNotEmpty;
@@ -164,6 +164,8 @@ void main() {
 
   testWidgets('شاشة النتيجة: أكل آخر حجر يعرض الفوز',
       (WidgetTester tester) async {
+    final semantics = tester.ensureSemantics();
+    addTearDown(semantics.dispose);
     final controller = TurnController(
       boardSize: 5,
       vsComputer: false,
@@ -201,9 +203,9 @@ void main() {
     await tester.pump(const Duration(milliseconds: 500));
     await tester.pump();
 
-    expect(find.text('اللاعب 1 فاز!'), findsOneWidget);
-    expect(find.text('العب تاني'), findsOneWidget);
-    expect(find.text('العودة للرئيسية'), findsOneWidget);
+    expect(find.bySemanticsLabel('اللاعب 1 فاز!'), findsOneWidget);
+    expect(find.bySemanticsLabel('العب تاني'), findsOneWidget);
+    expect(find.bySemanticsLabel('العودة للرئيسية'), findsOneWidget);
   });
 
   testWidgets('الاختيار يظهر فوراً: حلقة ذهبية وحلقات وجهات',

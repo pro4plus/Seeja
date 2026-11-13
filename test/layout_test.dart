@@ -22,38 +22,63 @@ void main() {
   testWidgets('الرئيسية: لا تجاوز عند 360 بكسل وخط 130%',
       (WidgetTester tester) async {
     await _setSmallScreen(tester);
+    final semantics = tester.ensureSemantics();
+    addTearDown(semantics.dispose);
     await tester.pumpWidget(const SeegaGame());
     await tester.pump(const Duration(milliseconds: 2600));
     await tester.pump(const Duration(milliseconds: 500));
     await tester.pump(const Duration(milliseconds: 500));
-    expect(find.text('العب ضد الكمبيوتر'), findsOneWidget);
-    expect(find.text('لاعبان على جهاز واحد'), findsOneWidget);
+    expect(find.bySemanticsLabel('العب ضد الكمبيوتر'),
+        findsOneWidget);
+    expect(find.bySemanticsLabel('لاعبان على جهاز واحد'),
+        findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
   testWidgets('الإعداد ضد الكمبيوتر: لا تجاوز',
       (WidgetTester tester) async {
     await _setSmallScreen(tester);
+    final semantics = tester.ensureSemantics();
+    addTearDown(semantics.dispose);
     await tester.pumpWidget(
       const MaterialApp(home: SetupScreen(vsComputer: true)),
     );
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
-    expect(find.text('اجلس للعب'), findsOneWidget);
-    expect(find.text('يلا'), findsOneWidget);
+    expect(find.bySemanticsLabel('اجلس للعب'), findsOneWidget);
+    expect(find.bySemanticsLabel('يلا'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
   testWidgets('الإعداد لاعبان: لا تجاوز',
       (WidgetTester tester) async {
     await _setSmallScreen(tester);
+    final semantics = tester.ensureSemantics();
+    addTearDown(semantics.dispose);
     await tester.pumpWidget(
       const MaterialApp(home: SetupScreen(vsComputer: false)),
     );
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
-    expect(find.text('اجلس للعب'), findsOneWidget);
-    expect(find.text('يلا'), findsOneWidget);
+    expect(find.bySemanticsLabel('اجلس للعب'), findsOneWidget);
+    expect(find.bySemanticsLabel('يلا'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('الإعداد ضد الكمبيوتر: ثلاث كوات للخصوم',
+      (WidgetTester tester) async {
+    await _setSmallScreen(tester);
+    final semantics = tester.ensureSemantics();
+    addTearDown(semantics.dispose);
+    await tester.pumpWidget(
+      const MaterialApp(home: SetupScreen(vsComputer: true)),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    // الكوات الثلاث صور بتسميات نصية (اسم · مستوى).
+    expect(find.bySemanticsLabel('ود البلد · سهل'), findsOneWidget);
+    expect(find.bySemanticsLabel('الأستاذ · وسط'), findsOneWidget);
+    expect(find.bySemanticsLabel('الشيخ · صعب'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

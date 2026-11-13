@@ -507,7 +507,6 @@ class _GameScreenState extends State<GameScreen>
               ),
             ),
           ),
-        ),
       ],
     );
     if (widget.config.vsComputer) return block;

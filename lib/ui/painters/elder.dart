@@ -272,9 +272,9 @@ class ElderPainter extends CustomPainter {
     canvas.drawOval(Rect.fromCenter(center: const Offset(66, 66), width: 30, height: 36), Paint()..color = const Color(0xFFDCDCE6));
     canvas.restore();
     for (final l in [
-      [Offset(36, 62), Offset(35, 71)],
-      [Offset(50, 66), Offset(50, 78)],
-      [Offset(64, 62), Offset(65, 71)],
+      [const Offset(36, 62), const Offset(35, 71)],
+      [const Offset(50, 66), const Offset(50, 78)],
+      [const Offset(64, 62), const Offset(65, 71)],
     ]) {
       canvas.drawLine(l[0], l[1], _line(1.1)..color = const Color(0xFFB9B9C6));
     }

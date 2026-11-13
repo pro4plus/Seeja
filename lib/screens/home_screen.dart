@@ -15,6 +15,7 @@ import '../ui/painters/elder.dart';
 import '../ui/painters/mat.dart';
 import '../ui/painters/pebble.dart';
 import '../ui/painters/wall.dart';
+import '../ui/painters/tabaq.dart';
 import '../ui/sheets.dart';
 import '../ui/widgets/plank_button.dart';
 import '../ui/widgets/wood_token.dart';
@@ -60,14 +61,14 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-    final wallH = size.height * 0.42;
+    final wallH = math.min(size.height * 0.48, 390.0);
     return AnimatedBuilder(
       animation: AppSettings.instance,
       builder: (context, child) {
         return Scaffold(
           body: Column(
             children: [
-              // ---- الجدار والباب ----
+              // ---- الواجهة الرئيسية: جدار مبيّض + باب مقوّس + مشهد سوداني ----
               SizedBox(
                 height: wallH,
                 width: double.infinity,
@@ -81,95 +82,102 @@ class _HomeScreenState extends State<HomeScreen>
                           return CustomPaint(
                             painter: WallPainter(
                               sunT: 1.0,
-                              palmSway: math.sin(_sway.value * 2 * math.pi) *
-                                  0.03,
-                              // الباب تحت منطقة العنوان.
-                              doorTopFraction: 0.34,
-                              doorHeightFraction: 0.59,
+                              palmSway: math.sin(_sway.value * 2 * math.pi) * 0.03,
+                              doorTopFraction: 0.30,
+                              doorHeightFraction: 0.68,
                             ),
                           );
                         },
                       ),
                     ),
-                    // لوحة عنوان مستوحاة من لافتات الحوش والبيوت الطينية.
+
+                    // العنوان كبير ومباشر مثل لافتة اللعبة، بلا بطاقة تغطي المشهد.
                     Positioned(
-                      top: 14,
-                      left: 58,
-                      right: 58,
-                      child: Container(
-                        padding: const EdgeInsets.fromLTRB(12, 7, 12, 10),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              SudaneseTheme.cream.withValues(alpha: 0.94),
-                              const Color(0xFFE8D1A5).withValues(alpha: 0.91),
-                            ],
-                          ),
-                          borderRadius: const BorderRadius.vertical(
-                            bottom: Radius.circular(22),
-                            top: Radius.circular(8),
-                          ),
-                          border: Border.all(
-                            color: SudaneseTheme.wood.withValues(alpha: 0.78),
-                            width: 1.5,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: SudaneseTheme.earthBlack.withValues(alpha: 0.22),
-                              blurRadius: 10,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Container(
-                              width: 42,
-                              height: 3,
-                              margin: const EdgeInsets.only(bottom: 3),
-                              decoration: BoxDecoration(
-                                color: SudaneseTheme.tabaqRed,
-                                borderRadius: BorderRadius.circular(4),
+                      top: 12,
+                      left: 48,
+                      right: 48,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              s.homeTitle,
+                              style: SudaneseTheme.display.copyWith(
+                                fontSize: 54,
+                                height: 1.05,
+                                color: SudaneseTheme.indigo,
+                                shadows: const [
+                                  Shadow(
+                                    color: SudaneseTheme.tabaqRed,
+                                    offset: Offset(2, 3),
+                                  ),
+                                ],
                               ),
                             ),
-                            FittedBox(
-                              fit: BoxFit.scaleDown,
-                              child: Text(
-                                s.homeTitle,
-                                style: SudaneseTheme.display.copyWith(
-                                  fontSize: 48,
-                                  color: SudaneseTheme.indigo,
-                                  shadows: [
-                                    Shadow(
-                                      color: SudaneseTheme.woodDark.withValues(alpha: 0.22),
-                                      offset: const Offset(1, 2),
-                                      blurRadius: 2,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            Text(
+                          ),
+                          const SizedBox(height: 3),
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
                               s.homeSubtitle,
                               style: SudaneseTheme.bodyBold.copyWith(
-                                fontSize: 14,
+                                fontSize: 16,
                                 color: SudaneseTheme.ink,
                               ),
                               textAlign: TextAlign.center,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
                             ),
-                          ],
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // زخارف الطبق على جانبي المشهد، مثل جدار الحوش الحقيقي.
+                    Positioned(
+                      left: 8,
+                      top: wallH * 0.33,
+                      child: const RepaintBoundary(
+                        child: CustomPaint(
+                          size: Size(54, 54),
+                          painter: TabaqPainter(),
                         ),
                       ),
                     ),
-                    // زر الإعدادات أعلى اليسار.
                     Positioned(
-                      top: 12,
-                      left: 12,
+                      right: 8,
+                      top: wallH * 0.33,
+                      child: const RepaintBoundary(
+                        child: CustomPaint(
+                          size: Size(54, 54),
+                          painter: TabaqPainter(rotation: 0.08),
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      left: 18,
+                      top: wallH * 0.63,
+                      child: const RepaintBoundary(
+                        child: CustomPaint(
+                          size: Size(42, 42),
+                          painter: TabaqPainter(rotation: 0.04),
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      right: 18,
+                      top: wallH * 0.63,
+                      child: const RepaintBoundary(
+                        child: CustomPaint(
+                          size: Size(42, 42),
+                          painter: TabaqPainter(rotation: -0.04),
+                        ),
+                      ),
+                    ),
+
+                    // زر الإعدادات.
+                    Positioned(
+                      top: 10,
+                      left: 10,
                       child: WoodToken(
                         icon: Icons.tune,
                         size: 48,
@@ -177,13 +185,14 @@ class _HomeScreenState extends State<HomeScreen>
                         onPressed: () => showSettingsSheet(context, s),
                       ),
                     ),
-                    // الشيخ في الباب.
+
+                    // الشيخ جالس أمام مدخل الحوش.
                     Positioned(
-                      bottom: wallH * 0.10,
-                      left: (size.width - 100) / 2,
+                      bottom: wallH * 0.015,
+                      left: (size.width - 118) / 2,
                       child: const RepaintBoundary(
                         child: CustomPaint(
-                          size: Size(100, 130),
+                          size: Size(118, 145),
                           painter: ElderPainter(
                             kind: ElderKind.elder,
                           ),
@@ -193,7 +202,8 @@ class _HomeScreenState extends State<HomeScreen>
                   ],
                 ),
               ),
-              // ---- البرش: لوحة العرض واللوحان والروابط ----
+
+              // ---- البرش: لوحة العرض + أزرار اللعب ----
               Expanded(
                 child: Stack(
                   fit: StackFit.expand,
@@ -204,10 +214,10 @@ class _HomeScreenState extends State<HomeScreen>
                       ),
                     ),
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      padding: const EdgeInsets.symmetric(horizontal: 18),
                       child: Column(
                         children: [
-                          const SizedBox(height: 6),
+                          const SizedBox(height: 4),
                           Expanded(
                             child: Center(
                               child: _DemoBoard(
@@ -225,7 +235,7 @@ class _HomeScreenState extends State<HomeScreen>
                               onPressed: () => _goSetup(true),
                             ),
                           ),
-                          const SizedBox(height: 12),
+                          const SizedBox(height: 8),
                           _Entrance(
                             delay: 80,
                             fromLeft: false,
@@ -236,10 +246,7 @@ class _HomeScreenState extends State<HomeScreen>
                               onPressed: () => _goSetup(false),
                             ),
                           ),
-                          const SizedBox(height: 10),
-                          // روابط أسفل الصفحة (منطقة لمس 48dp).
-                          // Wrap لا Row: عند 360 بكسل أو خط مكبّر
-                          // تلتف الروابط على سطرين بدل التجاوز.
+                          const SizedBox(height: 4),
                           Wrap(
                             alignment: WrapAlignment.center,
                             crossAxisAlignment: WrapCrossAlignment.center,
@@ -248,21 +255,18 @@ class _HomeScreenState extends State<HomeScreen>
                                 label: s.howToPlay,
                                 onTap: () => showHowToPlaySheet(context, s),
                               ),
-                              Text(' · ',
-                                  style: SudaneseTheme.bodyBold),
+                              Text(' · ', style: SudaneseTheme.bodyBold),
                               _FooterLink(
                                 label: s.aboutGame,
                                 onTap: () => showAboutSheet(context, s),
                               ),
-                              Text(' · ',
-                                  style: SudaneseTheme.bodyBold),
+                              Text(' · ', style: SudaneseTheme.bodyBold),
                               _FooterLink(
                                 label: s.tiktokLink,
                                 onTap: () => showAboutSheet(context, s),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 8),
                         ],
                       ),
                     ),

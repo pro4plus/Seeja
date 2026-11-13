@@ -482,9 +482,13 @@ class _GameScreenState extends State<GameScreen>
         const SizedBox(height: 2),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 28),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.center,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
               // الترتيب RTL: الأول يميناً — «باقي» يميناً و«أكلت» يساراً
               // كما في اللوحة.
               BowlCounter(
@@ -500,6 +504,8 @@ class _GameScreenState extends State<GameScreen>
                 label: s.captured,
               ),
             ],
+              ),
+            ),
           ),
         ),
       ],
@@ -602,9 +608,13 @@ class _GameScreenState extends State<GameScreen>
           ),
         ],
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: Alignment.center,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
           // الترتيب RTL: الأول يميناً — «باقي» يميناً و«أكلت» يساراً
           // كما في اللوحة؛ زرّا التراجع والتلميح بينهما.
           BowlCounter(
@@ -641,7 +651,8 @@ class _GameScreenState extends State<GameScreen>
             count: _capturedOf(1),
             label: s.captured,
           ),
-        ],
+          ],
+        ),
       ),
     );
   }

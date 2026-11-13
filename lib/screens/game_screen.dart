@@ -414,6 +414,51 @@ class _GameScreenState extends State<GameScreen>
           child: Stack(
             alignment: Alignment.center,
             children: [
+              Positioned(
+                left: 66,
+                right: 66,
+                bottom: 2,
+                child: Container(
+                  height: 42,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Color(0xFFC28B50),
+                        Color(0xFF80502D),
+                        Color(0xFF4A2B1A),
+                      ],
+                    ),
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(28),
+                      bottom: Radius.circular(12),
+                    ),
+                    border: Border.all(
+                      color: SudaneseTheme.sunGold,
+                      width: 1.6,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.25),
+                        blurRadius: 9,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Align(
+                    alignment: Alignment.bottomCenter,
+                    child: Container(
+                      height: 5,
+                      margin: const EdgeInsets.symmetric(horizontal: 12),
+                      decoration: BoxDecoration(
+                        color: SudaneseTheme.tabaqRed,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
               figure,
               Positioned(
                 left: 52,
@@ -539,8 +584,24 @@ class _GameScreenState extends State<GameScreen>
   Widget _playerZone() {
     final controller = _controller;
     final canHint = controller.isHumanTurn && !controller.isPlacing;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 28),
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+      decoration: BoxDecoration(
+        color: SudaneseTheme.cream.withValues(alpha: 0.76),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: SudaneseTheme.wood.withValues(alpha: 0.65),
+          width: 1.4,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: SudaneseTheme.earthBlack.withValues(alpha: 0.16),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [

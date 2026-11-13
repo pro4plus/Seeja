@@ -10,11 +10,12 @@ import '../game/sound_manager.dart';
 import '../l10n/strings.dart';
 import '../services/settings_store.dart';
 import '../theme/sudanese_theme.dart';
+import '../ui/art/art_assets.dart';
 import '../ui/painters/board.dart';
 import '../ui/painters/elder.dart';
-import '../ui/painters/pebble.dart';
-import '../ui/painters/tabaq.dart';
+import '../ui/painters/plank_wall.dart';
 import '../ui/widgets/niche.dart';
+import '../ui/widgets/rope_band.dart';
 import '../ui/widgets/wood_token.dart';
 import 'game_screen.dart';
 
@@ -114,8 +115,11 @@ class _SetupScreenState extends State<SetupScreen>
           body: Stack(
             fit: StackFit.expand,
             children: [
-              const RepaintBoundary(
-                child: CustomPaint(painter: _SetupMatPainter()),
+              // جدار الألواح الخشبية (مرسوم بالكود).
+              const Positioned.fill(
+                child: RepaintBoundary(
+                  child: CustomPaint(painter: PlankWallPainter()),
+                ),
               ),
               SafeArea(
                 child: Padding(
@@ -138,18 +142,39 @@ class _SetupScreenState extends State<SetupScreen>
                             },
                           ),
                           Expanded(
-                            child: Text(
-                              s.sitToPlay,
-                              style: SudaneseTheme.title.copyWith(
-                                fontSize: 30,
+                            child: Center(
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 22, vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF3A2418),
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(
+                                      color: const Color(0xFF8A5A33),
+                                      width: 2),
+                                  boxShadow: SudaneseTheme.hardShadow(),
+                                ),
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Text(
+                                    s.sitToPlay,
+                                    style: SudaneseTheme.title.copyWith(
+                                      fontSize: 30,
+                                      color: const Color(0xFFF3EAD2),
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
                               ),
-                              textAlign: TextAlign.center,
                             ),
                           ),
                           const SizedBox(width: 48),
                         ],
                       ),
                       const SizedBox(height: 10),
+                      // شريط الحبال المضفّرة تحت العنوان.
+                      const RopeBand(height: 12),
+                      const SizedBox(height: 12),
                       // ---- الكوات (ضد الكمبيوتر فقط) ----
                       if (widget.vsComputer) ...[
                         _SectionLabel(s.againstWho),
@@ -303,7 +328,9 @@ class _SetupScreenState extends State<SetupScreen>
                         ),
                       ),
                       const Spacer(),
-                      // ---- زر يلا (طبق دائري) ----
+                      // ---- زر يلا (طبق دائري) مع شريط الحبال ----
+                      const RopeBand(height: 12),
+                      const SizedBox(height: 8),
                       Center(child: _YallaButton(
                         ready: _ready,
                         pulse: _pulse,
@@ -336,31 +363,6 @@ class _SectionLabel extends StatelessWidget {
       textAlign: TextAlign.right,
     );
   }
-}
-
-/// خلفية الإعداد: برش أغمق قليلاً من الرئيسية.
-class _SetupMatPainter extends CustomPainter {
-  const _SetupMatPainter();
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    canvas.drawRect(
-      Offset.zero & size,
-      Paint()..color = const Color(0xFFD3AC62),
-    );
-    for (var x = 0.0; x < size.width; x += 6) {
-      canvas.drawLine(
-        Offset(x, 0),
-        Offset(x, size.height),
-        Paint()
-          ..color = SudaneseTheme.mudBrick.withValues(alpha: 0.10)
-          ..strokeWidth = 1.2,
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 /// لوحة مصغرة على لوح كريمي؛ المختارة بإطار أحمر.
@@ -444,7 +446,6 @@ class _PebbleTray extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: List.generate(SudaneseTheme.pebbles.length, (i) {
-          final def = SudaneseTheme.pebbles[i];
           final isSelected = selected == i;
           final isLocked = locked == i;
           return GestureDetector(
@@ -478,9 +479,10 @@ class _PebbleTray extends StatelessWidget {
                     alignment: Alignment.center,
                     children: [
                       RepaintBoundary(
-                        child: CustomPaint(
-                          size: const Size(38, 38),
-                          painter: PebblePainter(def: def),
+                        child: ArtImage(
+                          ArtAssets.stone(i),
+                          width: 38,
+                          height: 38,
                         ),
                       ),
                       if (isLocked)
@@ -529,10 +531,7 @@ class _YallaButton extends StatelessWidget {
             scale: scale,
             child: RotationTransition(
               turns: spin,
-              child: Opacity(
-                opacity: ready ? 1.0 : 0.45,
-                child: child,
-              ),
+              child: child,
             ),
           );
         },
@@ -543,26 +542,30 @@ class _YallaButton extends StatelessWidget {
             alignment: Alignment.center,
             children: [
               const RepaintBoundary(
-                child: CustomPaint(
-                  size: Size(92, 92),
-                  painter: TabaqPainter(),
+                child: ArtImage(
+                  ArtAssets.plate,
+                  width: 92,
+                  height: 92,
                 ),
               ),
-              Container(
-                width: 44,
-                height: 44,
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: SudaneseTheme.tabaqRed,
-                ),
-                alignment: Alignment.center,
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(
-                    s.letsGo,
-                    style: SudaneseTheme.display.copyWith(
-                      fontSize: 20,
-                      color: SudaneseTheme.cream,
+              Opacity(
+                opacity: ready ? 1.0 : 0.55,
+                child: Container(
+                  width: 44,
+                  height: 44,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: SudaneseTheme.tabaqRed,
+                  ),
+                  alignment: Alignment.center,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      s.letsGo,
+                      style: SudaneseTheme.display.copyWith(
+                        fontSize: 20,
+                        color: SudaneseTheme.cream,
+                      ),
                     ),
                   ),
                 ),

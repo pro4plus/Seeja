@@ -22,6 +22,8 @@ flutter:
   uses-material-design: true
 
   assets:
+    - assets/png/
+    - assets/svg/
     - assets/sounds/ui_tap.wav
     - assets/sounds/select.wav
     - assets/sounds/place1.wav

@@ -1,3 +1,4 @@
+// رسّام الحجر: بيضة لامعة بلمعة علوية وظل سفلي (نمط المرجع).
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../theme/sudanese_theme.dart';
@@ -11,31 +12,59 @@ class PebblePainter extends CustomPainter {
     final cx = size.width / 2, cy = size.height / 2;
     final r = math.min(size.width, size.height) / 2;
     final center = Offset(cx, cy);
-    canvas.drawOval(Rect.fromCenter(center: Offset(cx, cy + r * .72), width: r * 1.55, height: r * .42), Paint()..color = Colors.black.withValues(alpha: .32));
 
-    final pebble = Path();
-    const points = 12;
-    final radii = [0.88, .96, .91, .98, .90, .94, .87, .96, .91, .98, .89, .95];
-    for (var i = 0; i < points; i++) {
-      final a = -math.pi / 2 + i * math.pi * 2 / points;
-      final rr = r * radii[i];
-      final p = center + Offset(math.cos(a) * rr * (i.isEven ? 1.0 : .94), math.sin(a) * rr);
+    // ظل أرضي.
+    canvas.drawOval(
+      Rect.fromCenter(center: Offset(cx, cy + r * .78), width: r * 1.3, height: r * .3),
+      Paint()..color = Colors.black.withValues(alpha: .26),
+    );
+
+    // شكل البيضة: قاعدة عريضة تتجه إلى قمة مدببة.
+    final egg = Path();
+    const steps = 28;
+    for (var i = 0; i <= steps; i++) {
+      final t = i / steps;
+      final a = -math.pi / 2 + t * 2 * math.pi;
+      // تضييق عند الأعلى ليصير طرف مدبب.
+      final narrow = 1 - 0.22 * math.max(0, -math.sin(a));
+      final rr = r * 0.96 * narrow * (1 + 0.03 * math.cos(a * 6));
+      final pt = center + Offset(math.cos(a) * rr * 0.92, math.sin(a) * rr);
       if (i == 0) {
-        pebble.moveTo(p.dx, p.dy);
+        egg.moveTo(pt.dx, pt.dy);
       } else {
-        pebble.lineTo(p.dx, p.dy);
+        egg.lineTo(pt.dx, pt.dy);
       }
     }
-    pebble.close();
-    canvas.drawPath(pebble, Paint()..color = def.base);
+    egg.close();
+
+    canvas.drawPath(
+      egg,
+      Paint()
+        ..shader = RadialGradient(
+          center: const Alignment(-0.34, -0.42),
+          radius: 0.95,
+          colors: [def.light, def.base, def.dark],
+          stops: const [0.0, 0.5, 1.0],
+        ).createShader(Rect.fromCircle(center: center, radius: r)),
+    );
+    // ظل سفلي.
     canvas.save();
-    canvas.clipPath(pebble);
-    canvas.drawOval(Rect.fromCenter(center: center + Offset(-r * .24, -r * .28), width: r * 1.15, height: r * .95), Paint()..color = def.light.withValues(alpha: .52));
-    canvas.drawOval(Rect.fromCenter(center: center + Offset(r * .22, r * .48), width: r * 1.2, height: r * .62), Paint()..color = def.dark.withValues(alpha: .58));
+    canvas.clipPath(egg);
+    canvas.drawOval(
+      Rect.fromCenter(center: center + Offset(r * .12, r * .48), width: r * 1.3, height: r * .6),
+      Paint()..color = def.dark.withValues(alpha: .45),
+    );
+    // لمعة علوية.
+    canvas.drawOval(
+      Rect.fromCenter(center: center + Offset(-r * .3, -r * .42), width: r * .5, height: r * .26),
+      Paint()..color = Colors.white.withValues(alpha: .55),
+    );
     canvas.restore();
-    canvas.drawPath(pebble, Paint()..color = def.dark.withValues(alpha: .65)..style = PaintingStyle.stroke..strokeWidth = 1.25);
-    canvas.drawOval(Rect.fromCenter(center: center + Offset(-r * .28, -r * .43), width: r * .42, height: r * .21), Paint()..color = Colors.white.withValues(alpha: .86));
-    canvas.drawCircle(center + Offset(-r * .1, -r * .12), r * .07, Paint()..color = Colors.white.withValues(alpha: .38));
+    canvas.drawCircle(
+      center + Offset(-r * .12, -r * .18),
+      r * .12,
+      Paint()..color = Colors.white.withValues(alpha: .3),
+    );
   }
 
   @override

@@ -1,6 +1,5 @@
-// رسّام الفانوس (§5.2 + لوحة التصميم): فانوس صغير بمقبض
-// وغطاء وجسم زجاجي وقاعدة. مضيء: هالة دافئة وزجاج ذهبي.
-// مطفأ: زجاج غامق بلا هالة.
+// رسّام الفانوس: فانوس معدني بمقبض وغطاء وجسم زجاجي وقضبان
+// وقاعدة. مضيء: هالة دافئة وزجاج ذهبي وشعلة. مطفأ: زجاج غامق.
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -9,6 +8,7 @@ import '../../theme/sudanese_theme.dart';
 
 class LanternPainter extends CustomPainter {
   final bool lit;
+
   /// طور الوميض من 0 إلى 1، مرتبط بحركة الشخصية المحيطة.
   final double flicker;
 
@@ -22,90 +22,121 @@ class LanternPainter extends CustomPainter {
 
     if (lit) {
       // هالة دافئة: حلقات متحدة المركز خافتة.
-      final pulse = 0.88 + 0.12 * math.sin(flicker * math.pi * 2);
+      final pulse = 0.9 + 0.1 * math.sin(flicker * math.pi * 2);
       for (final (r, a) in [
-        (0.48, 0.10),
-        (0.38, 0.14),
-        (0.28, 0.20),
+        (0.62, 0.10),
+        (0.50, 0.13),
+        (0.38, 0.18),
       ]) {
         canvas.drawCircle(
-          Offset(cx, h * 0.5),
+          Offset(cx, h * 0.52),
           w * r * pulse,
           Paint()..color = SudaneseTheme.sunGold.withValues(alpha: a * pulse),
         );
       }
     }
+
+    final frame = Paint()..color = const Color(0xFF3A2418);
+
     // مقبض.
     canvas.drawArc(
       Rect.fromCenter(
-          center: Offset(cx, h * 0.14), width: w * 0.4, height: h * 0.22),
+          center: Offset(cx, h * 0.17), width: w * 0.34, height: h * 0.22),
       math.pi,
       math.pi,
       false,
       Paint()
-        ..color = SudaneseTheme.earthBlack
-        ..strokeWidth = 2.5
-        ..style = PaintingStyle.stroke,
+        ..color = const Color(0xFF3A2418)
+        ..strokeWidth = w * 0.075
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round,
     );
-    // غطاء.
+
+    // الغطاء.
     canvas.drawPath(
       Path()
-        ..moveTo(cx - w * 0.22, h * 0.24)
-        ..lineTo(cx + w * 0.22, h * 0.24)
-        ..lineTo(cx + w * 0.12, h * 0.14)
-        ..lineTo(cx - w * 0.12, h * 0.14)
+        ..moveTo(cx - w * 0.26, h * 0.27)
+        ..lineTo(cx + w * 0.26, h * 0.27)
+        ..lineTo(cx + w * 0.13, h * 0.15)
+        ..lineTo(cx - w * 0.13, h * 0.15)
         ..close(),
-      Paint()..color = SudaneseTheme.earthBlack,
+      frame,
     );
-    // جسم زجاجي (سداسي مبسط).
+    canvas.drawRect(
+      Rect.fromLTWH(cx - w * 0.16, h * 0.24, w * 0.32, h * 0.05),
+      Paint()..color = const Color(0xFF4E3120),
+    );
+
+    // جسم الزجاج.
     final glass = Path()
-      ..moveTo(cx - w * 0.30, h * 0.30)
-      ..lineTo(cx + w * 0.30, h * 0.30)
-      ..lineTo(cx + w * 0.36, h * 0.62)
-      ..lineTo(cx + w * 0.28, h * 0.80)
-      ..lineTo(cx - w * 0.28, h * 0.80)
-      ..lineTo(cx - w * 0.36, h * 0.62)
+      ..moveTo(cx - w * 0.28, h * 0.32)
+      ..lineTo(cx + w * 0.28, h * 0.32)
+      ..lineTo(cx + w * 0.22, h * 0.76)
+      ..lineTo(cx - w * 0.22, h * 0.76)
       ..close();
-    canvas.drawPath(
-      glass,
-      Paint()
-        ..color = lit
-            ? SudaneseTheme.sunGold
-            : const Color(0xFF3A3230),
-    );
     if (lit) {
+      canvas.drawPath(
+        glass,
+        Paint()
+          ..shader = const LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFFFFF0B8), Color(0xFFF7C64A), Color(0xFFE39A1E)],
+          ).createShader(Rect.fromLTWH(0, 0, w, h)),
+      );
       canvas.drawCircle(
-        Offset(cx, h * 0.55),
-        w * 0.12,
+        Offset(cx, h * 0.52),
+        w * 0.09,
         Paint()..color = const Color(0xFFFFE9A8),
       );
+    } else {
+      canvas.drawPath(glass, Paint()..color = const Color(0xFF4A423C));
     }
+
     // قضبان الجسم.
     final bar = Paint()
-      ..color = SudaneseTheme.earthBlack
-      ..strokeWidth = 2;
-    for (final dx in [-0.12, 0.0, 0.12]) {
-      canvas.drawLine(
-        Offset(cx + w * dx, h * 0.30),
-        Offset(cx + w * dx * 0.85, h * 0.80),
-        bar,
-      );
-    }
-    // قاعدة.
+      ..color = const Color(0xFF3A2418)
+      ..strokeWidth = w * 0.045;
+    canvas.drawLine(Offset(cx, h * 0.32), Offset(cx, h * 0.76), bar);
+    canvas.drawLine(
+        Offset(cx - w * 0.20, h * 0.36), Offset(cx - w * 0.16, h * 0.72),
+        bar..strokeWidth = w * 0.03);
+    canvas.drawLine(
+        Offset(cx + w * 0.20, h * 0.36), Offset(cx + w * 0.16, h * 0.72),
+        bar..strokeWidth = w * 0.03);
+
+    // إطار أعلى وأسفل.
     canvas.drawRect(
-      Rect.fromLTWH(cx - w * 0.30, h * 0.80, w * 0.60, h * 0.08),
-      Paint()..color = SudaneseTheme.earthBlack,
+      Rect.fromLTWH(cx - w * 0.30, h * 0.29, w * 0.60, h * 0.05),
+      frame,
     );
-    // شعلة صغيرة فوق الغطاء عند الإضاءة.
+    canvas.drawRect(
+      Rect.fromLTWH(cx - w * 0.24, h * 0.74, w * 0.48, h * 0.05),
+      frame,
+    );
+
+    // القاعدة.
+    canvas.drawRect(
+      Rect.fromLTWH(cx - w * 0.24, h * 0.78, w * 0.48, h * 0.08),
+      Paint()..color = const Color(0xFF3A2418),
+    );
+    canvas.drawRect(
+      Rect.fromLTWH(cx - w * 0.29, h * 0.86, w * 0.58, h * 0.07),
+      Paint()..color = const Color(0xFF4E3120),
+    );
+
+    // اللهب فوق الغطاء عند الإضاءة.
     if (lit) {
-      final flameHeight = 4.0 + 1.4 * math.sin(flicker * math.pi * 2);
-      canvas.drawOval(
-        Rect.fromCenter(
-          center: Offset(cx, h * 0.10),
-          width: 3.4,
-          height: flameHeight,
-        ),
-        Paint()..color = const Color(0xFFFFE9A8),
+      final flameHeight = h * 0.05 + h * 0.012 * math.sin(flicker * math.pi * 2);
+      canvas.drawPath(
+        Path()
+          ..moveTo(cx, h * 0.05)
+          ..quadraticBezierTo(
+              cx - w * 0.07, h * 0.10, cx, h * 0.05 + flameHeight)
+          ..quadraticBezierTo(
+              cx + w * 0.07, h * 0.10, cx, h * 0.05)
+          ..close(),
+        Paint()..color = const Color(0xFFFFD87A),
       );
     }
   }

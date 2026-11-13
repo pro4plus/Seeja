@@ -150,10 +150,13 @@ class WallPainter extends CustomPainter {
       canvas.translate(center.dx, center.dy);
       canvas.scale(s);
       canvas.translate(-center.dx, -center.dy);
-      paintTabaq(
-        canvas,
-        Rect.fromCircle(center: center, radius: size.width * fr),
-      );
+      final rect =
+          Rect.fromCircle(center: center, radius: size.width * fr);
+      if (i.isEven) {
+        paintPlateRings(canvas, rect);
+      } else {
+        paintPlateStar(canvas, rect);
+      }
       canvas.restore();
     }
 
@@ -206,107 +209,178 @@ class WallPainter extends CustomPainter {
     }
   }
 
-  /// مشهد الغروب: سماء (بنفسجي→كركدي→برتقالي)، شمس طبق،
-  /// أهرامات، النيل، نخلة.
+  /// مشهد الغروب بنمط المرجع: شرائط سماء مسطّحة، شمس برتقالية،
+  /// أهرامات مروي، نيل ملتفٍّ، ونخلة كبيرة على اليمين.
   void _paintDusk(Canvas canvas, Rect rect, double sunT) {
-    // سماء الغروب من شرائط لونية مسطحة: شكل مطبوع باليد لا غشاوة رقمية.
-    final sky = Rect.fromLTWH(rect.left, rect.top, rect.width, rect.height * 0.62);
+    // سماء مسطّحة بشرائط (شكل مطبوع باليد لا غشاوة رقمية).
     const bands = [
-      Color(0xFF252552),
-      Color(0xFF343063),
-      Color(0xFF512C6B),
-      Color(0xFF762C68),
-      Color(0xFFA63A55),
-      Color(0xFFD45D35),
-      Color(0xFFE58A1F),
+      Color(0xFF5E4F72),
+      Color(0xFF7C5C74),
+      Color(0xFFA86E6E),
+      Color(0xFFC98A72),
+      Color(0xFFE3A97E),
     ];
-    final bandH = sky.height / bands.length;
+    final skyH = rect.height * 0.62;
+    final bandH = skyH / bands.length;
     for (var i = 0; i < bands.length; i++) {
-      canvas.drawRect(Rect.fromLTWH(sky.left, sky.top + i * bandH, sky.width, bandH + 1), Paint()..color = bands[i]);
+      canvas.drawRect(
+        Rect.fromLTWH(
+            rect.left, rect.top + i * bandH, rect.width, bandH + 1),
+        Paint()..color = bands[i],
+      );
     }
-    final cloud = Paint()..color = Colors.white.withValues(alpha: 0.16)..strokeWidth = 2..strokeCap = StrokeCap.round;
-    canvas.drawLine(Offset(sky.left + 10, sky.top + sky.height * .28), Offset(sky.left + sky.width * .34, sky.top + sky.height * .25), cloud);
-    canvas.drawLine(Offset(sky.left + sky.width * .58, sky.top + sky.height * .38), Offset(sky.right - 12, sky.top + sky.height * .35), cloud);
-    // الأفق البرتقالي.
-    final horizonY = rect.top + rect.height * 0.62;
+    // الشمس البرتقالية.
+    final sunR = rect.width * 0.11;
+    final sunY = rect.top + skyH * 0.32 - sunT * rect.height * 0.12;
+    canvas.drawCircle(
+        Offset(rect.left + rect.width * 0.29, sunY), sunR,
+        Paint()..color = const Color(0xFFE2683A));
+
+    // الأرض والخط البعيد.
+    final horizonY = rect.top + skyH;
     canvas.drawRect(
-      Rect.fromLTWH(rect.left, horizonY, rect.width, 3),
-      Paint()..color = SudaneseTheme.dateOrange,
+      Rect.fromLTWH(rect.left, horizonY, rect.width, rect.bottom - horizonY),
+      Paint()..color = const Color(0xFFC08A4E),
     );
-    // شمس الطبق.
-    final sunR = rect.width * 0.20;
-    final sunY = horizonY - sunR * 0.4 - sunT * rect.height * 0.18;
-    paintTabaq(
-      canvas,
-      Rect.fromCircle(
-          center: Offset(rect.center.dx, sunY), radius: sunR),
+    canvas.drawRect(
+      Rect.fromLTWH(rect.left, horizonY, rect.width, 6),
+      Paint()..color = const Color(0xFFC98A72),
     );
+
     // أهرامات مروي.
-    final pyr = Paint()..color = const Color(0xFF4A2A4A);
-    final base = horizonY + 2;
+    final pyr = Paint()..color = const Color(0xFF8A5A34);
+    final pyrDark = Paint()..color = const Color(0xFF7A4C2C);
     for (final (fx, fw, fh) in [
-      (0.12, 0.26, 0.16),
-      (0.42, 0.34, 0.22),
-      (0.74, 0.22, 0.13),
+      (0.04, 0.20, 0.14),
+      (0.30, 0.18, 0.10),
     ]) {
       final x0 = rect.left + rect.width * fx;
       final w = rect.width * fw;
       final h = rect.height * fh;
       canvas.drawPath(
         Path()
-          ..moveTo(x0, base)
-          ..lineTo(x0 + w / 2, base - h)
-          ..lineTo(x0 + w, base)
+          ..moveTo(x0, horizonY + 4)
+          ..lineTo(x0 + w / 2, horizonY + 4 - h)
+          ..lineTo(x0 + w, horizonY + 4)
           ..close(),
         pyr,
       );
+      canvas.drawPath(
+        Path()
+          ..moveTo(x0 + w / 2, horizonY + 4 - h)
+          ..lineTo(x0 + w, horizonY + 4)
+          ..lineTo(x0 + w * 0.54, horizonY + 4)
+          ..close(),
+        pyrDark,
+      );
     }
-    // النيل: شريط فيروزي بخطوط أفقية فاتحة.
-    final nileTop = rect.top + rect.height * 0.74;
-    canvas.drawRect(
-      Rect.fromLTWH(rect.left, nileTop, rect.width,
-          rect.bottom - nileTop),
-      Paint()..color = SudaneseTheme.turquoise,
-    );
-    final linePaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.45)
-      ..strokeWidth = 1.5;
-    for (var i = 0; i < 3; i++) {
-      final y = nileTop + 8 + i * 9;
-      canvas.drawLine(
-          Offset(rect.left + 10, y), Offset(rect.right - 10, y), linePaint);
-    }
-    // النخلة (يمين الباب).
-    final palmX = rect.right - rect.width * 0.16;
+
+    // النيل: شريط ملتفٍّ.
+    final nile = Path()
+      ..moveTo(rect.left + rect.width * 0.52, horizonY + 2)
+      ..cubicTo(
+        rect.left + rect.width * 0.72,
+        horizonY + rect.height * 0.10,
+        rect.left + rect.width * 0.30,
+        horizonY + rect.height * 0.14,
+        rect.left + rect.width * 0.38,
+        horizonY + rect.height * 0.24,
+      )
+      ..cubicTo(
+        rect.left + rect.width * 0.46,
+        horizonY + rect.height * 0.34,
+        rect.left + rect.width * 0.22,
+        horizonY + rect.height * 0.34,
+        rect.left + rect.width * 0.30,
+        rect.bottom,
+      )
+      ..lineTo(rect.left + rect.width * 0.62, rect.bottom)
+      ..cubicTo(
+        rect.left + rect.width * 0.52,
+        horizonY + rect.height * 0.40,
+        rect.left + rect.width * 0.62,
+        horizonY + rect.height * 0.28,
+        rect.left + rect.width * 0.56,
+        horizonY + rect.height * 0.16,
+      )
+      ..cubicTo(
+        rect.left + rect.width * 0.50,
+        horizonY + rect.height * 0.06,
+        rect.left + rect.width * 0.60,
+        horizonY + 2,
+        rect.left + rect.width * 0.52,
+        horizonY + 2,
+      )
+      ..close();
+    canvas.drawPath(nile, Paint()..color = const Color(0xFF3E8FB0));
+
+    // النخلة الكبيرة على اليمين.
     final palmBase = rect.bottom - 2;
-    final trunk = Paint()
-      ..color = const Color(0xFF3A2418)
-      ..strokeWidth = 5
-      ..strokeCap = StrokeCap.round;
+    final palmTop = rect.top + rect.height * 0.30;
+    final palmX = rect.right - rect.width * 0.16;
     canvas.save();
     canvas.translate(palmX, palmBase);
     canvas.rotate(palmSway);
     canvas.translate(-palmX, -palmBase);
-    final trunkPath = Path()
-      ..moveTo(palmX, palmBase)
-      ..quadraticBezierTo(
-          palmX + 10, palmBase - 40, palmX + 4, palmBase - 62);
-    canvas.drawPath(trunkPath, trunk);
-    final top = Offset(palmX + 4, palmBase - 62);
-    final frond = Paint()
-      ..color = SudaneseTheme.palmGreen
-      ..strokeWidth = 4
-      ..strokeCap = StrokeCap.round
+    final trunk = Path()
+      ..moveTo(palmX - 7, palmBase)
+      ..cubicTo(palmX - 3, palmBase - 60, palmX - 1, palmTop + 60, palmX + 2,
+          palmTop)
+      ..lineTo(palmX + 15, palmTop)
+      ..cubicTo(palmX + 13, palmTop + 60, palmX + 15, palmBase - 60,
+          palmX + 11, palmBase)
+      ..close();
+    canvas.drawPath(trunk, Paint()..color = const Color(0xFF6E4A2E));
+    // حلقات الجذع.
+    final seg = Paint()
+      ..color = const Color(0xFF4E321F).withValues(alpha: 0.7)
+      ..strokeWidth = 3
       ..style = PaintingStyle.stroke;
-    for (var i = 0; i < 6; i++) {
-      final a = -math.pi * (0.15 + i * 0.14);
-      final end = top + Offset(math.cos(a) * 26, math.sin(a) * 14 - 6);
+    for (var i = 1; i <= 6; i++) {
+      final t = i / 7;
+      final y = palmBase - (palmBase - palmTop) * t;
+      canvas.drawLine(Offset(palmX - 6, y), Offset(palmX + 13, y), seg);
+    }
+    // السعف.
+    final top = Offset(palmX + 8, palmTop);
+    for (final (dx, dy, len) in [
+      (-40.0, 20.0, 1.05),
+      (40.0, 20.0, 1.05),
+      (-30.0, -24.0, 0.95),
+      (30.0, -24.0, 0.95),
+      (-14.0, -40.0, 0.85),
+      (14.0, -40.0, 0.85),
+      (-34.0, 42.0, 0.8),
+      (34.0, 42.0, 0.8),
+    ]) {
+      final end = top + Offset(dx * len, dy * len);
+      // ورقة السعفة: عريضة في الوسط ومدببة في الطرف.
+      final nx = dy * 0.55;
+      final ny = -dx * 0.55;
       canvas.drawPath(
         Path()
           ..moveTo(top.dx, top.dy)
           ..quadraticBezierTo(
-              top.dx + math.cos(a) * 16, top.dy - 12, end.dx, end.dy),
-        frond,
+              top.dx + dx * 0.45 * len + nx * 0.5,
+              top.dy + dy * 0.45 * len + ny * 0.5,
+              end.dx,
+              end.dy)
+          ..quadraticBezierTo(
+              top.dx + dx * 0.45 * len - nx * 0.5,
+              top.dy + dy * 0.45 * len - ny * 0.5,
+              top.dx,
+              top.dy)
+          ..close(),
+        Paint()..color = const Color(0xFF1F6B34),
+      );
+      // عرق السعفة.
+      canvas.drawLine(
+        top,
+        end,
+        Paint()
+          ..color = const Color(0xFF16562B)
+          ..strokeWidth = 1.4
+          ..style = PaintingStyle.stroke,
       );
     }
     canvas.restore();

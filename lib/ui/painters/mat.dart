@@ -1,5 +1,10 @@
+// رسّام الخلفية (الحوش): جدار من قصب الس sud Sudan — خيوط عمودية
+// بلون القش، مع حبل أحمر وأسود مضفّر أعلى الشاشة (	topThread)
+// وشُراشير عند الأسفل (fringe)، تماماً كسور اللوحة.
 import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
+
 import '../../theme/sudanese_theme.dart';
 
 class MatPainter extends CustomPainter {
@@ -9,40 +14,88 @@ class MatPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    canvas.drawRect(Offset.zero & size, Paint()..color = const Color(0xFFD9AF67));
     final rng = math.Random(7007);
-    // خيوط القصب الرأسية والأفقية، مع اختلافات خفيفة حتى لا تبدو كخلفية مسطحة.
-    for (var x = -2.0; x < size.width + 4; x += 5) {
-      canvas.drawLine(Offset(x, 0), Offset(x + rng.nextDouble() * 1.5 - .75, size.height), Paint()..color = SudaneseTheme.mudBrick.withValues(alpha: .10 + rng.nextDouble() * .10)..strokeWidth = 1.1);
+
+    // ---- أساس القش ----
+    canvas.drawRect(
+      Offset.zero & size,
+      Paint()..color = const Color(0xFFE0BC72),
+    );
+
+    // ---- خيوط القصب العمودية ----
+    var x = 0.0;
+    while (x < size.width) {
+      final w = 5 + rng.nextDouble() * 9;
+      final tone = 0.06 + rng.nextDouble() * 0.12;
+      canvas.drawRect(
+        Rect.fromLTWH(x, 0, w, size.height),
+        Paint()
+          ..color = SudaneseTheme.mudBrick.withValues(alpha: tone),
+      );
+      canvas.drawRect(
+        Rect.fromLTWH(x + w, 0, 1.6, size.height),
+        Paint()
+          ..color = const Color(0xFFF6E3B6).withValues(alpha: 0.45),
+      );
+      x += w + 2.5;
     }
-    for (var y = 3.0; y < size.height; y += 12) {
-      canvas.drawLine(Offset(0, y), Offset(size.width, y + rng.nextDouble() * 1.4), Paint()..color = const Color(0xFF8A5129).withValues(alpha: .10)..strokeWidth = 1);
+
+    // ---- حبال أفقية خفيفة (نسيج القش) ----
+    for (var y = 3.0; y < size.height; y += 14) {
+      canvas.drawLine(
+        Offset(0, y),
+        Offset(size.width, y + rng.nextDouble() * 1.6),
+        Paint()
+          ..color = const Color(0xFF8A5129).withValues(alpha: 0.10)
+          ..strokeWidth = 1.2,
+      );
     }
-    for (var x = 11.0; x < size.width; x += 48) {
-      canvas.drawLine(Offset(x, 0), Offset(x, size.height), Paint()..color = SudaneseTheme.mudBrick.withValues(alpha: .16)..strokeWidth = 2.2);
-    }
-    // أحزمة النسيج المميزة.
-    for (final y in [size.height * .22, size.height * .74]) {
-      canvas.drawRect(Rect.fromLTWH(0, y, size.width, 4), Paint()..color = SudaneseTheme.earthBlack.withValues(alpha: .72));
-      canvas.drawRect(Rect.fromLTWH(0, y + 4, size.width, 4), Paint()..color = SudaneseTheme.tabaqRed.withValues(alpha: .84));
-      for (var x = -size.height; x < size.width + size.height; x += 18) {
-        final path = Path()..moveTo(x, y)..lineTo(x + 9, y + 4)..lineTo(x, y + 8)..close();
-        canvas.drawPath(path, Paint()..color = SudaneseTheme.sunGold.withValues(alpha: .42));
-      }
-    }
+
+    // ---- حبل مضفّر (أحمر/أسود) ----
     if (topThread) {
-      canvas.drawRect(Rect.fromLTWH(0, size.height * .135, size.width, 5), Paint()..color = SudaneseTheme.tabaqRed);
-      canvas.drawRect(Rect.fromLTWH(0, size.height * .135 + 5, size.width, 1.5), Paint()..color = SudaneseTheme.earthBlack.withValues(alpha: .6));
+      final bandY = size.height * 0.10;
+      final bandH = math.max(10.0, size.height * 0.022);
+      canvas.drawRect(
+        Rect.fromLTWH(0, bandY, size.width, bandH),
+        Paint()..color = const Color(0xFF241607),
+      );
+      var bx = 0.0;
+      var i = 0;
+      while (bx < size.width) {
+        final seg = bandH * 0.9;
+        canvas.drawRect(
+          Rect.fromLTWH(bx, bandY, seg * 0.6, bandH),
+          Paint()..color = i.isEven
+              ? const Color(0xFFC1272D)
+              : const Color(0xFFF3EAD2),
+        );
+        bx += seg * 0.6;
+        i++;
+      }
+      canvas.drawRect(
+        Rect.fromLTWH(0, bandY + bandH, size.width, 2),
+        Paint()..color = Colors.black.withValues(alpha: 0.25),
+      );
     }
+
+    // ---- شُراشير القش عند الأسفل ----
     if (fringe) {
-      final base = size.height - 17;
-      for (var x = 2.0; x < size.width; x += 5) {
-        final len = 10 + ((x ~/ 5) % 3) * 3;
-        canvas.drawLine(Offset(x, base), Offset(x + (x % 3 - 1), base + len), Paint()..color = SudaneseTheme.earthBlack.withValues(alpha: .60)..strokeWidth = 1.7..strokeCap = StrokeCap.round);
+      final base = size.height - 18;
+      for (var fx = 2.0; fx < size.width; fx += 6) {
+        final len = 11 + ((fx ~/ 6) % 3) * 4;
+        canvas.drawLine(
+          Offset(fx, base),
+          Offset(fx + (fx % 3 - 1), base + len),
+          Paint()
+            ..color = const Color(0xFF8A5129).withValues(alpha: 0.65)
+            ..strokeWidth = 2
+            ..strokeCap = StrokeCap.round,
+        );
       }
     }
   }
 
   @override
-  bool shouldRepaint(covariant MatPainter oldDelegate) => oldDelegate.topThread != topThread || oldDelegate.fringe != fringe;
+  bool shouldRepaint(covariant MatPainter oldDelegate) =>
+      oldDelegate.topThread != topThread || oldDelegate.fringe != fringe;
 }

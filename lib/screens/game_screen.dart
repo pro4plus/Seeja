@@ -17,11 +17,12 @@ import '../ui/painters/elder.dart';
 import '../ui/painters/lantern.dart';
 import '../ui/painters/mat.dart';
 import '../ui/painters/pebble.dart';
-import '../ui/painters/tabaq.dart';
+import '../ui/art/art_assets.dart';
 import '../ui/sand_board.dart';
 import '../ui/sheets.dart';
 import '../ui/widgets/arched_sheet.dart';
 import '../ui/widgets/bowl_counter.dart';
+import '../ui/widgets/character_art.dart';
 import '../ui/widgets/plank_button.dart';
 import '../ui/widgets/wood_token.dart';
 
@@ -380,8 +381,8 @@ class _GameScreenState extends State<GameScreen>
             children: [
               figure,
               Positioned(
-                left: 52,
-                top: 34,
+                left: -30,
+                top: 38,
                 child: AnimatedBuilder(
                   animation: _tilt,
                   builder: (context, child) => RepaintBoundary(
@@ -704,9 +705,10 @@ class _GameScreenState extends State<GameScreen>
               Opacity(
                 opacity: isLoss ? 0.55 : 1.0,
                 child: const RepaintBoundary(
-                  child: CustomPaint(
-                    size: Size(118, 118),
-                    painter: TabaqPainter(),
+                  child: ArtImage(
+                    ArtAssets.tabaqWheel,
+                    width: 132,
+                    height: 132,
                   ),
                 ),
               ),
@@ -818,13 +820,12 @@ class _OpponentFigure extends StatelessWidget {
         final tiltValue = breath +
             (thinking ? math.sin(tilt.value * 2 * math.pi) * 0.085 : 0.0);
         return RepaintBoundary(
-          child: CustomPaint(
-            size: const Size(92, 118),
-            painter: ElderPainter(
-              kind: kind,
-              tilt: tiltValue,
-              bow: bowing ? bow.value : 0,
-            ),
+          child: CharacterArt(
+            kind: kind,
+            tilt: tiltValue,
+            bow: bowing ? bow.value : 0,
+            height: 112,
+            fadeBottom: true,
           ),
         );
       },

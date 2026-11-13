@@ -135,7 +135,7 @@ class _SplashScreenState extends State<SplashScreen>
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(11),
                       border: Border.all(
-                        color: SudaneseTheme.mudBrick.withOpacity(0.48),
+                        color: SudaneseTheme.mudBrick.withValues(alpha: 0.48),
                         width: 1,
                       ),
                     ),

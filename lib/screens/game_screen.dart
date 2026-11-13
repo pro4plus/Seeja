@@ -653,9 +653,28 @@ class _GameScreenState extends State<GameScreen>
     final myTurn = engine.currentPlayer == 1 &&
         _controller.phase != TurnPhase.gameOver;
     final name = widget.config.vsComputer ? s.you : s.player1;
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 92),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF8D542D), Color(0xFF4A2B1A)],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: SudaneseTheme.sunGold, width: 1.3),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.24),
+            blurRadius: 7,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
         RepaintBoundary(
           child: CustomPaint(
             size: const Size(26, 34),
@@ -680,6 +699,7 @@ class _GameScreenState extends State<GameScreen>
           ),
         ),
       ],
+      ),
     );
   }
 

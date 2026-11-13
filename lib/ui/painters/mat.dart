@@ -41,6 +41,49 @@ class MatPainter extends CustomPainter {
         canvas.drawLine(Offset(x, base), Offset(x + (x % 3 - 1), base + len), Paint()..color = SudaneseTheme.earthBlack.withValues(alpha: .60)..strokeWidth = 1.7..strokeCap = StrokeCap.round);
       }
     }
+
+    // إطار زخرفي مزدوج مستوحى من حواف الحصير السوداني.
+    final rail = Paint()
+      ..color = SudaneseTheme.earthBlack.withValues(alpha: .48)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2;
+    final innerRail = Paint()
+      ..color = SudaneseTheme.sunGold.withValues(alpha: .72)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1;
+    final frame = Rect.fromLTWH(8, 8, size.width - 16, size.height - 16);
+    canvas.drawRect(frame, rail);
+    canvas.drawRect(frame.deflate(4), innerRail);
+
+    // معينات متكررة على الجانبين، تظهر حول مساحة اللعب.
+    final motifPaint = Paint()
+      ..color = SudaneseTheme.tabaqRed.withValues(alpha: .78)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.8;
+    final motifFill = Paint()
+      ..color = SudaneseTheme.sunGold.withValues(alpha: .62);
+    for (var y = 28.0; y < size.height - 28; y += 42) {
+      for (final x in [18.0, size.width - 18]) {
+        final diamond = Path()
+          ..moveTo(x, y - 6)
+          ..lineTo(x + 5, y)
+          ..lineTo(x, y + 6)
+          ..lineTo(x - 5, y)
+          ..close();
+        canvas.drawPath(diamond, motifPaint);
+        canvas.drawCircle(Offset(x, y), 1.5, motifFill);
+      }
+    }
+
+    // وردات صغيرة في الزوايا الأربع لتأكيد طابع السجادة المنسوجة.
+    for (final x in [18.0, size.width - 18]) {
+      for (final y in [18.0, size.height - 18]) {
+        canvas.drawCircle(Offset(x, y), 5, motifPaint);
+        canvas.drawLine(Offset(x - 4, y), Offset(x + 4, y), motifPaint);
+        canvas.drawLine(Offset(x, y - 4), Offset(x, y + 4), motifPaint);
+        canvas.drawCircle(Offset(x, y), 1.6, motifFill);
+      }
+    }
   }
 
   @override

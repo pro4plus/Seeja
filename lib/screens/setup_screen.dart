@@ -379,39 +379,118 @@ class _BoardMini extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: SudaneseTheme.cream.withValues(alpha: 0.75),
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: selected
-                ? SudaneseTheme.tabaqRed
-                : Colors.transparent,
-            width: 3,
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: caption,
+      child: GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOutCubic,
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: selected
+                  ? [
+                      const Color(0xFFFFF5DD),
+                      const Color(0xFFE7C991),
+                    ]
+                  : [
+                      SudaneseTheme.cream.withValues(alpha: 0.88),
+                      const Color(0xFFDCC394).withValues(alpha: 0.82),
+                    ],
+            ),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: selected
+                  ? SudaneseTheme.tabaqRed
+                  : SudaneseTheme.wood.withValues(alpha: 0.55),
+              width: selected ? 3 : 1.4,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: SudaneseTheme.earthBlack.withValues(
+                    alpha: selected ? 0.22 : 0.10),
+                blurRadius: selected ? 11 : 5,
+                offset: Offset(0, selected ? 4 : 3),
+              ),
+              if (selected)
+                BoxShadow(
+                  color: SudaneseTheme.sunGold.withValues(alpha: 0.22),
+                  blurRadius: 13,
+                  spreadRadius: 1,
+                ),
+            ],
           ),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            RepaintBoundary(
-              child: CustomPaint(
-                size: const Size(120, 120),
-                painter:
-                    BoardPainter(size: size, centreOccupied: false),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Stack(
+                children: [
+                  RepaintBoundary(
+                    child: CustomPaint(
+                      size: const Size(120, 120),
+                      painter: BoardPainter(size: size, centreOccupied: false),
+                    ),
+                  ),
+                  Positioned(
+                    top: 2,
+                    right: 2,
+                    child: AnimatedScale(
+                      scale: selected ? 1 : 0.65,
+                      duration: const Duration(milliseconds: 180),
+                      curve: Curves.easeOutBack,
+                      child: AnimatedOpacity(
+                        opacity: selected ? 1 : 0,
+                        duration: const Duration(milliseconds: 150),
+                        child: Container(
+                          width: 25,
+                          height: 25,
+                          decoration: BoxDecoration(
+                            color: SudaneseTheme.tabaqRed,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: SudaneseTheme.cream,
+                              width: 1.5,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: SudaneseTheme.earthBlack.withValues(alpha: 0.25),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: const Icon(
+                            Icons.check,
+                            size: 16,
+                            color: SudaneseTheme.cream,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ),
-            const SizedBox(height: 6),
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(
-                caption,
-                style: SudaneseTheme.bodyBold.copyWith(fontSize: 15),
+              const SizedBox(height: 6),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  caption,
+                  style: SudaneseTheme.bodyBold.copyWith(
+                    fontSize: 15,
+                    color: selected
+                        ? SudaneseTheme.tabaqRed
+                        : SudaneseTheme.ink,
+                  ),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -437,8 +516,20 @@ class _PebbleTray extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
       decoration: BoxDecoration(
-        color: SudaneseTheme.woodDark,
+        gradient: const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Color(0xFF80502D),
+            Color(0xFF4A2C19),
+            Color(0xFF2E1B12),
+          ],
+        ),
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: SudaneseTheme.sunGold.withValues(alpha: 0.82),
+          width: 1.6,
+        ),
         boxShadow: SudaneseTheme.hardShadow(),
       ),
       child: Row(

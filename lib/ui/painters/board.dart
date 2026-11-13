@@ -38,6 +38,29 @@ class BoardPainter extends CustomPainter {
     canvas.drawPath(_slabPath(rect.deflate(3), 2), Paint()..color = const Color(0xFF9F773E)..style = PaintingStyle.stroke..strokeWidth = 2.4);
     canvas.drawPath(_slabPath(rect.deflate(7), 3), Paint()..color = Colors.white.withValues(alpha: 0.25)..style = PaintingStyle.stroke..strokeWidth = 1.2);
 
+    // علامات زخرفية محفورة في زوايا لوح الرمل، كأن اللوح جرى تجهيزه يدوياً.
+    final cornerInk = Paint()
+      ..color = const Color(0xFF805A2D).withValues(alpha: 0.72)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.7
+      ..strokeCap = StrokeCap.round;
+    final cornerGlow = Paint()
+      ..color = const Color(0xFFFFE0A0).withValues(alpha: 0.72);
+    for (final sx in [1.0, -1.0]) {
+      for (final sy in [1.0, -1.0]) {
+        final anchor = Offset(
+          rect.center.dx + sx * (side * 0.39),
+          rect.center.dy + sy * (side * 0.39),
+        );
+        final ornament = Path()
+          ..moveTo(anchor.dx, anchor.dy - 7)
+          ..quadraticBezierTo(anchor.dx + sx * 8, anchor.dy - 8, anchor.dx + sx * 8, anchor.dy)
+          ..quadraticBezierTo(anchor.dx + sx * 8, anchor.dy + sy * 8, anchor.dx, anchor.dy + sy * 8);
+        canvas.drawPath(ornament, cornerInk);
+        canvas.drawCircle(anchor, 1.8, cornerGlow);
+      }
+    }
+
     final inner = side - 16;
     final cell = inner / size;
     final pitR = cell * 0.36;
@@ -74,6 +97,43 @@ class BoardPainter extends CustomPainter {
         Paint()..color = const Color(0xFFF1D39B).withValues(alpha: 0.55)..style = PaintingStyle.stroke..strokeWidth = 2.4..strokeCap = StrokeCap.round);
     canvas.drawArc(Rect.fromCircle(center: p, radius: r * 0.93), math.pi * 0.9, math.pi * 0.8, false,
         Paint()..color = SudaneseTheme.earthBlack.withValues(alpha: 0.28)..style = PaintingStyle.stroke..strokeWidth = 1.4);
+
+    // حافة الحفرة مضغوطة من الرمل، مع لمعة على الجانب المواجه للضوء.
+    canvas.drawArc(
+      Rect.fromCircle(center: p + Offset(0, -r * 0.04), radius: r * 0.98),
+      math.pi * 1.05,
+      math.pi * 0.88,
+      false,
+      Paint()
+        ..color = const Color(0xFFFFE0A0).withValues(alpha: 0.48)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = math.max(1.0, r * 0.075)
+        ..strokeCap = StrokeCap.round,
+    );
+    canvas.drawArc(
+      Rect.fromCircle(center: p + Offset(0, r * 0.04), radius: r * 0.98),
+      math.pi * 0.05,
+      math.pi * 0.82,
+      false,
+      Paint()
+        ..color = const Color(0xFF704A25).withValues(alpha: 0.42)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = math.max(0.8, r * 0.055),
+        );
+
+    // نقاط رمل صغيرة داخل القاع تمنح الحفرة ملمساً طبيعياً.
+    for (var i = 0; i < 5; i++) {
+      final angle = (row * 7 + col * 11 + i * 73) * math.pi / 180;
+      final grain = p + Offset(
+        math.cos(angle) * r * (0.16 + (i % 3) * 0.12),
+        math.sin(angle) * r * (0.16 + (i % 3) * 0.12),
+      );
+      canvas.drawCircle(
+        grain,
+        math.max(0.45, r * 0.025),
+        Paint()..color = const Color(0xFFE9C987).withValues(alpha: 0.38),
+      );
+    }
     if ((row + col) % 3 == 0) canvas.drawCircle(p + Offset(r * .28, -r * .18), 1.2, Paint()..color = const Color(0xFFE9C987).withValues(alpha: .6));
   }
 

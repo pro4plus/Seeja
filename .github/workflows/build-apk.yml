@@ -1,9 +1,11 @@
 name: Build APK
 
-# عند كل push على main (أو تشغيل يدوي): فحص + اختبارات + بناء APK،
-# والـ APK يظهر في Artifacts تحت اسم alseeja-apk — بلا حاجة لـ Android SDK محلي.
+# فحص واختبارات وبناء APK على main وفرع التطوير، وكذلك عند فتح/تحديث PR.
+# الـ APK يظهر في Artifacts تحت اسم alseeja-apk — بلا حاجة لـ Android SDK محلي.
 on:
   push:
+    branches: [main, visual-overhaul]
+  pull_request:
     branches: [main]
   workflow_dispatch:
 

@@ -246,18 +246,54 @@ class _GameScreenState extends State<GameScreen>
                               maxWidth: 366,
                               maxHeight: 366,
                             ),
-                            child: AspectRatio(
-                              aspectRatio: 1,
-                              child: SandBoard(
-                                engine: engine,
-                                controller: controller,
-                                fx: _fx,
-                                p1Pebble: widget.config.p1Pebble,
-                                p2Pebble: widget.config.p2Pebble,
-                                strings: s,
-                                onTapPit: _onPitTap,
-                                onFxDone: () =>
-                                    controller.finishAnimation(),
+                            child: Container(
+                              padding: const EdgeInsets.all(9),
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [
+                                    Color(0xFF4A2C19),
+                                    Color(0xFF9A6335),
+                                    Color(0xFF3A2115),
+                                  ],
+                                ),
+                                borderRadius: BorderRadius.circular(30),
+                                border: Border.all(
+                                  color: const Color(0xFFE6BD78),
+                                  width: 2.2,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: SudaneseTheme.earthBlack
+                                        .withValues(alpha: 0.38),
+                                    blurRadius: 20,
+                                    offset: const Offset(0, 10),
+                                  ),
+                                  BoxShadow(
+                                    color: const Color(0xFFFFE0A0)
+                                        .withValues(alpha: 0.22),
+                                    blurRadius: 3,
+                                    spreadRadius: 1,
+                                  ),
+                                ],
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(21),
+                                child: AspectRatio(
+                                  aspectRatio: 1,
+                                  child: SandBoard(
+                                    engine: engine,
+                                    controller: controller,
+                                    fx: _fx,
+                                    p1Pebble: widget.config.p1Pebble,
+                                    p2Pebble: widget.config.p2Pebble,
+                                    strings: s,
+                                    onTapPit: _onPitTap,
+                                    onFxDone: () =>
+                                        controller.finishAnimation(),
+                                  ),
+                                ),
                               ),
                             ),
                           ),
@@ -378,6 +414,59 @@ class _GameScreenState extends State<GameScreen>
           child: Stack(
             alignment: Alignment.center,
             children: [
+              Positioned(
+                left: 66,
+                right: 66,
+                bottom: 2,
+                child: Container(
+                  height: 42,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Color(0xFFC28B50),
+                        Color(0xFF80502D),
+                        Color(0xFF4A2B1A),
+                      ],
+                    ),
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(28),
+                      bottom: Radius.circular(12),
+                    ),
+                    border: Border.all(
+                      color: oppTurn
+                          ? SudaneseTheme.sunGold
+                          : SudaneseTheme.wood.withValues(alpha: 0.72),
+                      width: oppTurn ? 2.2 : 1.4,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: oppTurn ? 0.34 : 0.20),
+                        blurRadius: oppTurn ? 13 : 8,
+                        offset: const Offset(0, 4),
+                      ),
+                      if (oppTurn)
+                        BoxShadow(
+                          color: SudaneseTheme.sunGold.withValues(alpha: 0.25),
+                          blurRadius: 15,
+                          spreadRadius: 1,
+                        ),
+                    ],
+                  ),
+                  child: Align(
+                    alignment: Alignment.bottomCenter,
+                    child: Container(
+                      height: 5,
+                      margin: const EdgeInsets.symmetric(horizontal: 12),
+                      decoration: BoxDecoration(
+                        color: SudaneseTheme.tabaqRed,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
               figure,
               Positioned(
                 left: 52,
@@ -401,9 +490,13 @@ class _GameScreenState extends State<GameScreen>
         const SizedBox(height: 2),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 28),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.center,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
               // الترتيب RTL: الأول يميناً — «باقي» يميناً و«أكلت» يساراً
               // كما في اللوحة.
               BowlCounter(
@@ -419,8 +512,9 @@ class _GameScreenState extends State<GameScreen>
                 label: s.captured,
               ),
             ],
+              ),
+            ),
           ),
-        ),
       ],
     );
     if (widget.config.vsComputer) return block;
@@ -433,9 +527,28 @@ class _GameScreenState extends State<GameScreen>
     final controller = _controller;
     final engine = controller.engine;
     final text = _turnLine();
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 34),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFFF7E7C4), Color(0xFFE4C18A)],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: SudaneseTheme.wood, width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: SudaneseTheme.earthBlack.withValues(alpha: 0.22),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
         Flexible(
           child: FittedBox(
             fit: BoxFit.scaleDown,
@@ -475,6 +588,7 @@ class _GameScreenState extends State<GameScreen>
           const _ThinkingDots(),
         ],
       ],
+      ),
     );
   }
 
@@ -482,12 +596,52 @@ class _GameScreenState extends State<GameScreen>
 
   Widget _playerZone() {
     final controller = _controller;
+    final myTurn = controller.engine.currentPlayer == 1 &&
+        controller.phase != TurnPhase.gameOver;
     final canHint = controller.isHumanTurn && !controller.isPlacing;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 28),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: myTurn
+              ? [
+                  const Color(0xFFFFF4D5),
+                  const Color(0xFFE9C987),
+                ]
+              : [
+                  SudaneseTheme.cream.withValues(alpha: 0.72),
+                  const Color(0xFFD9C49A).withValues(alpha: 0.72),
+                ],
+        ),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: myTurn ? SudaneseTheme.sunGold : SudaneseTheme.wood.withValues(alpha: 0.55),
+          width: myTurn ? 2.2 : 1.4,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: SudaneseTheme.earthBlack.withValues(alpha: myTurn ? 0.24 : 0.13),
+            blurRadius: myTurn ? 13 : 8,
+            offset: const Offset(0, 4),
+          ),
+          if (myTurn)
+            BoxShadow(
+              color: SudaneseTheme.sunGold.withValues(alpha: 0.22),
+              blurRadius: 16,
+              spreadRadius: 1,
+            ),
+        ],
+      ),
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: Alignment.center,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
           // الترتيب RTL: الأول يميناً — «باقي» يميناً و«أكلت» يساراً
           // كما في اللوحة؛ زرّا التراجع والتلميح بينهما.
           BowlCounter(
@@ -524,7 +678,8 @@ class _GameScreenState extends State<GameScreen>
             count: _capturedOf(1),
             label: s.captured,
           ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -536,9 +691,31 @@ class _GameScreenState extends State<GameScreen>
     final myTurn = engine.currentPlayer == 1 &&
         _controller.phase != TurnPhase.gameOver;
     final name = widget.config.vsComputer ? s.you : s.player1;
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 32),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF8D542D), Color(0xFF4A2B1A)],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: SudaneseTheme.sunGold, width: 1.3),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.24),
+            blurRadius: 7,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
         RepaintBoundary(
           child: CustomPaint(
             size: const Size(26, 34),
@@ -562,7 +739,9 @@ class _GameScreenState extends State<GameScreen>
             ),
           ),
         ),
-      ],
+          ],
+        ),
+      ),
     );
   }
 

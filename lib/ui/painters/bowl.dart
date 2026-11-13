@@ -34,6 +34,26 @@ class BowlPainter extends CustomPainter {
         ..close(),
       Paint()..color = SudaneseTheme.clayBowlDark.withValues(alpha: 0.6),
     );
+    // قاعدة صغيرة ترفع الصحن عن الأرض وتمنحه حجماً.
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromCenter(
+          center: Offset(cx, h * 0.94),
+          width: w * 0.38,
+          height: h * 0.075,
+        ),
+        const Radius.circular(5),
+      ),
+      Paint()..color = SudaneseTheme.clayBowlDark,
+    );
+    canvas.drawLine(
+      Offset(cx - w * 0.15, h * 0.925),
+      Offset(cx + w * 0.15, h * 0.925),
+      Paint()
+        ..color = SudaneseTheme.straw.withValues(alpha: 0.7)
+        ..strokeWidth = 1.2
+        ..strokeCap = StrokeCap.round,
+    );
     // فتحة الصحن (داخل غامق).
     canvas.drawOval(
       Rect.fromCenter(
@@ -67,6 +87,36 @@ class BowlPainter extends CustomPainter {
         );
       }
     }
+    // لمعة الطلاء على الجدار الخارجي وخط زخرفي محفور.
+    canvas.drawArc(
+      Rect.fromCenter(
+        center: Offset(cx - w * 0.015, h * 0.58),
+        width: w * 0.78,
+        height: h * 0.58,
+      ),
+      math.pi * 1.12,
+      math.pi * 0.30,
+      false,
+      Paint()
+        ..color = SudaneseTheme.straw.withValues(alpha: 0.48)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.5
+        ..strokeCap = StrokeCap.round,
+    );
+    canvas.drawArc(
+      Rect.fromCenter(
+        center: Offset(cx, h * 0.66),
+        width: w * 0.82,
+        height: h * 0.48,
+      ),
+      0.18,
+      math.pi - 0.36,
+      false,
+      Paint()
+        ..color = SudaneseTheme.clayBowlDark.withValues(alpha: 0.55)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.2,
+    );
     // حافة الصحن الأمامية (تغطي أسفل الحصوات).
     canvas.drawArc(
       Rect.fromCenter(

@@ -162,29 +162,64 @@ class _PlankPainter extends CustomPainter {
       Paint()
         ..color = SudaneseTheme.earthBlack.withValues(alpha: 0.35),
     );
-    canvas.drawPath(path, Paint()..color = color);
-    // خطوط خشب.
+    // جسم الخشب بتدرج يوضح الحافة العلوية والسفلية.
+    canvas.save();
+    canvas.clipPath(path);
+    canvas.drawRect(
+      Offset.zero & size,
+      Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Color.lerp(color, Colors.white, 0.16)!,
+            color,
+            Color.lerp(color, Colors.black, 0.20)!,
+          ],
+          stops: const [0, 0.48, 1],
+        ).createShader(Offset.zero & size),
+    );
+
+    // عروق خشب طويلة ومتفاوتة، مع عقدة صغيرة طبيعية.
     final grainPaint = Paint()
-      ..color = grain.withValues(alpha: 0.35)
-      ..strokeWidth = 1.5
+      ..color = grain.withValues(alpha: 0.42)
+      ..strokeWidth = 1.25
       ..style = PaintingStyle.stroke;
     final rng = math.Random(3);
-    for (var i = 0; i < 3; i++) {
-      final y = size.height * (0.25 + i * 0.25);
-      final wobble = 3 + rng.nextDouble() * 3;
+    for (var i = 0; i < 4; i++) {
+      final y = size.height * (0.18 + i * 0.21);
+      final wobble = 2 + rng.nextDouble() * 3;
       canvas.drawPath(
         Path()
-          ..moveTo(24, y)
-          ..quadraticBezierTo(
-              size.width / 2, y + wobble, size.width - 24, y),
+          ..moveTo(23, y)
+          ..cubicTo(
+            size.width * 0.30, y - wobble,
+            size.width * 0.64, y + wobble,
+            size.width - 23, y,
+          ),
         grainPaint,
       );
     }
-    // حافة سفلية غامقة خفيفة.
+    final knot = Offset(size.width * 0.23, size.height * 0.69);
+    canvas.drawOval(
+      Rect.fromCenter(center: knot, width: 13, height: 5),
+      grainPaint..strokeWidth = 1,
+    );
+
+    // لمعة رفيعة على أعلى اللوح وحافة داخلية محفورة.
+    canvas.drawLine(
+      const Offset(23, 2),
+      Offset(size.width - 23, 2),
+      Paint()
+        ..color = Colors.white.withValues(alpha: 0.20)
+        ..strokeWidth = 1,
+    );
+    canvas.restore();
+
     canvas.drawPath(
       path,
       Paint()
-        ..color = SudaneseTheme.earthBlack.withValues(alpha: 0.12)
+        ..color = SudaneseTheme.earthBlack.withValues(alpha: 0.28)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1.5,
     );

@@ -36,6 +36,36 @@ class PebblePainter extends CustomPainter {
     canvas.drawPath(pebble, Paint()..color = def.dark.withValues(alpha: .65)..style = PaintingStyle.stroke..strokeWidth = 1.25);
     canvas.drawOval(Rect.fromCenter(center: center + Offset(-r * .28, -r * .43), width: r * .42, height: r * .21), Paint()..color = Colors.white.withValues(alpha: .86));
     canvas.drawCircle(center + Offset(-r * .1, -r * .12), r * .07, Paint()..color = Colors.white.withValues(alpha: .38));
+
+    // حبيبات سطحية دقيقة ولمعة حجر مصقول.
+    final grain = Paint()
+      ..color = def.dark.withValues(alpha: 0.28)
+      ..strokeWidth = math.max(0.7, r * 0.035)
+      ..strokeCap = StrokeCap.round;
+    for (var i = 0; i < 5; i++) {
+      final x = center.dx + (i - 2) * r * 0.19;
+      final y = center.dy + r * (0.08 + (i.isEven ? 0.12 : -0.02));
+      canvas.drawLine(
+        Offset(x, y),
+        Offset(x + r * 0.07, y - r * 0.035),
+        grain,
+      );
+    }
+    final rim = Paint()
+      ..color = def.light.withValues(alpha: 0.42)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = math.max(0.8, r * 0.045);
+    canvas.drawArc(
+      Rect.fromCenter(
+        center: center + Offset(0, -r * 0.02),
+        width: r * 1.62,
+        height: r * 1.42,
+      ),
+      math.pi * 1.08,
+      math.pi * 0.78,
+      false,
+      rim,
+    );
   }
 
   @override

@@ -20,8 +20,24 @@ class BowlCounter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 76,
+    return Container(
+      width: 82,
+      padding: const EdgeInsets.fromLTRB(4, 5, 4, 6),
+      decoration: BoxDecoration(
+        color: SudaneseTheme.cream.withValues(alpha: 0.82),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: SudaneseTheme.wood.withValues(alpha: 0.72),
+          width: 1.4,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: SudaneseTheme.earthBlack.withValues(alpha: 0.18),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -31,12 +47,22 @@ class BowlCounter extends StatelessWidget {
               painter: BowlPainter(pebble: pebble, count: count),
             ),
           ),
-          const SizedBox(height: 2),
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Text(
-              '$label $count',
-              style: SudaneseTheme.bodyBold.copyWith(fontSize: 15),
+          const SizedBox(height: 3),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: SudaneseTheme.bodyBold.copyWith(
+              fontSize: 11,
+              color: SudaneseTheme.woodDark,
+            ),
+          ),
+          Text(
+            '$count',
+            style: SudaneseTheme.heading.copyWith(
+              fontSize: 18,
+              color: SudaneseTheme.tabaqRed,
+              height: 1.05,
             ),
           ),
         ],

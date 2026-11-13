@@ -9,8 +9,10 @@ import '../../theme/sudanese_theme.dart';
 
 class LanternPainter extends CustomPainter {
   final bool lit;
+  /// طور الوميض من 0 إلى 1، مرتبط بحركة الشخصية المحيطة.
+  final double flicker;
 
-  const LanternPainter({required this.lit});
+  const LanternPainter({required this.lit, this.flicker = 0});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -20,6 +22,7 @@ class LanternPainter extends CustomPainter {
 
     if (lit) {
       // هالة دافئة: حلقات متحدة المركز خافتة.
+      final pulse = 0.88 + 0.12 * math.sin(flicker * math.pi * 2);
       for (final (r, a) in [
         (0.48, 0.10),
         (0.38, 0.14),
@@ -27,8 +30,8 @@ class LanternPainter extends CustomPainter {
       ]) {
         canvas.drawCircle(
           Offset(cx, h * 0.5),
-          w * r,
-          Paint()..color = SudaneseTheme.sunGold.withValues(alpha: a),
+          w * r * pulse,
+          Paint()..color = SudaneseTheme.sunGold.withValues(alpha: a * pulse),
         );
       }
     }
@@ -95,15 +98,19 @@ class LanternPainter extends CustomPainter {
     );
     // شعلة صغيرة فوق الغطاء عند الإضاءة.
     if (lit) {
-      canvas.drawCircle(
-        Offset(cx, h * 0.10),
-        2.5,
-        Paint()..color = SudaneseTheme.sunGold,
+      final flameHeight = 4.0 + 1.4 * math.sin(flicker * math.pi * 2);
+      canvas.drawOval(
+        Rect.fromCenter(
+          center: Offset(cx, h * 0.10),
+          width: 3.4,
+          height: flameHeight,
+        ),
+        Paint()..color = const Color(0xFFFFE9A8),
       );
     }
   }
 
   @override
   bool shouldRepaint(covariant LanternPainter oldDelegate) =>
-      oldDelegate.lit != lit;
+      oldDelegate.lit != lit || oldDelegate.flicker != flicker;
 }

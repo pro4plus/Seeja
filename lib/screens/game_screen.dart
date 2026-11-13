@@ -664,7 +664,7 @@ class _GameScreenState extends State<GameScreen>
         _controller.phase != TurnPhase.gameOver;
     final name = widget.config.vsComputer ? s.you : s.player1;
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 92),
+      margin: const EdgeInsets.symmetric(horizontal: 32),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
@@ -682,9 +682,12 @@ class _GameScreenState extends State<GameScreen>
           ),
         ],
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
         RepaintBoundary(
           child: CustomPaint(
             size: const Size(26, 34),
@@ -708,7 +711,8 @@ class _GameScreenState extends State<GameScreen>
             ),
           ),
         ),
-      ],
+          ],
+        ),
       ),
     );
   }

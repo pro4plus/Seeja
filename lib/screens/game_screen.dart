@@ -246,18 +246,54 @@ class _GameScreenState extends State<GameScreen>
                               maxWidth: 366,
                               maxHeight: 366,
                             ),
-                            child: AspectRatio(
-                              aspectRatio: 1,
-                              child: SandBoard(
-                                engine: engine,
-                                controller: controller,
-                                fx: _fx,
-                                p1Pebble: widget.config.p1Pebble,
-                                p2Pebble: widget.config.p2Pebble,
-                                strings: s,
-                                onTapPit: _onPitTap,
-                                onFxDone: () =>
-                                    controller.finishAnimation(),
+                            child: Container(
+                              padding: const EdgeInsets.all(9),
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [
+                                    Color(0xFF4A2C19),
+                                    Color(0xFF9A6335),
+                                    Color(0xFF3A2115),
+                                  ],
+                                ),
+                                borderRadius: BorderRadius.circular(30),
+                                border: Border.all(
+                                  color: const Color(0xFFE6BD78),
+                                  width: 2.2,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: SudaneseTheme.earthBlack
+                                        .withValues(alpha: 0.38),
+                                    blurRadius: 20,
+                                    offset: const Offset(0, 10),
+                                  ),
+                                  BoxShadow(
+                                    color: const Color(0xFFFFE0A0)
+                                        .withValues(alpha: 0.22),
+                                    blurRadius: 3,
+                                    spreadRadius: 1,
+                                  ),
+                                ],
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(21),
+                                child: AspectRatio(
+                                  aspectRatio: 1,
+                                  child: SandBoard(
+                                    engine: engine,
+                                    controller: controller,
+                                    fx: _fx,
+                                    p1Pebble: widget.config.p1Pebble,
+                                    p2Pebble: widget.config.p2Pebble,
+                                    strings: s,
+                                    onTapPit: _onPitTap,
+                                    onFxDone: () =>
+                                        controller.finishAnimation(),
+                                  ),
+                                ),
                               ),
                             ),
                           ),

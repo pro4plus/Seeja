@@ -384,14 +384,33 @@ class _BoardMini extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: SudaneseTheme.cream.withValues(alpha: 0.75),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: selected
+                ? [
+                    const Color(0xFFFFF5DD),
+                    const Color(0xFFE7C991),
+                  ]
+                : [
+                    SudaneseTheme.cream.withValues(alpha: 0.88),
+                    const Color(0xFFDCC394).withValues(alpha: 0.82),
+                  ],
+          ),
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
             color: selected
                 ? SudaneseTheme.tabaqRed
-                : Colors.transparent,
-            width: 3,
+                : SudaneseTheme.wood.withValues(alpha: 0.55),
+            width: selected ? 3 : 1.4,
           ),
+          boxShadow: [
+            BoxShadow(
+              color: SudaneseTheme.earthBlack.withValues(alpha: selected ? 0.20 : 0.10),
+              blurRadius: selected ? 9 : 5,
+              offset: const Offset(0, 3),
+            ),
+          ],
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -437,8 +456,20 @@ class _PebbleTray extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
       decoration: BoxDecoration(
-        color: SudaneseTheme.woodDark,
+        gradient: const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Color(0xFF80502D),
+            Color(0xFF4A2C19),
+            Color(0xFF2E1B12),
+          ],
+        ),
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: SudaneseTheme.sunGold.withValues(alpha: 0.82),
+          width: 1.6,
+        ),
         boxShadow: SudaneseTheme.hardShadow(),
       ),
       child: Row(

@@ -22,6 +22,8 @@ flutter:
   uses-material-design: true
 
   assets:
+    # حزمة التصميم (PNG فقط — الـ SVG مصادر لا تُضمَّن).
+    - assets/design/png/
     - assets/sounds/ui_tap.wav
     - assets/sounds/select.wav
     - assets/sounds/place1.wav

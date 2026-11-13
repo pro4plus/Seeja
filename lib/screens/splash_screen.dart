@@ -94,44 +94,100 @@ class _SplashScreenState extends State<SplashScreen>
               ),
               // العنوان يُرسم مسحاً من اليمين (RTL).
               Positioned(
-                top: 48,
-                left: 0,
-                right: 0,
-                child: Column(
-                  children: [
-                    ClipRect(
-                      child: Align(
-                        alignment: Alignment.centerRight,
-                        widthFactor:
-                            titleReveal.clamp(0.01, 1.0),
-                        child: Text(
-                          strings.appTitle,
-                          style: SudaneseTheme.display.copyWith(
-                            fontSize: 64,
-                            color: SudaneseTheme.indigo,
-                            shadows: const [
-                              Shadow(
-                                color: SudaneseTheme.tabaqRed,
-                                offset: Offset(3, 4),
+                top: 34,
+                left: 20,
+                right: 20,
+                child: Container(
+                  padding: const EdgeInsets.fromLTRB(18, 13, 18, 15),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Color(0xFFFFF4D8),
+                        Color(0xFFE9D2A0),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(
+                      color: SudaneseTheme.sunGold,
+                      width: 2,
+                    ),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x660F0905),
+                        blurRadius: 22,
+                        offset: Offset(0, 10),
+                      ),
+                      BoxShadow(
+                        color: Color(0x88FFFFFF),
+                        blurRadius: 0,
+                        spreadRadius: -5,
+                        offset: Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 7,
+                    ),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(11),
+                      border: Border.all(
+                        color: SudaneseTheme.mudBrick.withOpacity(0.48),
+                        width: 1,
+                      ),
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        ClipRect(
+                          child: Align(
+                            alignment: Alignment.centerRight,
+                            widthFactor: titleReveal.clamp(0.01, 1.0),
+                            child: Text(
+                              strings.appTitle,
+                              style: SudaneseTheme.display.copyWith(
+                                fontSize: (MediaQuery.sizeOf(context).width * 0.15)
+                                    .clamp(42.0, 62.0),
+                                height: 1.15,
+                                color: SudaneseTheme.indigo,
+                                shadows: const [
+                                  Shadow(
+                                    color: SudaneseTheme.tabaqRed,
+                                    offset: Offset(2, 3),
+                                  ),
+                                ],
                               ),
-                            ],
+                              textAlign: TextAlign.center,
+                            ),
                           ),
-                          textAlign: TextAlign.center,
                         ),
-                      ),
-                    ),
-                    Opacity(
-                      opacity: subFade,
-                      child: Text(
-                        strings.tagline,
-                        style: SudaneseTheme.bodyBold.copyWith(
-                          fontSize: 17,
-                          color: SudaneseTheme.ink,
+                        const SizedBox(height: 5),
+                        Container(
+                          width: 62,
+                          height: 3,
+                          decoration: BoxDecoration(
+                            color: SudaneseTheme.tabaqRed,
+                            borderRadius: BorderRadius.circular(3),
+                          ),
                         ),
-                        textAlign: TextAlign.center,
-                      ),
+                        const SizedBox(height: 7),
+                        Opacity(
+                          opacity: subFade,
+                          child: Text(
+                            strings.tagline,
+                            style: SudaneseTheme.bodyBold.copyWith(
+                              fontSize: 16,
+                              color: SudaneseTheme.ink,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
             ],

@@ -91,38 +91,79 @@ class _HomeScreenState extends State<HomeScreen>
                         },
                       ),
                     ),
-                    // العنوان.
+                    // لوحة عنوان مستوحاة من لافتات الحوش والبيوت الطينية.
                     Positioned(
                       top: 14,
-                      left: 0,
-                      right: 0,
-                      child: Column(
-                        children: [
-                          FittedBox(
-                            fit: BoxFit.scaleDown,
-                            child: Text(
-                              s.homeTitle,
-                              style: SudaneseTheme.display.copyWith(
-                                fontSize: 62,
-                                color: SudaneseTheme.indigo,
-                                shadows: const [
-                                  Shadow(
-                                    color: SudaneseTheme.tabaqRed,
-                                    offset: Offset(3, 4),
-                                  ),
-                                ],
+                      left: 58,
+                      right: 58,
+                      child: Container(
+                        padding: const EdgeInsets.fromLTRB(12, 7, 12, 10),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              SudaneseTheme.cream.withValues(alpha: 0.94),
+                              const Color(0xFFE8D1A5).withValues(alpha: 0.91),
+                            ],
+                          ),
+                          borderRadius: const BorderRadius.vertical(
+                            bottom: Radius.circular(22),
+                            top: Radius.circular(8),
+                          ),
+                          border: Border.all(
+                            color: SudaneseTheme.wood.withValues(alpha: 0.78),
+                            width: 1.5,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: SudaneseTheme.earthBlack.withValues(alpha: 0.22),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              width: 42,
+                              height: 3,
+                              margin: const EdgeInsets.only(bottom: 3),
+                              decoration: BoxDecoration(
+                                color: SudaneseTheme.tabaqRed,
+                                borderRadius: BorderRadius.circular(4),
                               ),
                             ),
-                          ),
-                          Text(
-                            s.homeSubtitle,
-                            style: SudaneseTheme.bodyBold.copyWith(
-                              fontSize: 16,
-                              color: SudaneseTheme.ink,
+                            FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                s.homeTitle,
+                                style: SudaneseTheme.display.copyWith(
+                                  fontSize: 48,
+                                  color: SudaneseTheme.indigo,
+                                  shadows: [
+                                    Shadow(
+                                      color: SudaneseTheme.woodDark.withValues(alpha: 0.22),
+                                      offset: const Offset(1, 2),
+                                      blurRadius: 2,
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
+                            Text(
+                              s.homeSubtitle,
+                              style: SudaneseTheme.bodyBold.copyWith(
+                                fontSize: 14,
+                                color: SudaneseTheme.ink,
+                              ),
+                              textAlign: TextAlign.center,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                     // زر الإعدادات أعلى اليسار.

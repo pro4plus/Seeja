@@ -9,6 +9,7 @@ import '../l10n/strings.dart';
 import '../services/settings_store.dart';
 import '../theme/sudanese_theme.dart';
 import '../ui/painters/wall.dart';
+import '../ui/widgets/cartoon_text.dart';
 import 'home_screen.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -99,24 +100,14 @@ class _SplashScreenState extends State<SplashScreen>
                 right: 0,
                 child: Column(
                   children: [
-                    ClipRect(
-                      child: Align(
-                        alignment: Alignment.centerRight,
-                        widthFactor:
-                            titleReveal.clamp(0.01, 1.0),
-                        child: Text(
+                    Opacity(
+                      opacity: titleReveal.clamp(0.0, 1.0),
+                      child: Transform.scale(
+                        scale: Curves.elasticOut.transform(titleReveal.clamp(0.0, 1.0)),
+                        child: CartoonText(
                           strings.appTitle,
-                          style: SudaneseTheme.display.copyWith(
-                            fontSize: 64,
-                            color: SudaneseTheme.indigo,
-                            shadows: const [
-                              Shadow(
-                                color: SudaneseTheme.tabaqRed,
-                                offset: Offset(3, 4),
-                              ),
-                            ],
-                          ),
-                          textAlign: TextAlign.center,
+                          fontSize: 62,
+                          fill: SudaneseTheme.sunGold,
                         ),
                       ),
                     ),

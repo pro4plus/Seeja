@@ -469,9 +469,28 @@ class _GameScreenState extends State<GameScreen>
     final controller = _controller;
     final engine = controller.engine;
     final text = _turnLine();
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 34),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFFF7E7C4), Color(0xFFE4C18A)],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: SudaneseTheme.wood, width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: SudaneseTheme.earthBlack.withValues(alpha: 0.22),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
         Flexible(
           child: FittedBox(
             fit: BoxFit.scaleDown,
@@ -511,6 +530,7 @@ class _GameScreenState extends State<GameScreen>
           const _ThinkingDots(),
         ],
       ],
+      ),
     );
   }
 

@@ -1,6 +1,6 @@
-// شاشة اللعب v4: البرش كامل الشاشة. مقعد الخصم أعلى،
-// لوحة الرمل في الوسط، سطر الدور نصاً بلا صندوق،
-// صحون الطين والفوانيس، وصفحة النتيجة المقوّسة.
+// شاشة اللعب v4 + حزمة التصميم: البرش كامل الشاشة.
+// مقعد الخصم أعلى، لوحة الرمل في الوسط، سطر الدور نصاً
+// بلا صندوق، صحون الطين والفوانيس، وصفحة النتيجة المقوّسة.
 import 'dart:async';
 import 'dart:math' as math;
 
@@ -12,18 +12,12 @@ import '../game/turn_controller.dart';
 import '../l10n/strings.dart';
 import '../services/settings_store.dart';
 import '../theme/sudanese_theme.dart';
+import '../ui/design_kit.dart';
 import '../ui/painters/confetti.dart';
-import '../ui/painters/elder.dart';
-import '../ui/painters/lantern.dart';
-import '../ui/painters/mat.dart';
-import '../ui/painters/pebble.dart';
-import '../ui/painters/tabaq.dart';
 import '../ui/sand_board.dart';
 import '../ui/sheets.dart';
 import '../ui/widgets/arched_sheet.dart';
 import '../ui/widgets/bowl_counter.dart';
-import '../ui/widgets/plank_button.dart';
-import '../ui/widgets/wood_token.dart';
 
 class GameConfig {
   final int boardSize;
@@ -169,17 +163,6 @@ class _GameScreenState extends State<GameScreen>
     return player == 1 ? s.you : s.computer;
   }
 
-  ElderKind _kindFor(Difficulty d) {
-    switch (d) {
-      case Difficulty.easy:
-        return ElderKind.young;
-      case Difficulty.medium:
-        return ElderKind.teacher;
-      case Difficulty.hard:
-        return ElderKind.elder;
-    }
-  }
-
   int _capturedOf(int player) {
     final engine = _controller.engine;
     if (engine.placingPhase) return 0;
@@ -226,15 +209,24 @@ class _GameScreenState extends State<GameScreen>
             body: Stack(
               fit: StackFit.expand,
               children: [
-                const RepaintBoundary(
-                  child: CustomPaint(
-                    painter: MatPainter(topThread: true, fringe: true),
-                  ),
+                Image.asset(
+                  DesignKit.bgStraw,
+                  fit: BoxFit.cover,
                 ),
                 SafeArea(
                   child: Column(
                     children: [
                       _topTokens(),
+                      const SizedBox(height: 2),
+                      // شريط منسوج تحت الأزرار العلوية.
+                      SizedBox(
+                        width: double.infinity,
+                        child: Image.asset(
+                          DesignKit.bandWeave,
+                          height: 20,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
                       const SizedBox(height: 2),
                       _opponentBlock(),
                       const SizedBox(height: 4),
@@ -328,22 +320,22 @@ class _GameScreenState extends State<GameScreen>
         children: [
           // الترتيب RTL: الأول يميناً — الصوت يميناً والإيقاف يساراً
           // كما في اللوحة.
-          WoodToken(
-            icon: settings.soundOn ? Icons.volume_up : Icons.volume_off,
-            size: 48,
-            tooltip: settings.soundOn ? s.soundOn : s.soundOff,
-            onPressed: () async {
+          _TokenButton(
+            asset: settings.soundOn
+                ? DesignKit.tokenSound
+                : DesignKit.tokenSoundOff,
+            label: settings.soundOn ? s.soundOn : s.soundOff,
+            onTap: () async {
               final on = !settings.soundOn;
               await settings.setSoundOn(on);
               if (on) SoundManager.instance.tap();
               setState(() {});
             },
           ),
-          WoodToken(
-            icon: Icons.pause,
-            size: 48,
-            tooltip: s.menu,
-            onPressed: _showPauseMenu,
+          _TokenButton(
+            asset: DesignKit.tokenPause,
+            label: s.menu,
+            onTap: _showPauseMenu,
           ),
         ],
       ),
@@ -359,7 +351,7 @@ class _GameScreenState extends State<GameScreen>
         controller.phase != TurnPhase.gameOver;
     final figure = widget.config.vsComputer
         ? _OpponentFigure(
-            kind: _kindFor(widget.config.difficulty),
+            difficulty: widget.config.difficulty,
             tilt: _tilt,
             thinking: controller.isAiThinking,
             bow: _bow,
@@ -374,27 +366,33 @@ class _GameScreenState extends State<GameScreen>
       mainAxisSize: MainAxisSize.min,
       children: [
         SizedBox(
-          height: 112,
-          child: Stack(
-            alignment: Alignment.center,
+          height: 140,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              figure,
-              Positioned(
-                left: 52,
-                top: 34,
-                child: AnimatedBuilder(
-                  animation: _tilt,
-                  builder: (context, child) => RepaintBoundary(
-                    child: CustomPaint(
-                      size: const Size(30, 40),
-                      painter: LanternPainter(
-                        lit: oppTurn,
-                        flicker: _tilt.value,
-                      ),
-                    ),
-                  ),
+              // الفانوس بجانب الشخصية: مضيء عند دور الخصم،
+              // مع وميض خفيف.
+              AnimatedBuilder(
+                animation: _tilt,
+                builder: (context, child) {
+                  final flicker = oppTurn
+                      ? 0.82 +
+                          0.18 *
+                              (0.5 +
+                                  0.5 *
+                                      math.sin(
+                                          _tilt.value * 2 * math.pi * 3))
+                      : 1.0;
+                  return Opacity(opacity: flicker, child: child);
+                },
+                child: Image.asset(
+                  oppTurn ? DesignKit.lanternLit : DesignKit.lantern,
+                  width: 36,
                 ),
               ),
+              const SizedBox(width: 10),
+              figure,
             ],
           ),
         ),
@@ -496,25 +494,25 @@ class _GameScreenState extends State<GameScreen>
             label: s.remaining,
           ),
           if (widget.config.vsComputer) ...[
-            WoodToken(
-              icon: Icons.undo,
+            _TokenButton(
+              asset: DesignKit.tokenUndo,
+              label: s.undo,
               size: 52,
-              tooltip: s.undo,
-              onPressed: controller.canUndo
-                  ? () {
-                      controller.undo();
-                      setState(() {
-                        _fx.move = null;
-                        _fx.hintMove = null;
-                      });
-                    }
-                  : null,
+              enabled: controller.canUndo,
+              onTap: () {
+                controller.undo();
+                setState(() {
+                  _fx.move = null;
+                  _fx.hintMove = null;
+                });
+              },
             ),
-            WoodToken(
-              icon: Icons.lightbulb_outline,
+            _TokenButton(
+              asset: DesignKit.tokenHint,
+              label: s.hint,
               size: 52,
-              tooltip: s.hint,
-              onPressed: canHint ? _onHint : null,
+              enabled: canHint,
+              onTap: _onHint,
             ),
           ],
           BowlCounter(
@@ -536,33 +534,46 @@ class _GameScreenState extends State<GameScreen>
     final myTurn = engine.currentPlayer == 1 &&
         _controller.phase != TurnPhase.gameOver;
     final name = widget.config.vsComputer ? s.you : s.player1;
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        RepaintBoundary(
-          child: CustomPaint(
-            size: const Size(26, 34),
-            painter: LanternPainter(lit: myTurn),
+    final isYouBanner =
+        widget.config.vsComputer && myTurn;
+    return SizedBox(
+      height: 44,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Image.asset(
+            isYouBanner
+                ? DesignKit.turnBannerYou
+                : DesignKit.turnBanner,
+            height: 44,
+            semanticLabel: widget.config.vsComputer ? name : null,
           ),
-        ),
-        const SizedBox(width: 8),
-        FittedBox(
-          fit: BoxFit.scaleDown,
-          child: Text(
-            name,
-            style: SudaneseTheme.heading.copyWith(fontSize: 20),
-          ),
-        ),
-        const SizedBox(width: 8),
-        RepaintBoundary(
-          child: CustomPaint(
-            size: const Size(26, 26),
-            painter: PebblePainter(
-              def: SudaneseTheme.pebbles[widget.config.p1Pebble],
+          if (!widget.config.vsComputer)
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Image.asset(
+                  DesignKit.pebbleAsset(widget.config.p1Pebble),
+                  width: 22,
+                  height: 22,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  name,
+                  style: SudaneseTheme.heading.copyWith(fontSize: 18),
+                ),
+              ],
+            ),
+          Positioned(
+            left: 0,
+            child: Image.asset(
+              DesignKit.turnLantern,
+              width: 34,
+              height: 34,
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -689,12 +700,29 @@ class _GameScreenState extends State<GameScreen>
       subtitle = s.youWon;
     }
 
+    final btnW = math.min(
+      MediaQuery.of(context).size.width * 0.72,
+      300,
+    );
     return Stack(
       fit: StackFit.expand,
       children: [
         // تعتيم اللوحة خلف الصفحة.
         Container(color: Colors.black.withValues(alpha: 0.55)),
         if (isWin) const ConfettiOverlay(),
+        // أعلام صغيرة أعلى الصفحة.
+        Positioned(
+          top: 48,
+          left: 0,
+          right: 0,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              for (final flag in DesignKit.confettiFlags)
+                Image.asset(flag, width: 56),
+            ],
+          ),
+        ),
         Align(
           alignment: Alignment.bottomCenter,
           child: Column(
@@ -703,35 +731,46 @@ class _GameScreenState extends State<GameScreen>
               // ميدالية الطبق على حافة الصفحة العلوية.
               Opacity(
                 opacity: isLoss ? 0.55 : 1.0,
-                child: const RepaintBoundary(
-                  child: CustomPaint(
-                    size: Size(118, 118),
-                    painter: TabaqPainter(),
-                  ),
+                child: Image.asset(
+                  DesignKit.plateRainbow,
+                  width: 118,
+                  height: 118,
                 ),
               ),
               Transform.translate(
                 offset: const Offset(0, -46),
-                child: ArchedPanel(
+                child: Container(
+                  decoration: const BoxDecoration(
+                    image: DecorationImage(
+                      image: AssetImage(DesignKit.resultSheet),
+                      fit: BoxFit.cover,
+                      alignment: Alignment.topCenter,
+                    ),
+                  ),
                   padding:
                       const EdgeInsets.fromLTRB(24, 78, 24, 26),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Text(
-                          title,
-                          style: SudaneseTheme.display.copyWith(
-                            fontSize: 40,
-                            color: isWin
-                                ? SudaneseTheme.tabaqRed
-                                : SudaneseTheme.ink,
+                      if (isWin)
+                        Image.asset(
+                          DesignKit.resultTitle,
+                          width: btnW,
+                          semanticLabel: title,
+                        )
+                      else
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            title,
+                            style: SudaneseTheme.display.copyWith(
+                              fontSize: 40,
+                              color: SudaneseTheme.ink,
+                            ),
+                            textAlign: TextAlign.center,
                           ),
-                          textAlign: TextAlign.center,
                         ),
-                      ),
                       const SizedBox(height: 4),
                       Text(
                         subtitle,
@@ -760,24 +799,29 @@ class _GameScreenState extends State<GameScreen>
                         ),
                       ],
                       const SizedBox(height: 16),
-                      PlankButton(
-                        label: s.playAgain,
-                        caption: s.playAgainCaption,
-                        kind: PlankKind.red,
-                        onPressed: () {
-                          _controller.restart();
-                          setState(() {
-                            _fx.move = null;
-                            _fx.hintMove = null;
-                          });
-                        },
+                      Center(
+                        child: KitImageButton(
+                          asset: DesignKit.btnRectRed,
+                          semanticLabel: s.playAgain,
+                          width: btnW,
+                          onPressed: () {
+                            _controller.restart();
+                            setState(() {
+                              _fx.move = null;
+                              _fx.hintMove = null;
+                            });
+                          },
+                        ),
                       ),
                       const SizedBox(height: 10),
-                      PlankButton(
-                        label: s.backHome,
-                        kind: PlankKind.dark,
-                        onPressed: () => Navigator.of(context)
-                            .popUntil((r) => r.isFirst),
+                      Center(
+                        child: KitImageButton(
+                          asset: DesignKit.btnRectBrown,
+                          semanticLabel: s.backHome,
+                          width: btnW,
+                          onPressed: () => Navigator.of(context)
+                              .popUntil((r) => r.isFirst),
+                        ),
                       ),
                     ],
                   ),
@@ -791,17 +835,55 @@ class _GameScreenState extends State<GameScreen>
   }
 }
 
-/// شخصية الخصم (ضد الكمبيوتر): تميل رأسها أثناء التفكير
-/// وتنحني عند فوز اللاعب.
+/// زر دائري من صورة (إيقاف/صوت/تراجع/تلميح): منطقة لمس 48dp.
+/// المعطّل يظهر معتماً ولا يستجيب.
+class _TokenButton extends StatelessWidget {
+  final String asset;
+  final String label;
+  final double size;
+  final bool enabled;
+  final VoidCallback onTap;
+
+  const _TokenButton({
+    required this.asset,
+    required this.label,
+    this.size = 48,
+    this.enabled = true,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: enabled ? onTap : null,
+      behavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: const EdgeInsets.all(4),
+        child: Opacity(
+          opacity: enabled ? 1.0 : 0.45,
+          child: Image.asset(
+            asset,
+            width: size,
+            height: size,
+            semanticLabel: label,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// شخصية الخصم (ضد الكمبيوتر): صورة صدرية من الحزمة،
+/// تميل رأسها أثناء التفكير وتنحني عند فوز اللاعب.
 class _OpponentFigure extends StatelessWidget {
-  final ElderKind kind;
+  final Difficulty difficulty;
   final Animation<double> tilt;
   final bool thinking;
   final Animation<double> bow;
   final bool bowing;
 
   const _OpponentFigure({
-    required this.kind,
+    required this.difficulty,
     required this.tilt,
     required this.thinking,
     required this.bow,
@@ -817,17 +899,19 @@ class _OpponentFigure extends StatelessWidget {
         final breath = math.sin(tilt.value * 2 * math.pi) * 0.018;
         final tiltValue = breath +
             (thinking ? math.sin(tilt.value * 2 * math.pi) * 0.085 : 0.0);
-        return RepaintBoundary(
-          child: CustomPaint(
-            size: const Size(92, 118),
-            painter: ElderPainter(
-              kind: kind,
-              tilt: tiltValue,
-              bow: bowing ? bow.value : 0,
-            ),
+        final bowDy = bowing ? bow.value * 10 : 0.0;
+        return Transform.translate(
+          offset: Offset(0, bowDy),
+          child: Transform.rotate(
+            angle: tiltValue,
+            child: child,
           ),
         );
       },
+      child: Image.asset(
+        DesignKit.portraitFor(difficulty),
+        height: 132,
+      ),
     );
   }
 }
@@ -841,6 +925,7 @@ class _P2Seat extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final index = SudaneseTheme.pebbles.indexOf(pebble);
     return Container(
       padding:
           const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -852,11 +937,10 @@ class _P2Seat extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          RepaintBoundary(
-            child: CustomPaint(
-              size: const Size(30, 30),
-              painter: PebblePainter(def: pebble),
-            ),
+          Image.asset(
+            DesignKit.pebbleAsset(index < 0 ? 0 : index),
+            width: 30,
+            height: 30,
           ),
           const SizedBox(width: 8),
           Text(
@@ -988,6 +1072,8 @@ class _ConfirmButton extends StatelessWidget {
   }
 }
 
+/// بطاقة إحصاء في صفحة النتيجة: صورة البطاقة من الحزمة
+/// وتحتها العدد والتسمية نصاً.
 class _SessionChip extends StatelessWidget {
   final int count;
   final String label;
@@ -999,9 +1085,11 @@ class _SessionChip extends StatelessWidget {
     return Expanded(
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 10),
-        decoration: BoxDecoration(
-          color: SudaneseTheme.sand,
-          borderRadius: BorderRadius.circular(12),
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage(DesignKit.statCard),
+            fit: BoxFit.fill,
+          ),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,

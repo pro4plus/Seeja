@@ -382,10 +382,16 @@ class _GameScreenState extends State<GameScreen>
               Positioned(
                 left: 52,
                 top: 34,
-                child: RepaintBoundary(
-                  child: CustomPaint(
-                    size: const Size(30, 40),
-                    painter: LanternPainter(lit: oppTurn),
+                child: AnimatedBuilder(
+                  animation: _tilt,
+                  builder: (context, child) => RepaintBoundary(
+                    child: CustomPaint(
+                      size: const Size(30, 40),
+                      painter: LanternPainter(
+                        lit: oppTurn,
+                        flicker: _tilt.value,
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -807,9 +813,10 @@ class _OpponentFigure extends StatelessWidget {
     return AnimatedBuilder(
       animation: Listenable.merge([tilt, bow]),
       builder: (context, child) {
-        final tiltValue = thinking
-            ? math.sin(tilt.value * 2 * math.pi) * 0.10
-            : 0.0;
+        // تنفّس هادئ طوال اللعب، وميل أوضح عندما يفكر الخصم.
+        final breath = math.sin(tilt.value * 2 * math.pi) * 0.018;
+        final tiltValue = breath +
+            (thinking ? math.sin(tilt.value * 2 * math.pi) * 0.085 : 0.0);
         return RepaintBoundary(
           child: CustomPaint(
             size: const Size(92, 118),

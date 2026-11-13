@@ -6,7 +6,8 @@ void main() {
       (WidgetTester tester) async {
     await tester.pumpWidget(const SeegaGame());
     // شاشة البداية: عنوان "السيجا السودانية" بظل أحمر صلب.
-    expect(find.text('السيجا السودانية'), findsOneWidget);
+    // v5: العنوان مرسوم بـ CartoonText في 3 طبقات (ظل + حد + تعبئة).
+    expect(find.text('السيجا السودانية'), findsNWidgets(3));
     await tester.pump(const Duration(milliseconds: 2600));
     await tester.pump(const Duration(milliseconds: 500));
     await tester.pump(const Duration(milliseconds: 500));

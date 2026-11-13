@@ -416,7 +416,7 @@ class _BoardMini extends StatelessWidget {
                 color: SudaneseTheme.earthBlack.withValues(
                     alpha: selected ? 0.22 : 0.10),
                 blurRadius: selected ? 11 : 5,
-                offset: const Offset(0, selected ? 4 : 3),
+                offset: Offset(0, selected ? 4 : 3),
               ),
               if (selected)
                 BoxShadow(

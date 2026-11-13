@@ -453,17 +453,53 @@ class _DemoBoardState extends State<_DemoBoard> {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final side = math.min(
-            math.min(constraints.maxWidth, constraints.maxHeight), 300.0);
+        // Reserve room for the carved wooden surround so the complete
+        // board remains inside the available space on short screens.
+        final available = math.min(constraints.maxWidth, constraints.maxHeight);
+        final side = math.max(0.0, math.min(available - 16, 300.0));
         final cell = (side - 16) / 5;
         final pebblePx = cell * 0.72;
         return GestureDetector(
           onTap: widget.onTap,
-          child: SizedBox(
-            width: side,
-            height: side,
-            child: Stack(
-              children: [
+          child: Container(
+            width: side + 16,
+            height: side + 16,
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color(0xFF9A6538),
+                  Color(0xFF5B351F),
+                  Color(0xFF3D2518),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(
+                color: SudaneseTheme.sunGold.withValues(alpha: 0.9),
+                width: 2,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: SudaneseTheme.earthBlack.withValues(alpha: 0.30),
+                  blurRadius: 16,
+                  offset: const Offset(0, 7),
+                ),
+                BoxShadow(
+                  color: SudaneseTheme.sunGold.withValues(alpha: 0.16),
+                  blurRadius: 7,
+                  spreadRadius: 1,
+                ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(13),
+              child: SizedBox(
+                width: side,
+                height: side,
+                child: Stack(
+                  children: [
                 RepaintBoundary(
                   child: CustomPaint(
                     size: Size(side, side),
@@ -492,7 +528,9 @@ class _DemoBoardState extends State<_DemoBoard> {
                       ),
                     ),
                   ),
-              ],
+                  ],
+                ),
+              ),
             ),
           ),
         );

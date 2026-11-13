@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 360" width="320" height="360">
+  <!-- الأستاذ (الوجه الأوسط) — عمامة بيضاء، نظارة دائرية، لحية قصيرة، جلباب أبيض -->
+  <defs>
+    <linearGradient id="thobeShade" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#D9CBA9"/>
+      <stop offset="0.18" stop-color="#F3EDD9"/>
+      <stop offset="0.62" stop-color="#FBF7EA"/>
+      <stop offset="1" stop-color="#D6C7A4"/>
+    </linearGradient>
+    <linearGradient id="turbanShade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFDF4"/>
+      <stop offset="0.6" stop-color="#F4EFE0"/>
+      <stop offset="1" stop-color="#D9CCAC"/>
+    </linearGradient>
+  </defs>
+
+  <!-- الجلباب / الكتفان -->
+  <path d="M36,360 L44,296 C52,262 96,244 160,244 C224,244 268,262 276,296 L284,360 Z" fill="url(#thobeShade)"/>
+  <path d="M160,244 C142,246 126,252 116,262 L132,286 L160,268 Z" fill="#FFFFFF" opacity="0.85"/>
+  <path d="M160,244 C178,246 194,252 204,262 L188,286 L160,268 Z" fill="#EFE7D2" opacity="0.9"/>
+  <!-- ياقة وفتحة الصدر -->
+  <path d="M160,246 L142,272 L160,282 L178,272 Z" fill="#E6DCC0"/>
+  <path d="M160,246 L146,270 L160,277 L174,270 Z" fill="#FBF7EA"/>
+  <path d="M134,222 C140,244 150,254 160,254 C170,254 180,244 186,222 L174,219 C169,233 165,239 160,239 C155,239 151,233 146,219 Z" fill="#F3ECD9"/>
+  <line x1="160" y1="278" x2="160" y2="360" stroke="#CBBB99" stroke-width="2" opacity="0.75"/>
+  <circle cx="160" cy="300" r="2.6" fill="#CBBF9E"/>
+  <circle cx="160" cy="322" r="2.6" fill="#CBBF9E"/>
+  <!-- ثنيات الأكمام -->
+  <path d="M70,276 C64,300 62,330 63,360" stroke="#CBBB99" stroke-width="2.2" fill="none" opacity="0.6"/>
+  <path d="M250,276 C256,300 258,330 257,360" stroke="#CBBB99" stroke-width="2.2" fill="none" opacity="0.6"/>
+  <path d="M92,262 C86,290 84,326 85,360" stroke="#D2C4A3" stroke-width="1.8" fill="none" opacity="0.5"/>
+  <path d="M228,262 C234,290 236,326 235,360" stroke="#D2C4A3" stroke-width="1.8" fill="none" opacity="0.5"/>
+
+  <!-- الرقبة -->
+  <path d="M138,198 h44 v40 h-44 Z" fill="#7A4527"/>
+  <path d="M138,198 h44 v12 h-44 Z" fill="#5E3319"/>
+
+  <!-- الرأس -->
+  <path d="M160,84 C197,84 213,110 213,142 C213,180 190,210 160,210 C130,210 107,180 107,142 C107,110 123,84 160,84 Z" fill="#8C5733"/>
+  <!-- ظل جانبي للرأس -->
+  <path d="M186,90 C204,100 213,120 213,142 C213,180 190,210 160,210 C186,190 197,166 197,142 C197,120 193,102 186,90 Z" fill="#6E3F22" opacity="0.5"/>
+  <!-- الأذنان -->
+  <ellipse cx="107" cy="148" rx="6.5" ry="10" fill="#8C5733"/>
+  <ellipse cx="213" cy="148" rx="6.5" ry="10" fill="#8C5733"/>
+
+  <!-- العمامة -->
+  <path d="M104,104 C96,58 120,26 160,26 C200,26 224,58 216,104 C196,118 124,118 104,104 Z" fill="url(#turbanShade)"/>
+  <path d="M104,104 C124,116 196,116 216,104 C216,110 214,116 210,120 C186,130 134,130 110,120 C106,116 104,110 104,104 Z" fill="#E4D8B9"/>
+  <path d="M110,88 C132,100 188,100 210,88" stroke="#CFBF9C" stroke-width="2.4" fill="none" opacity="0.85"/>
+  <path d="M107,74 C130,88 190,88 213,74" stroke="#D6C7A6" stroke-width="2.2" fill="none" opacity="0.7"/>
+  <path d="M120,58 C138,70 184,70 202,58" stroke="#DCCFAF" stroke-width="2" fill="none" opacity="0.55"/>
+  <path d="M132,42 C146,52 176,52 190,42" stroke="#E4D8B9" stroke-width="1.8" fill="none" opacity="0.45"/>
+  <!-- ظل العمامة على الجبهة -->
+  <path d="M110,112 C130,124 190,124 210,112 C208,126 190,134 160,134 C130,134 112,126 110,112 Z" fill="#6E3F22" opacity="0.22"/>
+
+  <!-- الحاجبان -->
+  <path d="M126,126 C133,121 145,121 152,126" stroke="#3A2418" stroke-width="3.4" fill="none" stroke-linecap="round"/>
+  <path d="M168,126 C175,121 187,121 194,126" stroke="#3A2418" stroke-width="3.4" fill="none" stroke-linecap="round"/>
+
+  <!-- النظارة -->
+  <circle cx="139" cy="142" r="17" fill="#FFFDF6" opacity="0.16"/>
+  <circle cx="181" cy="142" r="17" fill="#FFFDF6" opacity="0.16"/>
+  <circle cx="139" cy="142" r="17" fill="none" stroke="#3A2418" stroke-width="3.4"/>
+  <circle cx="181" cy="142" r="17" fill="none" stroke="#3A2418" stroke-width="3.4"/>
+  <path d="M156,141 C159,138 161,138 164,141" stroke="#3A2418" stroke-width="3.4" fill="none"/>
+  <path d="M122,139 L112,134" stroke="#3A2418" stroke-width="3.2" stroke-linecap="round"/>
+  <path d="M198,139 L208,134" stroke="#3A2418" stroke-width="3.2" stroke-linecap="round"/>
+  <!-- انعكاس في العدسة -->
+  <path d="M130,134 C133,130 138,129 141,131" stroke="#FFFFFF" stroke-width="3" fill="none" opacity="0.75" stroke-linecap="round"/>
+  <path d="M172,134 C175,130 180,129 183,131" stroke="#FFFFFF" stroke-width="3" fill="none" opacity="0.75" stroke-linecap="round"/>
+
+  <!-- العينان -->
+  <ellipse cx="139" cy="142" rx="4.4" ry="5" fill="#241609"/>
+  <ellipse cx="181" cy="142" rx="4.4" ry="5" fill="#241609"/>
+  <circle cx="140.5" cy="140" r="1.5" fill="#FFFFFF" opacity="0.9"/>
+  <circle cx="182.5" cy="140" r="1.5" fill="#FFFFFF" opacity="0.9"/>
+
+  <!-- الأنف -->
+  <path d="M158,150 C155,160 155,163 161,163" stroke="#5E3319" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+
+  <!-- اللحية القصيرة (على الفك والذقن) -->
+  <path d="M150,168 C149,180 154,190 160,190 C166,190 171,180 170,168 C166,174 154,174 150,168 Z" fill="#33200F"/>
+  <!-- الشارب -->
+  <path d="M146,163 C150,159 155,159 160,161 C165,159 170,159 174,163 C170,167 150,167 146,163 Z" fill="#241609"/>
+
+</svg>

@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 240" width="340" height="240">
+  <defs>
+    <linearGradient id="clay" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#D2793F"/>
+      <stop offset="0.55" stop-color="#B85A2C"/>
+      <stop offset="1" stop-color="#8E4220"/>
+    </linearGradient>
+  </defs>
+  <ellipse cx="170" cy="224" rx="150" ry="16" fill="#000000" opacity="0.22"/>
+  <!-- جسم الصحن -->
+  <path d="M14,92 C14,180 74,226 170,226 C266,226 326,180 326,92 Z" fill="url(#clay)"/>
+  <!-- الفتحة -->
+  <ellipse cx="170" cy="92" rx="156" ry="46" fill="#3A2418"/>
+  <ellipse cx="170" cy="96" rx="146" ry="38" fill="#2A1A10"/>
+  <!-- الحصى داخل الصحن -->
+  <g>
+    <circle cx="86" cy="82" r="24" fill="#3B4FA0"/>
+    <circle cx="132" cy="72" r="24" fill="#3B4FA0"/>
+    <circle cx="178" cy="78" r="24" fill="#3B4FA0"/>
+    <circle cx="222" cy="86" r="24" fill="#3B4FA0"/>
+    <circle cx="110" cy="62" r="22" fill="#4A63C0"/>
+    <circle cx="156" cy="56" r="22" fill="#4A63C0"/>
+    <circle cx="200" cy="62" r="22" fill="#4A63C0"/>
+    <circle cx="76" cy="66" r="19" fill="#2E3F86"/>
+    <circle cx="238" cy="70" r="19" fill="#2E3F86"/>
+    <circle cx="142" cy="42" r="17" fill="#5E76C6"/>
+    <circle cx="186" cy="44" r="17" fill="#5E76C6"/>
+  </g>
+  <!-- شريط الغرزة -->
+  <path d="M44,140 C74,158 116,166 170,166 C224,166 266,158 296,140" stroke="#F3E2C8" stroke-width="7"
+        stroke-dasharray="14 12" fill="none" stroke-linecap="round"/>
+  <path d="M34,104 C50,120 70,130 96,136" stroke="#7E3418" stroke-width="4" fill="none" opacity="0.5" stroke-linecap="round"/>
+  <!-- حافة الصحن -->
+  <path d="M14,92 C14,180 74,226 170,226 C266,226 326,180 326,92" stroke="#6E3216" stroke-width="5" fill="none" opacity="0.65"/>
+  <ellipse cx="170" cy="92" rx="156" ry="46" fill="none" stroke="#6E3216" stroke-width="5" opacity="0.8"/>
+</svg>

@@ -16,8 +16,10 @@ import '../ui/painters/mat.dart';
 import '../ui/painters/pebble.dart';
 import '../ui/painters/wall.dart';
 import '../ui/sheets.dart';
+import '../ui/widgets/character_art.dart';
 import '../ui/widgets/plank_button.dart';
 import '../ui/widgets/wood_token.dart';
+import 'gallery_screen.dart';
 import 'setup_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -136,16 +138,15 @@ class _HomeScreenState extends State<HomeScreen>
                         onPressed: () => showSettingsSheet(context, s),
                       ),
                     ),
-                    // الشيخ في الباب.
+                    // الأستاذ جالساً في فم الباب.
                     Positioned(
-                      bottom: wallH * 0.10,
-                      left: (size.width - 100) / 2,
+                      bottom: -wallH * 0.05,
+                      left: (size.width - 150) / 2,
                       child: const RepaintBoundary(
-                        child: CustomPaint(
-                          size: Size(100, 130),
-                          painter: ElderPainter(
-                            kind: ElderKind.elder,
-                          ),
+                        child: CharacterArt(
+                          kind: ElderKind.teacher,
+                          seated: true,
+                          height: 168,
                         ),
                       ),
                     ),
@@ -212,6 +213,19 @@ class _HomeScreenState extends State<HomeScreen>
                               _FooterLink(
                                 label: s.aboutGame,
                                 onTap: () => showAboutSheet(context, s),
+                              ),
+                              Text(' · ',
+                                  style: SudaneseTheme.bodyBold),
+                              _FooterLink(
+                                label: s.gallery,
+                                onTap: () {
+                                  SoundManager.instance.tap();
+                                  Navigator.of(context).push(
+                                    FadeSlidePageRoute(
+                                      builder: (_) => const GalleryScreen(),
+                                    ),
+                                  );
+                                },
                               ),
                               Text(' · ',
                                   style: SudaneseTheme.bodyBold),

@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 420" width="300" height="420">
+  <defs>
+    <linearGradient id="inner" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2A1A10"/>
+      <stop offset="1" stop-color="#43291A"/>
+    </linearGradient>
+  </defs>
+  <!-- ظل الكوّة على الجدار -->
+  <path d="M150,20 C216,20 268,80 268,152 L268,360 C268,392 244,406 214,406 L86,406 C56,406 32,392 32,360 L32,152 C32,80 84,20 150,20 Z"
+        fill="#000000" opacity="0.20" transform="translate(-16,14)"/>
+  <!-- الفتحة -->
+  <path d="M150,20 C216,20 268,80 268,152 L268,360 C268,392 244,406 214,406 L86,406 C56,406 32,392 32,360 L32,152 C32,80 84,20 150,20 Z"
+        fill="url(#inner)"/>
+  <!-- الإطار الذهبي -->
+  <path d="M150,20 C216,20 268,80 268,152 L268,360 C268,392 244,406 214,406 L86,406 C56,406 32,392 32,360 L32,152 C32,80 84,20 150,20 Z"
+        fill="none" stroke="#D8A93C" stroke-width="7"/>
+  <path d="M150,34 C206,34 252,88 252,154 L252,352 C252,378 234,392 208,392 L92,392 C66,392 48,378 48,352 L48,154 C48,88 94,34 150,34 Z"
+        fill="none" stroke="#8A6524" stroke-width="3" opacity="0.85"/>
+  <!-- قاعدة الكوّة -->
+  <rect x="34" y="392" width="232" height="16" rx="8" fill="#8A6524"/>
+  <rect x="46" y="402" width="208" height="10" rx="5" fill="#5E3F14"/>
+</svg>

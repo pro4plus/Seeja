@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 360" width="320" height="360">
+  <!-- الشيخ (older man) — عمامة بيضاء كبيرة، لحية بيضاء طويلة، سترتانMustard فوق الجلباب، تجاعيد -->
+  <defs>
+    <linearGradient id="thobeShadeS" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#DCCFB2"/>
+      <stop offset="0.2" stop-color="#F5F0DF"/>
+      <stop offset="0.64" stop-color="#FBF7EA"/>
+      <stop offset="1" stop-color="#D8C9A6"/>
+    </linearGradient>
+    <linearGradient id="vestS" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#A87B3C"/>
+      <stop offset="0.5" stop-color="#C99A56"/>
+      <stop offset="1" stop-color="#9A6E33"/>
+    </linearGradient>
+    <linearGradient id="turbanShadeS" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFDF5"/>
+      <stop offset="0.62" stop-color="#F2ECDD"/>
+      <stop offset="1" stop-color="#D5C8A8"/>
+    </linearGradient>
+    <linearGradient id="beardS" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFCF2"/>
+      <stop offset="1" stop-color="#DCD0B4"/>
+    </linearGradient>
+  </defs>
+
+  <!-- الجلباب -->
+  <path d="M36,360 L44,296 C52,262 96,244 160,244 C224,244 268,262 276,296 L284,360 Z" fill="url(#thobeShadeS)"/>
+  <!-- السترتان (فستان جلدي) -->
+  <path d="M36,360 L44,296 C52,262 96,244 160,244 L160,252 C104,252 66,268 58,298 L52,360 Z" fill="url(#vestS)"/>
+  <path d="M284,360 L276,296 C268,262 224,244 160,244 L160,252 C216,252 254,268 262,298 L268,360 Z" fill="url(#vestS)"/>
+  <path d="M44,296 C52,262 96,244 160,244" stroke="#7E5626" stroke-width="2" fill="none" opacity="0.5"/>
+  <path d="M276,296 C268,262 224,244 160,244" stroke="#7E5626" stroke-width="2" fill="none" opacity="0.5"/>
+  <path d="M74,278 C68,302 66,332 67,360" stroke="#B98C48" stroke-width="2" fill="none" opacity="0.6"/>
+  <path d="M246,278 C252,302 254,332 253,360" stroke="#B98C48" stroke-width="2" fill="none" opacity="0.6"/>
+
+  <!-- الرقبة -->
+  <path d="M140,194 h40 v46 h-40 Z" fill="#6E3F22"/>
+
+  <!-- الرأس (نحيل، متجعد) -->
+  <path d="M160,88 C193,88 208,112 208,144 C208,180 187,206 160,206 C133,206 112,180 112,144 C112,112 127,88 160,88 Z" fill="#8C5733"/>
+  <path d="M186,94 C202,104 208,122 208,144 C208,180 187,206 160,206 C184,187 194,164 194,144 C194,122 191,106 186,94 Z" fill="#6E3F22" opacity="0.42"/>
+  <ellipse cx="112" cy="148" rx="6.5" ry="10" fill="#8C5733"/>
+  <ellipse cx="208" cy="148" rx="6.5" ry="10" fill="#8C5733"/>
+
+  <!-- العمامة الكبيرة -->
+  <path d="M99,108 C93,72 120,42 160,42 C200,42 227,72 221,108 C201,122 119,122 99,108 Z" fill="url(#turbanShadeS)"/>
+  <path d="M99,108 C119,122 201,122 221,108 C222,114 220,120 216,124 C192,134 128,134 104,124 C100,120 98,114 99,108 Z" fill="#E2D6B7"/>
+  <path d="M106,94 C128,108 192,108 214,94" stroke="#CBB894" stroke-width="2.6" fill="none" opacity="0.9"/>
+  <path d="M103,80 C128,96 192,96 217,80" stroke="#D8C9A7" stroke-width="2.4" fill="none" opacity="0.75"/>
+  <path d="M114,64 C134,78 186,78 206,64" stroke="#DED0AF" stroke-width="2.2" fill="none" opacity="0.6"/>
+  <path d="M128,50 C144,62 176,62 192,50" stroke="#E6D9BA" stroke-width="2" fill="none" opacity="0.5"/>
+  <path d="M105,116 C127,129 193,129 215,116 C213,130 192,138 160,138 C128,138 107,130 105,116 Z" fill="#6E3F22" opacity="0.2"/>
+
+  <!-- تجاعيد الجبهة -->
+  <path d="M126,122 C136,118 148,118 156,122" stroke="#5E3319" stroke-width="2" fill="none" opacity="0.7" stroke-linecap="round"/>
+  <path d="M164,122 C172,118 184,118 192,122" stroke="#5E3319" stroke-width="2" fill="none" opacity="0.7" stroke-linecap="round"/>
+  <path d="M132,112 C142,109 152,109 158,112" stroke="#5E3319" stroke-width="1.6" fill="none" opacity="0.5" stroke-linecap="round"/>
+  <path d="M162,112 C168,109 178,109 188,112" stroke="#5E3319" stroke-width="1.6" fill="none" opacity="0.5" stroke-linecap="round"/>
+
+  <!-- الحاجبان الرماديان -->
+  <path d="M126,130 C133,124 145,124 152,130" stroke="#D8D0BE" stroke-width="3.6" fill="none" stroke-linecap="round"/>
+  <path d="M168,130 C175,124 187,124 194,130" stroke="#D8D0BE" stroke-width="3.6" fill="none" stroke-linecap="round"/>
+
+  <!-- العينان -->
+  <ellipse cx="139" cy="145" rx="4.6" ry="5" fill="#241609"/>
+  <ellipse cx="181" cy="145" rx="4.6" ry="5" fill="#241609"/>
+  <circle cx="140.6" cy="143" r="1.4" fill="#FFFFFF" opacity="0.85"/>
+  <circle cx="182.6" cy="143" r="1.4" fill="#FFFFFF" opacity="0.85"/>
+  <!-- خطوط عين الشيخ -->
+  <path d="M128,136 C134,133 144,133 150,136" stroke="#5E3319" stroke-width="1.6" fill="none" opacity="0.7"/>
+  <path d="M170,136 C176,133 186,133 192,136" stroke="#5E3319" stroke-width="1.6" fill="none" opacity="0.7"/>
+
+  <!-- الأنف -->
+  <path d="M158,152 C155,163 156,166 162,166" stroke="#5E3319" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+
+  <!-- اللحية البيضاء الطويلة -->
+  <path d="M113,142 C110,192 128,242 160,242 C192,242 210,192 207,142 C199,162 182,171 160,171 C138,171 121,162 113,142 Z" fill="url(#beardS)"/>
+  <path d="M113,142 C110,192 128,242 160,242 C192,242 210,192 207,142 C203,156 196,166 188,172 C178,180 168,182 160,180 C150,182 140,180 130,172 C122,166 117,156 113,142 Z" fill="#FFFFFF" opacity="0.5"/>
+  <path d="M138,180 C136,204 140,224 146,236" stroke="#CBB894" stroke-width="1.8" fill="none" opacity="0.75"/>
+  <path d="M160,180 C160,204 160,224 160,238" stroke="#CBB894" stroke-width="1.8" fill="none" opacity="0.75"/>
+  <path d="M182,180 C184,204 180,224 174,236" stroke="#CBB894" stroke-width="1.8" fill="none" opacity="0.75"/>
+  <!-- عرق اللحية الجانبي -->
+  <path d="M124,158 C128,176 134,192 142,206" stroke="#E4D9BC" stroke-width="1.6" fill="none" opacity="0.7"/>
+  <path d="M196,158 C192,176 186,192 178,206" stroke="#E4D9BC" stroke-width="1.6" fill="none" opacity="0.7"/>
+</svg>

@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 460 380" width="460" height="380">
+  <!-- الأستاذ جالساً (كما في شاشة اللعب): عمامة، نظارة، لحية، جلباب أبيض، رجلان متقاطعتان -->
+  <defs>
+    <linearGradient id="sThobe" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#E2D4B6"/>
+      <stop offset="0.22" stop-color="#F8F3E3"/>
+      <stop offset="0.6" stop-color="#FFFBEE"/>
+      <stop offset="1" stop-color="#DCCEB0"/>
+    </linearGradient>
+    <linearGradient id="sTurban" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFDF6"/>
+      <stop offset="0.65" stop-color="#F3EDDE"/>
+      <stop offset="1" stop-color="#DCCFB0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- الظل الأرضي -->
+  <ellipse cx="230" cy="352" rx="180" ry="20" fill="#3A2418" opacity="0.16"/>
+
+  <!-- الرجلان المتقاطعتان (أسفل) -->
+  <path d="M96,330 C104,296 150,282 200,286 C232,288 250,300 252,314 C254,330 236,340 200,344 C160,348 108,346 96,330 Z" fill="url(#sThobe)"/>
+  <path d="M364,330 C356,296 310,282 260,286 C228,288 210,300 208,314 C206,330 224,340 260,344 C300,348 352,346 364,330 Z" fill="url(#sThobe)"/>
+  <path d="M96,330 C110,318 150,308 200,310" stroke="#CBB894" stroke-width="2" fill="none" opacity="0.6"/>
+  <path d="M364,330 C350,318 310,308 260,310" stroke="#CBB894" stroke-width="2" fill="none" opacity="0.6"/>
+
+  <!-- الجلباب / الجذع -->
+  <path d="M150,258 C152,214 172,186 230,186 C288,186 308,214 310,258 L312,300 C312,312 300,318 230,318 C160,318 148,312 148,300 Z" fill="url(#sThobe)"/>
+  <!-- فتحة الصدر -->
+  <path d="M230,190 L212,222 L230,234 L248,222 Z" fill="#E9E0C6"/>
+  <path d="M230,190 L216,218 L230,226 L244,218 Z" fill="#FFFBEE"/>
+  <line x1="230" y1="232" x2="230" y2="300" stroke="#CBB894" stroke-width="2" opacity="0.6"/>
+
+  <!-- الأكمام واليدان -->
+  <path d="M150,258 C136,270 128,292 130,312 C132,328 148,336 168,334 C186,332 196,320 196,306 C196,288 180,268 150,258 Z" fill="#F7F1E0"/>
+  <path d="M310,258 C324,270 332,292 330,312 C328,328 312,336 292,334 C274,332 264,320 264,306 C264,288 280,268 310,258 Z" fill="#EDE5CF"/>
+  <!-- اليدان فوق الركبة -->
+  <ellipse cx="196" cy="310" rx="26" ry="17" fill="#8C5733"/>
+  <ellipse cx="264" cy="310" rx="26" ry="17" fill="#7A4527"/>
+  <path d="M180,304 C186,300 200,300 206,305" stroke="#6E3F22" stroke-width="2" fill="none" opacity="0.6"/>
+  <path d="M252,305 C258,300 270,300 276,304" stroke="#5E3319" stroke-width="2" fill="none" opacity="0.6"/>
+
+  <!-- الرقبة -->
+  <path d="M208,162 h44 v40 h-44 Z" fill="#7A4527"/>
+  <path d="M208,162 h44 v13 h-44 Z" fill="#5E3319"/>
+
+  <!-- الرأس -->
+  <path d="M230,96 C266,96 282,122 282,152 C282,190 259,220 230,220 C201,220 178,190 178,152 C178,122 194,96 230,96 Z" fill="#8C5733"/>
+  <path d="M256,102 C272,112 282,132 282,152 C282,190 259,220 230,220 C254,200 266,176 266,152 C266,132 262,114 256,102 Z" fill="#6E3F22" opacity="0.42"/>
+
+  <!-- العمامة -->
+  <path d="M174,116 C166,64 192,28 230,28 C268,28 294,64 286,116 C264,132 196,132 174,116 Z" fill="url(#sTurban)"/>
+  <path d="M174,116 C196,132 264,132 286,116 C287,123 284,130 280,134 C256,146 204,146 180,134 C176,130 173,123 174,116 Z" fill="#E4D8B9"/>
+  <path d="M179,96 C200,114 260,114 281,96" stroke="#CBB894" stroke-width="2.6" fill="none" opacity="0.9"/>
+  <path d="M176,78 C200,98 260,98 284,78" stroke="#D8C9A7" stroke-width="2.4" fill="none" opacity="0.7"/>
+  <path d="M186,58 C206,76 254,76 274,58" stroke="#DED0AF" stroke-width="2.2" fill="none" opacity="0.6"/>
+  <path d="M180,126 C200,140 260,140 280,126 C278,142 258,150 230,150 C202,150 182,142 180,126 Z" fill="#6E3F22" opacity="0.2"/>
+
+  <!-- الحاجبان -->
+  <path d="M198,140 C205,135 217,135 223,140" stroke="#3A2418" stroke-width="3.4" fill="none" stroke-linecap="round"/>
+  <path d="M237,140 C244,135 256,135 262,140" stroke="#3A2418" stroke-width="3.4" fill="none" stroke-linecap="round"/>
+
+  <!-- النظارة -->
+  <circle cx="210" cy="156" r="17" fill="#FFFDF6" opacity="0.16"/>
+  <circle cx="250" cy="156" r="17" fill="#FFFDF6" opacity="0.16"/>
+  <circle cx="210" cy="156" r="17" fill="none" stroke="#3A2418" stroke-width="3.4"/>
+  <circle cx="250" cy="156" r="17" fill="none" stroke="#3A2418" stroke-width="3.4"/>
+  <path d="M227,155 C230,152 232,152 233,155" stroke="#3A2418" stroke-width="3.4" fill="none"/>
+  <path d="M193,153 L184,149" stroke="#3A2418" stroke-width="3.2" stroke-linecap="round"/>
+  <path d="M267,153 L276,149" stroke="#3A2418" stroke-width="3.2" stroke-linecap="round"/>
+  <path d="M201,148 C204,144 209,143 212,145" stroke="#FFFFFF" stroke-width="3" fill="none" opacity="0.75" stroke-linecap="round"/>
+  <path d="M241,148 C244,144 249,143 252,145" stroke="#FFFFFF" stroke-width="3" fill="none" opacity="0.75" stroke-linecap="round"/>
+
+  <!-- العينان -->
+  <ellipse cx="210" cy="156" rx="4.4" ry="5" fill="#241609"/>
+  <ellipse cx="250" cy="156" rx="4.4" ry="5" fill="#241609"/>
+  <circle cx="211.5" cy="154" r="1.5" fill="#FFFFFF" opacity="0.9"/>
+  <circle cx="251.5" cy="154" r="1.5" fill="#FFFFFF" opacity="0.9"/>
+
+  <!-- الأنف -->
+  <path d="M228,164 C225,174 226,177 232,177" stroke="#5E3319" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+
+  <!-- اللحية والشارب -->
+  <path d="M212,184 C219,180 241,180 248,184 C245,198 238,206 230,206 C222,206 215,198 212,184 Z" fill="#3A2418"/>
+  <path d="M212,184 C219,180 241,180 248,184 C245,192 241,197 237,200 C232,192 228,192 223,199 C219,196 215,191 212,184 Z" fill="#2A1A10"/>
+  <path d="M222,200 C226,206 234,206 238,200 C238,210 235,215 230,215 C225,215 222,210 222,200 Z" fill="#3A2418"/>
+</svg>

@@ -99,24 +99,31 @@ class _SplashScreenState extends State<SplashScreen>
                 right: 0,
                 child: Column(
                   children: [
-                    ClipRect(
-                      child: Align(
-                        alignment: Alignment.centerRight,
-                        widthFactor:
-                            titleReveal.clamp(0.01, 1.0),
-                        child: Text(
-                          strings.appTitle,
-                          style: SudaneseTheme.display.copyWith(
-                            fontSize: 64,
-                            color: SudaneseTheme.indigo,
-                            shadows: const [
-                              Shadow(
-                                color: SudaneseTheme.tabaqRed,
-                                offset: Offset(3, 4),
+                    // العنوان يُرسم مسحاً من اليمين (RTL) دون أن يفيض.
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: ClipRect(
+                        child: Align(
+                          alignment: Alignment.centerRight,
+                          widthFactor:
+                              titleReveal.clamp(0.01, 1.0),
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              strings.appTitle,
+                              style: SudaneseTheme.display.copyWith(
+                                fontSize: 60,
+                                color: SudaneseTheme.indigo,
+                                shadows: const [
+                                  Shadow(
+                                    color: SudaneseTheme.tabaqRed,
+                                    offset: Offset(3, 4),
+                                  ),
+                                ],
                               ),
-                            ],
+                              textAlign: TextAlign.center,
+                            ),
                           ),
-                          textAlign: TextAlign.center,
                         ),
                       ),
                     ),

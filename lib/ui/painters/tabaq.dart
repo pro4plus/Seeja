@@ -164,6 +164,118 @@ void paintTabaq(Canvas canvas, Rect rect, {double rotation = 0}) {
   canvas.restore();
 }
 
+
+/// حلقة مربعات صغيرة (نمط المرجع: تيباق موزاييك).
+void paintSquareRing(
+  Canvas canvas,
+  Offset center,
+  double radius,
+  Color color,
+  int count,
+  double size,
+) {
+  final paint = Paint()..color = color;
+  final step = 2 * math.pi / count;
+  for (var i = 0; i < count; i++) {
+    final a = i * step;
+    final c = center + Offset(math.cos(a) * radius, math.sin(a) * radius);
+    canvas.save();
+    canvas.translate(c.dx, c.dy);
+    canvas.rotate(a + math.pi / 2);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromCenter(center: Offset.zero, width: size, height: size),
+        Radius.circular(size * 0.18),
+      ),
+      paint,
+    );
+    canvas.restore();
+  }
+}
+
+/// طبق المرجع الأول: حلقات مربعات ملوّنة ومركز أحمر داكن.
+void paintPlateRings(Canvas canvas, Rect rect) {
+  final center = rect.center;
+  final r = math.min(rect.width, rect.height) / 2;
+  canvas.drawCircle(center, r, Paint()..color = SudaneseTheme.straw);
+  for (final (rad, color, count, size) in [
+    (0.886, SudaneseTheme.tabaqRed, 34, 0.10),
+    (0.757, SudaneseTheme.palmGreen, 30, 0.086),
+    (0.629, SudaneseTheme.earthBlack, 26, 0.071),
+    (0.500, const Color(0xFFD8B96F), 22, 0.064),
+  ]) {
+    paintSquareRing(canvas, center, r * rad, color, count, r * size);
+  }
+  canvas.drawCircle(center, r * 0.357, Paint()..color = const Color(0xFF8E1F19));
+  canvas.drawCircle(
+    center,
+    r * 0.357,
+    Paint()
+      ..color = const Color(0xFF5E130F)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = r * 0.03,
+  );
+  canvas.drawCircle(
+    center,
+    r * 0.96,
+    Paint()
+      ..color = SudaneseTheme.earthBlack
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = r * 0.07,
+  );
+}
+
+/// طبق المرجع الثاني: نجمة ثمانية ذهبية على أرضية بنية.
+void paintPlateStar(Canvas canvas, Rect rect) {
+  final center = rect.center;
+  final r = math.min(rect.width, rect.height) / 2;
+  canvas.drawCircle(center, r, Paint()..color = const Color(0xFF8B5A28));
+  canvas.drawCircle(
+    center,
+    r * 0.80,
+    Paint()
+      ..color = const Color(0xFF6E3F1E)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = r * 0.06,
+  );
+  for (var i = 0; i < 36; i++) {
+    final a = i * 2 * math.pi / 36;
+    canvas.drawCircle(
+      center + Offset(math.cos(a) * r * 0.87, math.sin(a) * r * 0.87),
+      r * 0.036,
+      Paint()..color = const Color(0xFFC9A25A),
+    );
+  }
+  final star = Path();
+  for (var i = 0; i < 16; i++) {
+    final rad = i.isEven ? r * 0.74 : r * 0.37;
+    final a = -math.pi / 2 + i * math.pi / 8;
+    final pt = center + Offset(math.cos(a) * rad, math.sin(a) * rad);
+    if (i == 0) {
+      star.moveTo(pt.dx, pt.dy);
+    } else {
+      star.lineTo(pt.dx, pt.dy);
+    }
+  }
+  star.close();
+  canvas.drawPath(star, Paint()..color = const Color(0xFFD9B168));
+  canvas.drawPath(
+    star,
+    Paint()
+      ..color = const Color(0xFF7A4A22)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = r * 0.03,
+  );
+  canvas.drawCircle(
+    center,
+    r * 0.96,
+    Paint()
+      ..color = const Color(0xFF3A2418)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = r * 0.07,
+  );
+}
+
 class TabaqPainter extends CustomPainter {
   final double rotation;
 

@@ -95,6 +95,7 @@ class Strings {
   String get playVsFriendCaption => isArabic
       ? 'تحدّ صديقك وجهاً لوجه'
       : 'Challenge a friend face to face';
+  String get gallery => isArabic ? 'معرض الرسومات' : 'Art gallery';
   String get tiktokLink => isArabic ? 'تيك توك @nubax' : 'TikTok @nubax';
   String get turnLineChoose => isArabic
       ? 'دورك: اختر حجراً ثم وجهته'

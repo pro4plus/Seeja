@@ -1,10 +1,13 @@
-// كوّة الخصم (§5.3 + لوحة التصميم): قوس داكن فيه الشخصية،
-// وتحتها بطاقة قش بالاسم والمستوى. المختارة مضيئة بإطار
-// ذهبي، والأخريات معتمة. عند الاختيار تومئ الشخصية برأسها.
+// كوّة الخصم: محراب خشبي مقوّس (من الرسومات الجاهزة) يتوسّطه
+// رسم الخصم، وتحته لوحة خشبية داكنة بالاسم والمستوى.
+// المختارة تُطلَّل بإطار ذهبي، والأخريات معتمة، وتومئ الشخصية
+// برأسها عند الاختيار.
 import 'package:flutter/material.dart';
 
 import '../../theme/sudanese_theme.dart';
+import '../art/art_assets.dart';
 import '../painters/elder.dart';
+import 'character_art.dart';
 
 class OpponentNiche extends StatefulWidget {
   final ElderKind kind;
@@ -58,91 +61,80 @@ class _OpponentNicheState extends State<OpponentNiche>
     return GestureDetector(
       onTap: widget.onTap,
       child: Opacity(
-        opacity: widget.selected ? 1.0 : 0.72,
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: const BorderRadius.vertical(
-              top: Radius.circular(70),
-              bottom: Radius.circular(16),
-            ),
-            border: widget.selected
-                ? Border.all(color: SudaneseTheme.sunGold, width: 3)
-                : Border.all(color: Colors.transparent, width: 3),
-            boxShadow: widget.selected
-                ? [
-                    BoxShadow(
-                      color: SudaneseTheme.sunGold.withValues(alpha: 0.45),
-                      blurRadius: 16,
-                      spreadRadius: 2,
-                    ),
-                  ]
-                : null,
-          ),
-          child: ClipRRect(
-            borderRadius: const BorderRadius.vertical(
-              top: Radius.circular(67),
-              bottom: Radius.circular(13),
-            ),
-            child: Container(
-              color: widget.selected
-                  ? const Color(0xFF5A3A22)
-                  : const Color(0xFF3A2418),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
+        opacity: widget.selected ? 1.0 : 0.74,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // ---- المحراب ----
+            AspectRatio(
+              aspectRatio: 300 / 420,
+              child: Stack(
+                alignment: Alignment.center,
                 children: [
-                  const SizedBox(height: 10),
-                  AnimatedBuilder(
-                    animation: _nod,
-                    builder: (context, child) {
-                      final nod = _nod.value < 0.5
-                          ? _nod.value * 2
-                          : (1 - _nod.value) * 2;
-                      return RepaintBoundary(
-                        child: CustomPaint(
-                          size: const Size(78, 100),
-                          painter: ElderPainter(
-                            kind: widget.kind,
-                            tilt: nod * 0.12,
-                          ),
-                        ),
-                      );
-                    },
+                  Positioned.fill(
+                    child: ArtImage(
+                      widget.selected
+                          ? ArtAssets.nicheGold
+                          : ArtAssets.niche,
+                      fit: BoxFit.fill,
+                    ),
                   ),
-                  Container(
-                    width: double.infinity,
-                    color: SudaneseTheme.straw.withValues(alpha: 0.9),
-                    padding:
-                        const EdgeInsets.symmetric(vertical: 5),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Text(
-                            widget.name,
-                            style: SudaneseTheme.heading.copyWith(
-                              fontSize: 17,
-                              color: SudaneseTheme.ink,
-                            ),
-                          ),
-                        ),
-                        FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Text(
-                            widget.level,
-                            style: SudaneseTheme.caption.copyWith(
-                              color: SudaneseTheme.ink
-                                  .withValues(alpha: 0.75),
-                            ),
-                          ),
-                        ),
-                      ],
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 74),
+                    child: AnimatedBuilder(
+                      animation: _nod,
+                      builder: (context, child) {
+                        final nod = _nod.value < 0.5
+                            ? _nod.value * 2
+                            : (1 - _nod.value) * 2;
+                        return CharacterArt(
+                          kind: widget.kind,
+                          tilt: nod * 0.14,
+                          height: 104,
+                        );
+                      },
                     ),
                   ),
                 ],
               ),
             ),
-          ),
+            // ---- لوحة الاسم ----
+            Container(
+              width: double.infinity,
+              margin: const EdgeInsets.only(top: 2),
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              decoration: BoxDecoration(
+                color: const Color(0xFF3A2418),
+                borderRadius: BorderRadius.circular(10),
+                boxShadow: SudaneseTheme.hardShadow(),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      widget.name,
+                      style: SudaneseTheme.heading.copyWith(
+                        fontSize: 17,
+                        color: const Color(0xFFF3EAD2),
+                      ),
+                    ),
+                  ),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      widget.level,
+                      style: SudaneseTheme.caption.copyWith(
+                        fontSize: 13,
+                        color: const Color(0xFFE3C184),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );

@@ -1,3 +1,4 @@
+// حجر كرتوني: جسم ممتلئ بخط خارجي سميك، ظل خلية (cel-shade) ولمعة زجاجية.
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../theme/sudanese_theme.dart';
@@ -8,36 +9,52 @@ class PebblePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final cx = size.width / 2, cy = size.height / 2;
+    final c = Offset(size.width / 2, size.height / 2);
     final r = math.min(size.width, size.height) / 2;
-    final center = Offset(cx, cy);
-    canvas.drawOval(Rect.fromCenter(center: Offset(cx, cy + r * .72), width: r * 1.55, height: r * .42), Paint()..color = Colors.black.withValues(alpha: .32));
+    final body = r * 0.88;
+    final line = (r * 0.13).clamp(1.6, 4.0);
 
-    final pebble = Path();
-    const points = 12;
-    final radii = [0.88, .96, .91, .98, .90, .94, .87, .96, .91, .98, .89, .95];
-    for (var i = 0; i < points; i++) {
-      final a = -math.pi / 2 + i * math.pi * 2 / points;
-      final rr = r * radii[i];
-      final p = center + Offset(math.cos(a) * rr * (i.isEven ? 1.0 : .94), math.sin(a) * rr);
-      if (i == 0) {
-        pebble.moveTo(p.dx, p.dy);
-      } else {
-        pebble.lineTo(p.dx, p.dy);
-      }
-    }
-    pebble.close();
-    canvas.drawPath(pebble, Paint()..color = def.base);
+    // ظل التماس
+    canvas.drawOval(
+      Rect.fromCenter(center: c + Offset(0, r * 0.80), width: r * 1.5, height: r * 0.36),
+      Paint()..color = SudaneseTheme.earthBlack.withValues(alpha: 0.28),
+    );
+    // الجسم
+    final bodyRect = Rect.fromCenter(center: c, width: body * 2, height: body * 1.92);
+    canvas.drawOval(bodyRect, Paint()..color = def.base);
     canvas.save();
-    canvas.clipPath(pebble);
-    canvas.drawOval(Rect.fromCenter(center: center + Offset(-r * .24, -r * .28), width: r * 1.15, height: r * .95), Paint()..color = def.light.withValues(alpha: .52));
-    canvas.drawOval(Rect.fromCenter(center: center + Offset(r * .22, r * .48), width: r * 1.2, height: r * .62), Paint()..color = def.dark.withValues(alpha: .58));
+    canvas.clipPath(Path()..addOval(bodyRect));
+    // ظل سفلي (هلال)
+    canvas.drawOval(
+      Rect.fromCenter(center: c + Offset(r * 0.14, r * 0.46), width: body * 2.0, height: body * 1.3),
+      Paint()..color = def.dark.withValues(alpha: 0.85),
+    );
+    canvas.drawOval(
+      Rect.fromCenter(center: c + Offset(-r * 0.05, r * 0.30), width: body * 1.9, height: body * 1.3),
+      Paint()..color = def.base,
+    );
+    // وجه مضيء علوي
+    canvas.drawOval(
+      Rect.fromCenter(center: c + Offset(-r * 0.22, -r * 0.34), width: body * 1.15, height: body * 0.8),
+      Paint()..color = def.light.withValues(alpha: 0.9),
+    );
     canvas.restore();
-    canvas.drawPath(pebble, Paint()..color = def.dark.withValues(alpha: .65)..style = PaintingStyle.stroke..strokeWidth = 1.25);
-    canvas.drawOval(Rect.fromCenter(center: center + Offset(-r * .28, -r * .43), width: r * .42, height: r * .21), Paint()..color = Colors.white.withValues(alpha: .86));
-    canvas.drawCircle(center + Offset(-r * .1, -r * .12), r * .07, Paint()..color = Colors.white.withValues(alpha: .38));
+    // خط خارجي
+    canvas.drawOval(
+      bodyRect,
+      Paint()
+        ..color = SudaneseTheme.earthBlack
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = line,
+    );
+    // لمعتان
+    canvas.drawOval(
+      Rect.fromCenter(center: c + Offset(-r * 0.36, -r * 0.46), width: r * 0.46, height: r * 0.24),
+      Paint()..color = Colors.white.withValues(alpha: 0.95),
+    );
+    canvas.drawCircle(c + Offset(-r * 0.08, -r * 0.30), r * 0.07, Paint()..color = Colors.white.withValues(alpha: 0.9));
   }
 
   @override
-  bool shouldRepaint(covariant PebblePainter oldDelegate) => oldDelegate.def != def;
+  bool shouldRepaint(covariant PebblePainter old) => old.def != def;
 }

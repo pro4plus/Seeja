@@ -22,23 +22,23 @@ class PebbleDef {
 
 class SudaneseTheme {
   // ---- لوحة §5.1 ----
-  static const Color tabaqRed = Color(0xFFB3261E);
-  static const Color palmGreen = Color(0xFF1F6B3A);
-  static const Color dateOrange = Color(0xFFE58A1F);
+  static const Color tabaqRed = Color(0xFFE4493B);
+  static const Color palmGreen = Color(0xFF2FA85A);
+  static const Color dateOrange = Color(0xFFFF9A2E);
   static const Color hibiscus = Color(0xFFA3205F);
   static const Color indigo = Color(0xFF1D2A5B);
-  static const Color turquoise = Color(0xFF1AA3A8);
-  static const Color straw = Color(0xFFD9B36A);
-  static const Color cream = Color(0xFFF5E6C4);
+  static const Color turquoise = Color(0xFF22C1C3);
+  static const Color straw = Color(0xFFFFD27A);
+  static const Color cream = Color(0xFFFFF4DC);
   static const Color mudBrick = Color(0xFF8A5129);
   static const Color mudBrickDark = Color(0xFF6E3C1E);
   static const Color earthBlack = Color(0xFF1A1210);
-  static const Color sunGold = Color(0xFFF2C14E);
+  static const Color sunGold = Color(0xFFFFD23F);
 
   // ---- ألوان مساعدة ----
   static const Color ink = Color(0xFF2B1A12); // نص على الفاتح
-  static const Color whitewash = Color(0xFFF3EAD2); // الجدار المبيّض
-  static const Color sand = Color(0xFFE3C184); // لوحة الرمل
+  static const Color whitewash = Color(0xFFFFE9B8); // الجدار المبيّض
+  static const Color sand = Color(0xFFEFC475); // لوحة الرمل
   static const Color sandDark = Color(0xFFC9A15E);
   static const Color pitDark = Color(0xFF9A7438); // داخل الحفرة
   static const Color pitDeep = Color(0xFF7A5A2C);
@@ -155,11 +155,14 @@ class SudaneseTheme {
   /// ظل صلب منزاح (حرفة يدوية، لا ظل ناعم عام).
   static List<BoxShadow> hardShadow({Color color = earthBlack}) => [
         BoxShadow(
-          color: color.withValues(alpha: 0.35),
+          color: color.withValues(alpha: 0.45),
           blurRadius: 0,
-          offset: const Offset(0, 5),
+          offset: const Offset(0, 6),
         ),
       ];
+
+  /// خط الرسم الخارجي السميك المشترك لكل العناصر الكرتونية.
+  static const Color outline = Color(0xFF2B1A12);
 
   static ThemeData get theme {
     return ThemeData(
@@ -188,26 +191,33 @@ class SudaneseTheme {
   }
 }
 
-/// انتقال مشترك: تلاشٍ + انزلاق 24 بكسل (320ms, easeOutCubic).
+/// انتقال كرتوني مشترك: تكبير مطّاطي مع تلاشٍ (380ms، easeOutBack).
 class FadeSlidePageRoute<T> extends PageRouteBuilder<T> {
   FadeSlidePageRoute({required WidgetBuilder builder})
       : super(
-          transitionDuration: const Duration(milliseconds: 320),
-          reverseTransitionDuration: const Duration(milliseconds: 320),
+          transitionDuration: const Duration(milliseconds: 380),
+          reverseTransitionDuration: const Duration(milliseconds: 260),
           pageBuilder: (context, animation, secondaryAnimation) =>
               builder(context),
           transitionsBuilder:
               (context, animation, secondaryAnimation, child) {
-            final curved = CurvedAnimation(
-                parent: animation, curve: Curves.easeOutCubic);
+            final bounce = CurvedAnimation(
+                parent: animation,
+                curve: Curves.easeOutBack,
+                reverseCurve: Curves.easeInCubic);
+            final fade = CurvedAnimation(
+                parent: animation, curve: const Interval(0, 0.6));
             return FadeTransition(
-              opacity: curved,
-              child: SlideTransition(
-                position: Tween<Offset>(
-                  begin: const Offset(0, 0.06),
-                  end: Offset.zero,
-                ).animate(curved),
-                child: child,
+              opacity: fade,
+              child: ScaleTransition(
+                scale: Tween<double>(begin: 0.88, end: 1.0).animate(bounce),
+                child: SlideTransition(
+                  position: Tween<Offset>(
+                    begin: const Offset(0, 0.05),
+                    end: Offset.zero,
+                  ).animate(bounce),
+                  child: child,
+                ),
               ),
             );
           },

@@ -1,7 +1,6 @@
-// رسّام جدار الحوش (§5.2 + لوحة التصميم):
-// جدار مبيّض، قاعدة طوب لبن، باب مقوّس بإطار فيروزي وإفريز
-// أحمر متقطع، وبداخله مشهد غروب (سماء بنفسجي→برتقالي، شمس طبق،
-// أهرامات مروي، النيل، نخلة تتمايل)، و6 أطباق في الحائط.
+// الحوش الكرتوني: جدار بطوب مدوّر بخطوط سميكة، باب مقوّس بإطار نيلي،
+// داخله غروب كرتوني (سماء مسطحة، شمس بوجه، نيل متموّج، نخلة تتمايل)،
+// وستة أطباق معلقة بحجم يتدرّج عند الظهور.
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -10,20 +9,19 @@ import '../../theme/sudanese_theme.dart';
 import 'tabaq.dart';
 
 class WallPainter extends CustomPainter {
-  /// ارتفاع الشمس داخل الباب 0..1 (0 = عند الأفق، 1 = أعلى الباب).
+  /// ارتفاع الشمس داخل الباب 0..1.
   final double sunT;
 
   /// تمايل النخلة بالراديان.
   final double palmSway;
 
-  /// مقياس ظهور كل طبق من الأطباق الستة 0..1 (لظهور متدرج في البداية).
+  /// مقياس ظهور كل طبق 0..1.
   final List<double> plates;
 
   /// توهج الباب (للبداية).
   final double glow;
 
-  /// أعلى الباب كنسبة من ارتفاع الجدار: يجب أن يكون تحت منطقة
-  /// العنوان (الرئيسية والبداية تضعان العنوان فوق الجدار).
+  /// أعلى الباب كنسبة من ارتفاع الجدار.
   final double doorTopFraction;
 
   /// ارتفاع الباب كنسبة من ارتفاع الجدار.
@@ -38,286 +36,170 @@ class WallPainter extends CustomPainter {
     this.doorHeightFraction = 0.82,
   });
 
+  static const _ink = SudaneseTheme.woodDark;
+
+  Paint _line(double w) => Paint()
+    ..color = _ink
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = w
+    ..strokeCap = StrokeCap.round
+    ..strokeJoin = StrokeJoin.round;
+
   @override
   void paint(Canvas canvas, Size size) {
-    // ---- الجدار المبيّض ----
-    canvas.drawRect(
-      Offset.zero & size,
-      Paint()..color = SudaneseTheme.whitewash,
-    );
-    // بقع جص خافتة.
-    final smudge = Paint()
-      ..color = SudaneseTheme.sandDark.withValues(alpha: 0.10);
-    canvas.drawOval(
-        Rect.fromCenter(
-            center: Offset(size.width * 0.2, size.height * 0.25),
-            width: 90,
-            height: 46),
-        smudge);
-    canvas.drawOval(
-        Rect.fromCenter(
-            center: Offset(size.width * 0.85, size.height * 0.6),
-            width: 70,
-            height: 34),
-        smudge);
-    canvas.drawOval(
-        Rect.fromCenter(
-            center: Offset(size.width * 0.5, size.height * 0.08),
-            width: 120,
-            height: 30),
-        smudge);
-
-    // ---- الباب المقوّس ----
-    final doorW = size.width * 0.56;
-    final doorH = size.height * doorHeightFraction;
-    final doorLeft = (size.width - doorW) / 2;
-    final doorTop = size.height * doorTopFraction;
-    final archR = doorW / 2;
-    final doorRect = Rect.fromLTWH(doorLeft, doorTop, doorW, doorH);
-    final archPath = Path()
-      ..moveTo(doorRect.left, doorRect.bottom)
-      ..lineTo(doorRect.left, doorRect.top + archR)
-      ..arcTo(
-        Rect.fromCircle(
-            center: Offset(doorRect.center.dx, doorRect.top + archR),
-            radius: archR),
-        math.pi,
-        math.pi,
-        false,
-      )
-      ..lineTo(doorRect.right, doorRect.bottom)
-      ..close();
-
-    // الإطار الفيروزي.
-    canvas.drawPath(archPath, Paint()..color = SudaneseTheme.turquoise);
-    // الإفريز الأحمر المتقطع على الإطار.
-    _paintFrieze(canvas, doorRect, archR);
-
-    // ---- مشهد الغروب داخل الباب ----
-    const frame = 13.0;
-    final innerRect = Rect.fromLTWH(
-      doorRect.left + frame,
-      doorRect.top + frame,
-      doorRect.width - frame * 2,
-      doorRect.height - frame,
-    );
-    final innerArch = Path()
-      ..moveTo(innerRect.left, innerRect.bottom)
-      ..lineTo(innerRect.left, innerRect.top + archR - frame)
-      ..arcTo(
-        Rect.fromCircle(
-            center:
-                Offset(innerRect.center.dx, innerRect.top + archR - frame),
-            radius: archR - frame),
-        math.pi,
-        math.pi,
-        false,
-      )
-      ..lineTo(innerRect.right, innerRect.bottom)
-      ..close();
-    canvas.save();
-    canvas.clipPath(innerArch);
-    _paintDusk(canvas, innerRect, sunT);
-    canvas.restore();
-
-    // توهج الباب (للبداية).
-    if (glow > 0) {
-      canvas.save();
-      canvas.clipPath(archPath);
-      canvas.drawRect(
-        Offset.zero & size,
-        Paint()
-          ..color = SudaneseTheme.sunGold.withValues(alpha: 0.25 * glow),
-      );
-      canvas.restore();
+    // الجدار
+    canvas.drawRect(Offset.zero & size, Paint()..color = const Color(0xFFFFE9B8));
+    const bh = 26.0, bw = 54.0;
+    var r = 0;
+    for (var y = 0.0; y < size.height; y += bh) {
+      final off = r.isEven ? 0.0 : bw / 2;
+      for (var x = -bw + off; x < size.width; x += bw) {
+        final rr = RRect.fromRectAndRadius(
+            Rect.fromLTWH(x + 2, y + 2, bw - 4, bh - 4), const Radius.circular(7));
+        canvas.drawRRect(rr, Paint()..color = (r + (x ~/ bw)).isEven ? const Color(0xFFFFEFC9) : const Color(0xFFFBE0A6));
+        canvas.drawRRect(rr, _line(1.6)..color = _ink.withValues(alpha: 0.22));
+      }
+      r++;
     }
+    // قاعدة الجدار
+    canvas.drawRect(Rect.fromLTWH(0, size.height - 14, size.width, 14), Paint()..color = const Color(0xFFC9783A));
+    canvas.drawLine(Offset(0, size.height - 14), Offset(size.width, size.height - 14), _line(3));
 
-    // ---- الأطباق الستة في الحائط (3 يمين و3 يسار) ----
-    final plateSpots = <(double, double, double)>[
-      (0.10, 0.22, 0.085), // يسار كبير
-      (0.90, 0.22, 0.085), // يمين كبير
-      (0.13, 0.48, 0.065), // يسار وسط
-      (0.87, 0.48, 0.065), // يمين وسط
-      (0.09, 0.72, 0.05), // يسار صغير
-      (0.91, 0.72, 0.05), // يمين صغير
-    ];
+    _plates(canvas, size);
+    _door(canvas, size);
+  }
+
+  void _plates(Canvas canvas, Size size) {
+    const cols = [Color(0xFFE4493B), Color(0xFF1AA3A8), Color(0xFFF2C14E)];
     for (var i = 0; i < 6; i++) {
-      final s = plates[i.clamp(0, plates.length - 1)];
+      final left = i < 3;
+      final k = i % 3;
+      final cx = left ? size.width * (0.07 + k * 0.045) : size.width * (0.86 + k * 0.045 - 0.09);
+      final cy = size.height * (0.28 + (k % 2) * 0.26 + (left ? 0 : 0.05));
+      final s = (i < plates.length ? plates[i] : 1.0).clamp(0.0, 1.0);
       if (s <= 0) continue;
-      final (fx, fy, fr) = plateSpots[i];
-      final center = Offset(size.width * fx, size.height * fy);
-      canvas.save();
-      canvas.translate(center.dx, center.dy);
-      canvas.scale(s);
-      canvas.translate(-center.dx, -center.dy);
-      paintTabaq(
-        canvas,
-        Rect.fromCircle(center: center, radius: size.width * fr),
-      );
-      canvas.restore();
-    }
-
-    // ---- قاعدة الطوب اللبن أسفل الجدار ----
-    final plinthH = size.height * 0.07;
-    final plinth = Rect.fromLTWH(
-        0, size.height - plinthH, size.width, plinthH);
-    canvas.drawRect(
-        plinth, Paint()..color = SudaneseTheme.mudBrick);
-    final brickPaint = Paint()
-      ..color = SudaneseTheme.mudBrickDark
-      ..strokeWidth = 1.5;
-    for (var y = plinth.top + plinthH / 2; y < size.height; y += plinthH / 2) {
-      canvas.drawLine(
-          Offset(0, y), Offset(size.width, y), brickPaint);
-    }
-    for (var x = 0.0; x < size.width; x += 34) {
-      final off = ((x / 34) % 2 == 0) ? 0.0 : 17.0;
-      canvas.drawLine(Offset(x + off, plinth.top),
-          Offset(x + off, size.height), brickPaint);
+      final rad = 13.0 * s;
+      canvas.drawCircle(Offset(cx, cy), rad, Paint()..color = cols[i % 3]);
+      canvas.drawCircle(Offset(cx, cy), rad * 0.62, Paint()..color = const Color(0xFFFFF4DC));
+      canvas.drawCircle(Offset(cx, cy), rad * 0.3, Paint()..color = cols[(i + 1) % 3]);
+      canvas.drawCircle(Offset(cx, cy), rad, _line(2.4));
     }
   }
 
-  /// إفريز أحمر: مربعات صغيرة على طول الإطار المقوّس.
-  void _paintFrieze(Canvas canvas, Rect doorRect, double archR) {
-    final paint = Paint()..color = SudaneseTheme.tabaqRed;
-    const sq = 7.0;
-    // الجانبان العموديان.
-    for (var y = doorRect.top + archR + 10;
-        y < doorRect.bottom - 8;
-        y += 22) {
-      canvas.drawRect(
-          Rect.fromCenter(
-              center: Offset(doorRect.left + 7, y), width: sq, height: sq),
-          paint);
-      canvas.drawRect(
-          Rect.fromCenter(
-              center: Offset(doorRect.right - 7, y), width: sq, height: sq),
-          paint);
-    }
-    // القوس العلوي.
-    final cx = doorRect.center.dx;
-    final cy = doorRect.top + archR;
-    for (var a = math.pi; a <= 2 * math.pi; a += 0.22) {
-      final x = cx + (archR - 7) * math.cos(a);
-      final y = cy + (archR - 7) * math.sin(a);
-      canvas.drawRect(
-          Rect.fromCenter(center: Offset(x, y), width: sq, height: sq),
-          paint);
-    }
-  }
+  void _door(Canvas canvas, Size size) {
+    final dw = size.width * 0.56;
+    final left = (size.width - dw) / 2;
+    final top = size.height * doorTopFraction;
+    final bottom = top + size.height * doorHeightFraction;
+    final archR = dw / 2;
+    final door = Path()
+      ..moveTo(left, bottom)
+      ..lineTo(left, top + archR)
+      ..arcToPoint(Offset(left + dw, top + archR), radius: Radius.circular(archR))
+      ..lineTo(left + dw, bottom)
+      ..close();
 
-  /// مشهد الغروب: سماء (بنفسجي→كركدي→برتقالي)، شمس طبق،
-  /// أهرامات، النيل، نخلة.
-  void _paintDusk(Canvas canvas, Rect rect, double sunT) {
-    // سماء الغروب من شرائط لونية مسطحة: شكل مطبوع باليد لا غشاوة رقمية.
-    final sky = Rect.fromLTWH(rect.left, rect.top, rect.width, rect.height * 0.62);
-    const bands = [
-      Color(0xFF252552),
-      Color(0xFF343063),
-      Color(0xFF512C6B),
-      Color(0xFF762C68),
-      Color(0xFFA63A55),
-      Color(0xFFD45D35),
-      Color(0xFFE58A1F),
-    ];
-    final bandH = sky.height / bands.length;
-    for (var i = 0; i < bands.length; i++) {
-      canvas.drawRect(Rect.fromLTWH(sky.left, sky.top + i * bandH, sky.width, bandH + 1), Paint()..color = bands[i]);
-    }
-    final cloud = Paint()..color = Colors.white.withValues(alpha: 0.16)..strokeWidth = 2..strokeCap = StrokeCap.round;
-    canvas.drawLine(Offset(sky.left + 10, sky.top + sky.height * .28), Offset(sky.left + sky.width * .34, sky.top + sky.height * .25), cloud);
-    canvas.drawLine(Offset(sky.left + sky.width * .58, sky.top + sky.height * .38), Offset(sky.right - 12, sky.top + sky.height * .35), cloud);
-    // الأفق البرتقالي.
-    final horizonY = rect.top + rect.height * 0.62;
-    canvas.drawRect(
-      Rect.fromLTWH(rect.left, horizonY, rect.width, 3),
-      Paint()..color = SudaneseTheme.dateOrange,
-    );
-    // شمس الطبق.
-    final sunR = rect.width * 0.20;
-    final sunY = horizonY - sunR * 0.4 - sunT * rect.height * 0.18;
-    paintTabaq(
-      canvas,
-      Rect.fromCircle(
-          center: Offset(rect.center.dx, sunY), radius: sunR),
-    );
-    // أهرامات مروي.
-    final pyr = Paint()..color = const Color(0xFF4A2A4A);
-    final base = horizonY + 2;
-    for (final (fx, fw, fh) in [
-      (0.12, 0.26, 0.16),
-      (0.42, 0.34, 0.22),
-      (0.74, 0.22, 0.13),
-    ]) {
-      final x0 = rect.left + rect.width * fx;
-      final w = rect.width * fw;
-      final h = rect.height * fh;
-      canvas.drawPath(
-        Path()
-          ..moveTo(x0, base)
-          ..lineTo(x0 + w / 2, base - h)
-          ..lineTo(x0 + w, base)
-          ..close(),
-        pyr,
-      );
-    }
-    // النيل: شريط فيروزي بخطوط أفقية فاتحة.
-    final nileTop = rect.top + rect.height * 0.74;
-    canvas.drawRect(
-      Rect.fromLTWH(rect.left, nileTop, rect.width,
-          rect.bottom - nileTop),
-      Paint()..color = SudaneseTheme.turquoise,
-    );
-    final linePaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.45)
-      ..strokeWidth = 1.5;
-    for (var i = 0; i < 3; i++) {
-      final y = nileTop + 8 + i * 9;
-      canvas.drawLine(
-          Offset(rect.left + 10, y), Offset(rect.right - 10, y), linePaint);
-    }
-    // النخلة (يمين الباب).
-    final palmX = rect.right - rect.width * 0.16;
-    final palmBase = rect.bottom - 2;
-    final trunk = Paint()
-      ..color = const Color(0xFF3A2418)
-      ..strokeWidth = 5
-      ..strokeCap = StrokeCap.round;
+    // الإطار
+    canvas.drawPath(door.shift(const Offset(0, 5)), Paint()..color = _ink.withValues(alpha: 0.35));
+    canvas.drawPath(door, Paint()..color = SudaneseTheme.indigo);
+    canvas.drawPath(door, _line(4));
+
+    final inner = Path()
+      ..moveTo(left + 9, bottom)
+      ..lineTo(left + 9, top + archR)
+      ..arcToPoint(Offset(left + dw - 9, top + archR), radius: Radius.circular(archR - 9))
+      ..lineTo(left + dw - 9, bottom)
+      ..close();
     canvas.save();
-    canvas.translate(palmX, palmBase);
+    canvas.clipPath(inner);
+    final h = bottom - top;
+    // سماء من شرائط مسطحة
+    final bands = [
+      const Color(0xFF6C63D9),
+      const Color(0xFFB36BD6),
+      const Color(0xFFFF8FA3),
+      const Color(0xFFFFB86B),
+      const Color(0xFFFFE08A),
+    ];
+    final bandH = h * 0.78 / bands.length;
+    for (var i = 0; i < bands.length; i++) {
+      canvas.drawRect(Rect.fromLTWH(left, top + i * bandH, dw, bandH + 1), Paint()..color = bands[i]);
+    }
+    // الشمس
+    final horizon = top + h * 0.74;
+    final sunY = horizon - (h * 0.34) * sunT.clamp(0.0, 1.0);
+    final sc = Offset(left + dw / 2, sunY);
+    if (glow > 0) {
+      canvas.drawCircle(sc, 44 + 26 * glow, Paint()..color = const Color(0xFFFFF1A8).withValues(alpha: 0.5 * glow));
+    }
+    canvas.drawCircle(sc, 20, Paint()..color = const Color(0xFFFFE066));
+    canvas.drawCircle(sc, 20, _line(2.6));
+    canvas.drawCircle(sc + const Offset(-6, -2), 2.4, Paint()..color = _ink);
+    canvas.drawCircle(sc + const Offset(6, -2), 2.4, Paint()..color = _ink);
+    canvas.drawArc(Rect.fromCenter(center: sc + const Offset(0, 3), width: 12, height: 9), 0.2, math.pi - 0.4, false, _line(2));
+    // سحابتان
+    for (final c in [Offset(left + dw * 0.25, top + h * 0.28), Offset(left + dw * 0.75, top + h * 0.2)]) {
+      for (final d in [const Offset(-9, 2), const Offset(0, -3), const Offset(9, 2)]) {
+        canvas.drawCircle(c + d, 8, Paint()..color = Colors.white.withValues(alpha: 0.9));
+      }
+    }
+    // الأرض والنيل
+    canvas.drawRect(Rect.fromLTRB(left, horizon, left + dw, bottom), Paint()..color = const Color(0xFFE0A64F));
+    final nile = Path()..moveTo(left, horizon + 8);
+    for (var x = 0.0; x <= dw; x += 14) {
+      nile.quadraticBezierTo(left + x + 7, horizon + 14 - (x ~/ 14 % 2) * 12.0, left + x + 14, horizon + 8);
+    }
+    nile
+      ..lineTo(left + dw, horizon + 30)
+      ..lineTo(left, horizon + 30)
+      ..close();
+    canvas.drawPath(nile, Paint()..color = const Color(0xFF3FB6E8));
+    canvas.drawPath(nile, _line(2.2));
+    // نخلة
+    _palm(canvas, Offset(left + dw * 0.82, horizon + 34));
+    canvas.restore();
+    canvas.drawPath(inner, _line(3));
+
+    // إفريز أحمر متقطع على القوس
+    paintDashedCircle(canvas, Offset(left + dw / 2, top + archR), archR - 3, SudaneseTheme.tabaqRed, 3.5, dashes: 18);
+    // عتبة
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(Rect.fromLTRB(left - 8, bottom - 6, left + dw + 8, bottom + 8), const Radius.circular(6)),
+      Paint()..color = const Color(0xFFC9783A),
+    );
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(Rect.fromLTRB(left - 8, bottom - 6, left + dw + 8, bottom + 8), const Radius.circular(6)),
+      _line(3),
+    );
+  }
+
+  void _palm(Canvas canvas, Offset base) {
+    canvas.save();
+    canvas.translate(base.dx, base.dy);
     canvas.rotate(palmSway);
-    canvas.translate(-palmX, -palmBase);
-    final trunkPath = Path()
-      ..moveTo(palmX, palmBase)
-      ..quadraticBezierTo(
-          palmX + 10, palmBase - 40, palmX + 4, palmBase - 62);
-    canvas.drawPath(trunkPath, trunk);
-    final top = Offset(palmX + 4, palmBase - 62);
-    final frond = Paint()
-      ..color = SudaneseTheme.palmGreen
-      ..strokeWidth = 4
-      ..strokeCap = StrokeCap.round
-      ..style = PaintingStyle.stroke;
-    for (var i = 0; i < 6; i++) {
-      final a = -math.pi * (0.15 + i * 0.14);
-      final end = top + Offset(math.cos(a) * 26, math.sin(a) * 14 - 6);
-      canvas.drawPath(
-        Path()
-          ..moveTo(top.dx, top.dy)
-          ..quadraticBezierTo(
-              top.dx + math.cos(a) * 16, top.dy - 12, end.dx, end.dy),
-        frond,
-      );
+    final trunk = Path()
+      ..moveTo(-3, 0)
+      ..quadraticBezierTo(-6, -30, -2, -56)
+      ..lineTo(4, -56)
+      ..quadraticBezierTo(2, -30, 5, 0)
+      ..close();
+    canvas.drawPath(trunk, Paint()..color = const Color(0xFF9A5B2B));
+    canvas.drawPath(trunk, _line(2.2));
+    for (final a in [-2.6, -2.0, -1.2, -0.55, 0.15]) {
+      final tip = Offset(math.cos(a) * 30, -56 + math.sin(a) * 18);
+      final leaf = Path()
+        ..moveTo(0, -56)
+        ..quadraticBezierTo(tip.dx * 0.5, -56 - 16, tip.dx, tip.dy + 4)
+        ..quadraticBezierTo(tip.dx * 0.5, -56 - 2, 0, -56)
+        ..close();
+      canvas.drawPath(leaf, Paint()..color = const Color(0xFF2FA85A));
+      canvas.drawPath(leaf, _line(2));
     }
     canvas.restore();
   }
 
   @override
-  bool shouldRepaint(covariant WallPainter oldDelegate) =>
-      oldDelegate.sunT != sunT ||
-      oldDelegate.palmSway != palmSway ||
-      oldDelegate.glow != glow ||
-      oldDelegate.plates != plates ||
-      oldDelegate.doorTopFraction != doorTopFraction ||
-      oldDelegate.doorHeightFraction != doorHeightFraction;
+  bool shouldRepaint(covariant WallPainter old) =>
+      old.sunT != sunT || old.palmSway != palmSway || old.glow != glow || old.plates != plates ||
+      old.doorTopFraction != doorTopFraction || old.doorHeightFraction != doorHeightFraction;
 }

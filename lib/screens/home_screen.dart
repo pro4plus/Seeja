@@ -16,6 +16,7 @@ import '../ui/painters/mat.dart';
 import '../ui/painters/pebble.dart';
 import '../ui/painters/wall.dart';
 import '../ui/sheets.dart';
+import '../ui/widgets/cartoon_text.dart';
 import '../ui/widgets/plank_button.dart';
 import '../ui/widgets/wood_token.dart';
 import 'setup_screen.dart';
@@ -100,17 +101,18 @@ class _HomeScreenState extends State<HomeScreen>
                         children: [
                           FittedBox(
                             fit: BoxFit.scaleDown,
-                            child: Text(
-                              s.homeTitle,
-                              style: SudaneseTheme.display.copyWith(
-                                fontSize: 62,
-                                color: SudaneseTheme.indigo,
-                                shadows: const [
-                                  Shadow(
-                                    color: SudaneseTheme.tabaqRed,
-                                    offset: Offset(3, 4),
-                                  ),
-                                ],
+                            child: TweenAnimationBuilder<double>(
+                              tween: Tween(begin: 0.0, end: 1.0),
+                              duration: const Duration(milliseconds: 700),
+                              curve: Curves.elasticOut,
+                              builder: (context, v, child) => Transform.scale(
+                                scale: v.clamp(0.0, 1.3),
+                                child: child,
+                              ),
+                              child: CartoonText(
+                                s.homeTitle,
+                                fontSize: 58,
+                                fill: SudaneseTheme.sunGold,
                               ),
                             ),
                           ),

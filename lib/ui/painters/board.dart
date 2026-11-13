@@ -1,4 +1,5 @@
-// لوحة السيجا: لوح رمل عضوي بحواف منحوتة وحفر عميقة، لا مربعات ولا رقعة شطرنج.
+// لوحة السيجا الكرتونية: لوح رمل مدوّر بسُمك ثلاثي الأبعاد وخط خارجي سميك،
+// وحفر غائرة بظل داخلي. أبعاد الشبكة (pitCenter/pitDiameter) كما كانت.
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../theme/sudanese_theme.dart';
@@ -15,28 +16,50 @@ class BoardPainter extends CustomPainter {
     return Offset(8 + (c + 0.5) * cell, 8 + (r + 0.5) * cell);
   }
 
-  static double pitDiameter(Size boardSize, int cells) => (boardSize.shortestSide - 16) / cells * 0.72;
+  static double pitDiameter(Size boardSize, int cells) =>
+      (boardSize.shortestSide - 16) / cells * 0.72;
+
+  static const _ink = SudaneseTheme.woodDark;
 
   @override
   void paint(Canvas canvas, Size canvasSize) {
     final side = canvasSize.shortestSide;
-    final rect = Rect.fromLTWH((canvasSize.width - side) / 2, (canvasSize.height - side) / 2, side, side);
-    final shadow = Paint()..color = SudaneseTheme.earthBlack.withValues(alpha: 0.40);
-    canvas.drawRRect(RRect.fromRectAndRadius(rect.translate(0, 8), const Radius.circular(28)), shadow);
+    final rect = Rect.fromLTWH(
+        (canvasSize.width - side) / 2, (canvasSize.height - side) / 2, side, side);
+    final top = RRect.fromRectAndRadius(
+        rect.deflate(1).translate(0, -4), const Radius.circular(30));
 
-    // حواف غير منتظمة، كقطعة رمل وضعت باليد.
-    final slab = _slabPath(rect, 0);
-    canvas.drawPath(slab, Paint()..color = const Color(0xFFDDB66E));
-    canvas.drawPath(_slabPath(rect.deflate(4), 1), Paint()..color = SudaneseTheme.sand);
-
-    final rng = math.Random(422);
-    for (var i = 0; i < 260; i++) {
-      final p = Offset(rect.left + 8 + rng.nextDouble() * (side - 16), rect.top + 8 + rng.nextDouble() * (side - 16));
-      final color = i.isEven ? SudaneseTheme.sandDark : const Color(0xFFF2D49A);
-      canvas.drawCircle(p, 0.45 + rng.nextDouble() * 1.3, Paint()..color = color.withValues(alpha: 0.24 + rng.nextDouble() * 0.22));
+    // سُمك اللوح (الوجه الجانبي)
+    for (var i = 8; i >= 1; i--) {
+      canvas.drawRRect(top.shift(Offset(0, i.toDouble())),
+          Paint()..color = Color.lerp(const Color(0xFFB5793A), const Color(0xFF8C5A28), i / 8)!);
     }
-    canvas.drawPath(_slabPath(rect.deflate(3), 2), Paint()..color = const Color(0xFF9F773E)..style = PaintingStyle.stroke..strokeWidth = 2.4);
-    canvas.drawPath(_slabPath(rect.deflate(7), 3), Paint()..color = Colors.white.withValues(alpha: 0.25)..style = PaintingStyle.stroke..strokeWidth = 1.2);
+    canvas.drawRRect(
+        top.shift(const Offset(0, 8)),
+        Paint()
+          ..color = _ink
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 3.5);
+    // الوجه العلوي
+    canvas.drawRRect(top, Paint()..color = const Color(0xFFF3CF8C));
+    canvas.drawRRect(top.deflate(7), Paint()..color = const Color(0xFFE9B964));
+    canvas.drawRRect(
+        top,
+        Paint()
+          ..color = _ink
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 3.5);
+    // لمعة حافة علوية
+    final shine = Path()
+      ..moveTo(rect.left + 26, rect.top + 7)
+      ..lineTo(rect.right - 60, rect.top + 7);
+    canvas.drawPath(
+        shine,
+        Paint()
+          ..color = Colors.white.withValues(alpha: 0.6)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 3
+          ..strokeCap = StrokeCap.round);
 
     final inner = side - 16;
     final cell = inner / size;
@@ -44,39 +67,37 @@ class BoardPainter extends CustomPainter {
     final centre = size ~/ 2;
     for (var r = 0; r < size; r++) {
       for (var c = 0; c < size; c++) {
-        final p = Offset(rect.left + 8 + (c + 0.5) * cell, rect.top + 8 + (r + 0.5) * cell);
-        _paintPit(canvas, p, pitR, r, c);
+        final p = Offset(rect.left + 8 + (c + 0.5) * cell,
+            rect.top + 8 + (r + 0.5) * cell - 4);
+        _pit(canvas, p, pitR);
         if (r == centre && c == centre && !centreOccupied) {
-          paintDashedCircle(canvas, p, pitR * 0.92, SudaneseTheme.palmGreen, 2.5, dashes: 16);
-          paintEightStar(canvas, p, pitR * 0.40, SudaneseTheme.tabaqRed);
+          paintDashedCircle(canvas, p, pitR * 0.9, SudaneseTheme.palmGreen, 3, dashes: 14);
+          paintEightStar(canvas, p, pitR * 0.42, SudaneseTheme.tabaqRed);
         }
       }
     }
   }
 
-  Path _slabPath(Rect r, int seed) {
-    final n = 12.0 + seed;
-    return Path()
-      ..moveTo(r.left + n, r.top + 2)
-      ..quadraticBezierTo(r.center.dx, r.top - 2, r.right - n, r.top + 3)
-      ..quadraticBezierTo(r.right + 2, r.center.dy, r.right - 3, r.bottom - n)
-      ..quadraticBezierTo(r.center.dx, r.bottom + 2, r.left + 4, r.bottom - 4)
-      ..quadraticBezierTo(r.left - 2, r.center.dy, r.left + 2, r.top + n)
-      ..close();
-  }
-
-  void _paintPit(Canvas canvas, Offset p, double r, int row, int col) {
-    canvas.drawOval(Rect.fromCenter(center: p + Offset(0, r * 0.38), width: r * 1.75, height: r * 0.52), Paint()..color = SudaneseTheme.earthBlack.withValues(alpha: 0.18));
-    canvas.drawCircle(p, r, Paint()..color = const Color(0xFFB78B4B));
-    canvas.drawCircle(p + Offset(0, -r * 0.08), r * 0.94, Paint()..color = SudaneseTheme.pitDark);
-    canvas.drawCircle(p + Offset(-r * 0.08, -r * 0.20), r * 0.70, Paint()..color = SudaneseTheme.pitDeep);
-    canvas.drawArc(Rect.fromCircle(center: p + Offset(0, -r * 0.08), radius: r * 0.78), 0.2, math.pi * 0.75, false,
-        Paint()..color = const Color(0xFFF1D39B).withValues(alpha: 0.55)..style = PaintingStyle.stroke..strokeWidth = 2.4..strokeCap = StrokeCap.round);
-    canvas.drawArc(Rect.fromCircle(center: p, radius: r * 0.93), math.pi * 0.9, math.pi * 0.8, false,
-        Paint()..color = SudaneseTheme.earthBlack.withValues(alpha: 0.28)..style = PaintingStyle.stroke..strokeWidth = 1.4);
-    if ((row + col) % 3 == 0) canvas.drawCircle(p + Offset(r * .28, -r * .18), 1.2, Paint()..color = const Color(0xFFE9C987).withValues(alpha: .6));
+  void _pit(Canvas canvas, Offset p, double r) {
+    // حافة بارزة أسفل (تعطي إحساس الغور)
+    canvas.drawCircle(p + Offset(0, r * 0.12), r * 1.04, Paint()..color = Colors.white.withValues(alpha: 0.55));
+    canvas.drawCircle(p, r, Paint()..color = _ink);
+    canvas.drawCircle(p + Offset(0, r * 0.05), r * 0.9, Paint()..color = const Color(0xFFB8782F));
+    // ظل داخلي علوي
+    canvas.save();
+    canvas.clipPath(Path()..addOval(Rect.fromCircle(center: p, radius: r * 0.9)));
+    canvas.drawCircle(p + Offset(0, r * 0.42), r * 0.95, Paint()..color = const Color(0xFFD9A04C));
+    canvas.restore();
+    canvas.drawArc(
+        Rect.fromCircle(center: p, radius: r * 0.62), math.pi * 1.05, math.pi * 0.45, false,
+        Paint()
+          ..color = const Color(0xFF7A4A1E).withValues(alpha: 0.55)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2.2
+          ..strokeCap = StrokeCap.round);
   }
 
   @override
-  bool shouldRepaint(covariant BoardPainter oldDelegate) => oldDelegate.size != size || oldDelegate.centreOccupied != centreOccupied;
+  bool shouldRepaint(covariant BoardPainter old) =>
+      old.size != size || old.centreOccupied != centreOccupied;
 }

@@ -2,8 +2,6 @@
 // مدببين وخطوط خشب وظل صلب 5 بكسل؛ عنوان Reem Kufi وسطر
 // توضيحي وسهم ‹. أحمر للفعل الرئيسي، خشب داكن للثانوي.
 // الضغط: يغوص 4 بكسل في 70ms ثم يرتد في 140ms.
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 
 import '../../theme/sudanese_theme.dart';
@@ -62,11 +60,11 @@ class _PlankButtonState extends State<PlankButton>
   @override
   Widget build(BuildContext context) {
     final color = widget.kind == PlankKind.red
-        ? SudaneseTheme.tabaqRed
-        : SudaneseTheme.woodDark;
+        ? const Color(0xFFF2584A)
+        : const Color(0xFF3D4FB0);
     final grain = widget.kind == PlankKind.red
-        ? const Color(0xFF8A1B15)
-        : const Color(0xFF2B1A12);
+        ? const Color(0xFFA9261C)
+        : const Color(0xFF232F7A);
     return GestureDetector(
       onTapDown: (_) => _down(),
       onTapUp: (_) {
@@ -78,8 +76,13 @@ class _PlankButtonState extends State<PlankButton>
         animation: _press,
         builder: (context, child) {
           return Transform.translate(
-            offset: Offset(0, 4 * _press.value),
-            child: child,
+            offset: Offset(0, 6 * _press.value),
+            child: Transform.scale(
+              alignment: Alignment.bottomCenter,
+              scaleX: 1 + 0.04 * _press.value,
+              scaleY: 1 - 0.07 * _press.value,
+              child: child,
+            ),
           );
         },
         child: CustomPaint(
@@ -141,56 +144,38 @@ class _PlankPainter extends CustomPainter {
 
   const _PlankPainter({required this.color, required this.grain});
 
-  Path _plankPath(Size size) {
-    const tip = 18.0;
-    return Path()
-      ..moveTo(0, size.height / 2)
-      ..lineTo(tip, 0)
-      ..lineTo(size.width - tip, 0)
-      ..lineTo(size.width, size.height / 2)
-      ..lineTo(size.width - tip, size.height)
-      ..lineTo(tip, size.height)
-      ..close();
-  }
-
   @override
   void paint(Canvas canvas, Size size) {
-    final path = _plankPath(size);
-    // ظل صلب منزاح.
-    canvas.drawPath(
-      _plankPath(size).shift(const Offset(0, 5)),
-      Paint()
-        ..color = SudaneseTheme.earthBlack.withValues(alpha: 0.35),
+    final body = RRect.fromRectAndRadius(
+        Rect.fromLTWH(2, 2, size.width - 4, size.height - 10), Radius.circular(size.height / 2.4));
+    // الحافة السفلية السميكة (3D)
+    final lip = body.shift(const Offset(0, 7));
+    canvas.drawRRect(lip, Paint()..color = grain);
+    canvas.drawRRect(body, Paint()..color = color);
+    // لمعة علوية
+    canvas.save();
+    canvas.clipRRect(body);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+          Rect.fromLTWH(10, 5, size.width - 20, (size.height - 10) * 0.36), Radius.circular(size.height / 4)),
+      Paint()..color = Colors.white.withValues(alpha: 0.30),
     );
-    canvas.drawPath(path, Paint()..color = color);
-    // خطوط خشب.
-    final grainPaint = Paint()
-      ..color = grain.withValues(alpha: 0.35)
-      ..strokeWidth = 1.5
-      ..style = PaintingStyle.stroke;
-    final rng = math.Random(3);
-    for (var i = 0; i < 3; i++) {
-      final y = size.height * (0.25 + i * 0.25);
-      final wobble = 3 + rng.nextDouble() * 3;
-      canvas.drawPath(
-        Path()
-          ..moveTo(24, y)
-          ..quadraticBezierTo(
-              size.width / 2, y + wobble, size.width - 24, y),
-        grainPaint,
-      );
-    }
-    // حافة سفلية غامقة خفيفة.
-    canvas.drawPath(
-      path,
-      Paint()
-        ..color = SudaneseTheme.earthBlack.withValues(alpha: 0.12)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.5,
-    );
+    canvas.restore();
+    final ink = Paint()
+      ..color = SudaneseTheme.earthBlack
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3.2
+      ..strokeJoin = StrokeJoin.round;
+    canvas.drawRRect(body, ink);
+    final lipPath = Path()
+      ..moveTo(body.left + 6, body.bottom - 2)
+      ..lineTo(lip.left + 6, lip.bottom)
+      ..lineTo(lip.right - 6, lip.bottom)
+      ..lineTo(body.right - 6, body.bottom - 2);
+    canvas.drawPath(lipPath, ink);
   }
 
   @override
-  bool shouldRepaint(covariant _PlankPainter oldDelegate) =>
-      oldDelegate.color != color;
+  bool shouldRepaint(covariant _PlankPainter old) =>
+      old.color != color || old.grain != grain;
 }

@@ -38,17 +38,18 @@ class _WoodTokenState extends State<WoodToken> {
         },
         onTapCancel: () => setState(() => _down = false),
         child: AnimatedScale(
-          scale: _down ? 0.92 : 1.0,
-          duration: const Duration(milliseconds: 90),
+          scale: _down ? 0.88 : 1.0,
+          duration: const Duration(milliseconds: 160),
+          curve: Curves.easeOutBack,
           child: Container(
             width: widget.size,
             height: widget.size,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: SudaneseTheme.wood,
+              color: const Color(0xFF3D4FB0),
               border: Border.all(
-                color: SudaneseTheme.straw,
-                width: 2.5,
+                color: SudaneseTheme.outline,
+                width: 3.2,
               ),
               boxShadow: SudaneseTheme.hardShadow(),
             ),

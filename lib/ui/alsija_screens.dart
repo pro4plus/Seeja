@@ -267,13 +267,16 @@ Widget _plank(
           c.restore();
         }),
         Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _text(title, 47, color: cream),
-              if (subtitle != null)
-                _text(subtitle, 29, color: cream, weight: FontWeight.w600),
-            ],
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _text(title, 47, color: cream),
+                if (subtitle != null)
+                  _text(subtitle, 29, color: cream, weight: FontWeight.w600),
+              ],
+            ),
           ),
         ),
       ],

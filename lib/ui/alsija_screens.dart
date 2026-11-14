@@ -976,7 +976,28 @@ const _referencePieces = <List<AlsijaPiece?>>[
   ],
 ];
 
-class AlsijaGame extends StatelessWidget {
+/// Animation triggers for [AlsijaGame], mirroring the original BoardFx:
+/// nonce-based so the same move can be re-triggered. The widget owns the
+/// animation controllers; the screen only bumps the nonces and passes the
+/// move data. All fields are plain data — no game logic lives here.
+class AlsijaFx {
+  int slideNonce = 0;
+  AlsijaCell? slideFrom;
+  AlsijaCell? slideTo;
+  AlsijaPiece? slideMover;
+  List<AlsijaCell> slideCaptured = const [];
+  int placedNonce = 0;
+  AlsijaCell? placedCell;
+  int shakeNonce = 0;
+  AlsijaCell? shakeCell;
+  int waveNonce = 0;
+  int hintNonce = 0;
+  AlsijaCell? hintFrom;
+  AlsijaCell? hintTo;
+  int clearNonce = 0;
+}
+
+class AlsijaGame extends StatefulWidget {
   const AlsijaGame({
     super.key,
     this.cells = _referencePieces,
@@ -998,6 +1019,15 @@ class AlsijaGame extends StatelessWidget {
     this.onUndo,
     this.board,
     this.hud,
+    this.vsComputer = true,
+    this.player1Name = 'أنت',
+    this.player2Name = 'الخصم',
+    this.turnLabel,
+    this.isPlacing = false,
+    this.placedThisTurn = 0,
+    this.isAiThinking = false,
+    this.fx,
+    this.onFxDone,
   });
 
   final List<List<AlsijaPiece?>> cells;
@@ -1015,53 +1045,770 @@ class AlsijaGame extends StatelessWidget {
   final Widget? board;
   final List<Widget>? hud;
 
-  Widget _board() => Stack(
-    fit: StackFit.expand,
-    children: [
-      _Art((c, s) {
-        final r = (Offset.zero & s).deflate(9);
-        _round(c, r.shift(const Offset(8, 10)), 70, const Color(0x66724820));
-        _round(c, r, 70, const Color(0xffa4773b));
-        final face = r.deflate(8);
-        c.drawRRect(
-          RRect.fromRectAndRadius(face, const Radius.circular(64)),
-          Paint()
-            ..shader = const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Color(0xffefd198), Color(0xffd5a85e)],
-            ).createShader(face),
+  /// Two-player mode: the top block rotates 180° and shows the
+  /// second player's seat instead of the computer figure.
+  final bool vsComputer;
+  final String player1Name, player2Name;
+
+  /// Full turn-line text (computed by the screen from the real
+  /// phase/player, e.g. «الدور: اللاعب 1 — ضع 3 أحجار»).
+  /// Null keeps the old «دورك…» / «دور الخصم» fallback.
+  final String? turnLabel;
+  final bool isPlacing;
+  final int placedThisTurn;
+  final bool isAiThinking;
+
+  /// Animation triggers (see [AlsijaFx]). Null means no animations.
+  final AlsijaFx? fx;
+
+  /// Called after the slide + capture animations finish, so the
+  /// screen can call TurnController.finishAnimation().
+  final VoidCallback? onFxDone;
+
+  @override
+  State<AlsijaGame> createState() => _AlsijaGameState();
+}
+
+class _AlsijaGameState extends State<AlsijaGame>
+    with TickerProviderStateMixin {
+  late final AnimationController _slideController;
+  late final AnimationController _captureController;
+  late final AnimationController _placeController;
+  late final AnimationController _shakeController;
+  late final AnimationController _waveController;
+  late final AnimationController _hintController;
+  late final AnimationController _trailController;
+  late final AnimationController _pulseController;
+  late final AnimationController _breathController;
+  late final AnimationController _boardShakeController;
+
+  int _seenSlide = 0;
+  int _seenPlaced = 0;
+  int _seenShake = 0;
+  int _seenWave = 0;
+  int _seenHint = 0;
+  int _seenClear = 0;
+
+  AlsijaCell? _slidingFrom;
+  AlsijaCell? _slidingTo;
+  AlsijaPiece? _slidingMover;
+  List<AlsijaCell> _capturingCells = const [];
+  AlsijaPiece? _capturingMover;
+  AlsijaCell? _capturingTo;
+  AlsijaCell? _placingCell;
+  AlsijaCell? _shakingCell;
+  AlsijaCell? _hintFrom;
+  AlsijaCell? _hintTo;
+  AlsijaCell? _trailFrom;
+  AlsijaCell? _trailTo;
+  bool _waveActive = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _slideController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 240),
+    );
+    _captureController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 320),
+    );
+    _placeController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 260),
+    );
+    _shakeController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 240),
+    );
+    _waveController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
+    _hintController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 3),
+    );
+    _trailController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    );
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    )..repeat(reverse: true);
+    _breathController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    )..repeat(reverse: true);
+    _boardShakeController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 180),
+    );
+  }
+
+  @override
+  void dispose() {
+    for (final c in [
+      _slideController,
+      _captureController,
+      _placeController,
+      _shakeController,
+      _waveController,
+      _hintController,
+      _trailController,
+      _pulseController,
+      _breathController,
+      _boardShakeController,
+    ]) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(covariant AlsijaGame oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final fx = widget.fx;
+    if (fx == null) {
+      return;
+    }
+    if (fx.clearNonce != _seenClear) {
+      _seenClear = fx.clearNonce;
+      _clearFx();
+    }
+    if (fx.placedNonce != _seenPlaced) {
+      _seenPlaced = fx.placedNonce;
+      _placingCell = fx.placedCell;
+      if (_placingCell != null) {
+        _placeController.forward(from: 0);
+      }
+    }
+    if (fx.slideNonce != _seenSlide) {
+      _seenSlide = fx.slideNonce;
+      _startMoveAnimation(fx);
+    }
+    if (fx.shakeNonce != _seenShake) {
+      _seenShake = fx.shakeNonce;
+      _shakingCell = fx.shakeCell;
+      if (_shakingCell != null) {
+        _shakeController.forward(from: 0);
+      }
+    }
+    if (fx.waveNonce != _seenWave) {
+      _seenWave = fx.waveNonce;
+      _waveActive = true;
+      _waveController.forward(from: 0).then((_) {
+        if (mounted) {
+          setState(() => _waveActive = false);
+        }
+      });
+    }
+    if (fx.hintNonce != _seenHint) {
+      _seenHint = fx.hintNonce;
+      _hintFrom = fx.hintFrom;
+      _hintTo = fx.hintTo;
+      if (_hintFrom != null && _hintTo != null) {
+        _hintController.forward(from: 0);
+      }
+    }
+  }
+
+  void _clearFx() {
+    for (final c in [
+      _slideController,
+      _captureController,
+      _placeController,
+      _shakeController,
+      _waveController,
+      _hintController,
+      _trailController,
+      _boardShakeController,
+    ]) {
+      c.stop();
+    }
+    _slidingFrom = null;
+    _slidingTo = null;
+    _slidingMover = null;
+    _capturingCells = const [];
+    _capturingMover = null;
+    _capturingTo = null;
+    _placingCell = null;
+    _shakingCell = null;
+    _hintFrom = null;
+    _hintTo = null;
+    _trailFrom = null;
+    _trailTo = null;
+    _waveActive = false;
+  }
+
+  Future<void> _startMoveAnimation(AlsijaFx fx) async {
+    final from = fx.slideFrom;
+    final to = fx.slideTo;
+    final mover = fx.slideMover;
+    if (from == null || to == null || mover == null) {
+      return;
+    }
+    final captured = fx.slideCaptured;
+    // Plain assignment (no setState): didUpdateWidget runs before the
+    // build that follows it, so the slide overlay renders in this
+    // frame — same as the original SandBoard.
+    _slidingFrom = from;
+    _slidingTo = to;
+    _slidingMover = mover;
+    await _slideController.forward(from: 0);
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _slidingFrom = null;
+      _slidingTo = null;
+      _slidingMover = null;
+      _trailFrom = from;
+      _trailTo = to;
+    });
+    _trailController.forward(from: 0);
+    if (captured.isNotEmpty) {
+      setState(() {
+        _capturingCells = captured;
+        _capturingMover = mover;
+        _capturingTo = to;
+      });
+      if (captured.length > 1) {
+        _boardShakeController.forward(from: 0);
+      }
+      await _captureController.forward(from: 0);
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _capturingCells = const [];
+        _capturingMover = null;
+        _capturingTo = null;
+      });
+    }
+    widget.onFxDone?.call();
+  }
+
+  // ---------------------------------------------------------- الهندسة
+
+  /// Board grid: inside the 540×500 board area at offset (40, 20),
+  /// size 460×440 — same geometry the static board already uses.
+  int get _boardSize => widget.cells.isEmpty ? 5 : widget.cells.length;
+
+  Offset _cellCenter(int row, int column) {
+    final n = _boardSize;
+    return Offset(
+      40 + (column + 0.5) * 460.0 / n,
+      20 + (row + 0.5) * 440.0 / n,
+    );
+  }
+
+  double get _pebblePx {
+    final n = _boardSize;
+    return math.min(460.0 / n, 440.0 / n) * 0.69;
+  }
+
+  // ---------------------------------------------------------- اللوحة
+
+  Widget _board() {
+    final board = Stack(
+      fit: StackFit.expand,
+      children: [
+        _Art((c, s) {
+          final r = (Offset.zero & s).deflate(9);
+          _round(c, r.shift(const Offset(8, 10)), 70, const Color(0x66724820));
+          _round(c, r, 70, const Color(0xffa4773b));
+          final face = r.deflate(8);
+          c.drawRRect(
+            RRect.fromRectAndRadius(face, const Radius.circular(64)),
+            Paint()
+              ..shader = const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0xffefd198), Color(0xffd5a85e)],
+              ).createShader(face),
+          );
+        }),
+        if (widget.cells.isNotEmpty && widget.cells.first.isNotEmpty)
+          _at(
+            40,
+            20,
+            460,
+            440,
+            Column(
+              children: [
+                for (final (row, line) in widget.cells.indexed)
+                  Expanded(
+                    child: Row(
+                      children: [
+                        for (final (column, piece) in line.indexed)
+                          Expanded(child: _cell(row, column, piece)),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        if (_trailFrom != null && _trailTo != null) _trailOverlay(),
+        if (_hintFrom != null && _hintTo != null) _hintOverlay(),
+        if (_waveActive) _waveOverlay(),
+        if (_slidingFrom != null &&
+            _slidingTo != null &&
+            _slidingMover != null)
+          _slideOverlay(),
+        if (_capturingCells.isNotEmpty) _captureOverlay(),
+        if (_shakingCell != null) _shakeFlashOverlay(),
+      ],
+    );
+    return AnimatedBuilder(
+      animation: _boardShakeController,
+      builder: (context, child) {
+        final t = _boardShakeController.value;
+        final dx = t > 0 ? math.sin(t * math.pi * 4) * 4 * (1 - t) : 0.0;
+        return Transform.translate(offset: Offset(dx, 0), child: child);
+      },
+      child: board,
+    );
+  }
+
+  Widget _slideOverlay() {
+    final from = _slidingFrom!;
+    final to = _slidingTo!;
+    final mover = _slidingMover!;
+    final color = mover == AlsijaPiece.player
+        ? widget.playerColor
+        : widget.opponentColor;
+    return AnimatedBuilder(
+      animation: _slideController,
+      builder: (context, child) {
+        final t = Curves.easeInOutCubic.transform(_slideController.value);
+        final fromPx = _cellCenter(from.row, from.column);
+        final toPx = _cellCenter(to.row, to.column);
+        final pos = Offset.lerp(fromPx, toPx, t)!;
+        final px = _pebblePx;
+        return Positioned(
+          left: pos.dx - px / 2,
+          top: pos.dy - px / 2,
+          child: Transform.scale(
+            scale: 1 + 0.08 * math.sin(t * math.pi),
+            child: SizedBox(width: px, height: px, child: _stone(color)),
+          ),
         );
-      }),
-      if (cells.isNotEmpty && cells.first.isNotEmpty)
-        _at(
-          40,
-          20,
-          460,
-          440,
-          Column(
-            children: [
-              for (final (row, line) in cells.indexed)
-                Expanded(
-                  child: Row(
-                    children: [
-                      for (final (column, piece) in line.indexed)
-                        Expanded(child: _cell(row, column, piece)),
-                    ],
+      },
+    );
+  }
+
+  Widget _captureOverlay() {
+    final mover = _capturingMover;
+    final to = _capturingTo;
+    final captured = _capturingCells;
+    if (mover == null || to == null) {
+      return const SizedBox.shrink();
+    }
+    final victimColor = mover == AlsijaPiece.player
+        ? widget.opponentColor
+        : widget.playerColor;
+    final px = _pebblePx;
+    return AnimatedBuilder(
+      animation: _captureController,
+      builder: (context, child) {
+        final t = _captureController.value;
+        final widgets = <Widget>[];
+        for (var i = 0; i < captured.length; i++) {
+          final sq = captured[i];
+          final interval = Interval(
+            (i * 0.07).clamp(0.0, 0.8),
+            1.0,
+            curve: Curves.easeIn,
+          );
+          final lt = interval.transform(t);
+          final centre = _cellCenter(sq.row, sq.column);
+          widgets.add(
+            Positioned(
+              left: centre.dx - px / 2,
+              top: centre.dy - px / 2,
+              child: Opacity(
+                opacity: (1 - lt).clamp(0.0, 1.0),
+                child: Transform.rotate(
+                  angle: lt * 0.44,
+                  child: Transform.scale(
+                    scale: (1 - lt).clamp(0.0, 1.0),
+                    child: SizedBox(
+                      width: px,
+                      height: px,
+                      child: _stone(victimColor),
+                    ),
                   ),
                 ),
-            ],
+              ),
+            ),
+          );
+          widgets.add(
+            Positioned.fill(
+              child: _Art((c, s) {
+                final rng = math.Random(5);
+                for (var j = 0; j < 7; j++) {
+                  final a = rng.nextDouble() * math.pi * 2;
+                  final d = lt * (14 + rng.nextDouble() * 18);
+                  final p =
+                      centre + Offset(math.cos(a) * d, math.sin(a) * d);
+                  c.drawCircle(
+                    p,
+                    2.5 * (1 - lt),
+                    Paint()
+                      ..color = (j.isEven ? gold : cream)
+                          .withValues(alpha: 1 - lt),
+                  );
+                }
+              }),
+            ),
+          );
+          widgets.add(
+            Positioned.fill(
+              child: _Art((c, s) {
+                if (lt <= 0) {
+                  return;
+                }
+                final landing = _cellCenter(to.row, to.column);
+                c.drawCircle(
+                  landing,
+                  lt * px * 0.9,
+                  Paint()
+                    ..color = gold.withValues(alpha: (1 - lt) * 0.7)
+                    ..style = PaintingStyle.stroke
+                    ..strokeWidth = 3,
+                );
+              }),
+            ),
+          );
+        }
+        if (captured.length > 1) {
+          final landing = _cellCenter(to.row, to.column);
+          final dx = math.sin(t * math.pi * 4) * 2 * (1 - t);
+          widgets.add(
+            Positioned(
+              left: landing.dx - 14 + dx,
+              top: landing.dy - px * 0.55,
+              child: Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: gold,
+                  border: Border.all(color: Colors.white, width: 2),
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  'x${captured.length}',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+          );
+        }
+        return IgnorePointer(child: Stack(children: widgets));
+      },
+    );
+  }
+
+  Widget _trailOverlay() {
+    final from = _trailFrom!;
+    final to = _trailTo!;
+    return AnimatedBuilder(
+      animation: _trailController,
+      builder: (context, child) {
+        final t = _trailController.value;
+        if (t >= 1) {
+          return const SizedBox.shrink();
+        }
+        final fromPx = _cellCenter(from.row, from.column);
+        final toPx = _cellCenter(to.row, to.column);
+        return IgnorePointer(
+          child: _Art((c, s) {
+            final paint = Paint()
+              ..color =
+                  const Color(0xff9e7039).withValues(alpha: (1 - t) * 0.7)
+              ..strokeWidth = 4
+              ..strokeCap = StrokeCap.round
+              ..style = PaintingStyle.stroke;
+            final middle = Offset.lerp(fromPx, toPx, 0.5)!;
+            final path = Path()
+              ..moveTo(fromPx.dx, fromPx.dy)
+              ..quadraticBezierTo(
+                middle.dx + 5,
+                middle.dy - 5,
+                toPx.dx,
+                toPx.dy,
+              );
+            c.drawPath(path, paint);
+          }),
+        );
+      },
+    );
+  }
+
+  Widget _hintOverlay() {
+    final from = _hintFrom!;
+    final to = _hintTo!;
+    return AnimatedBuilder(
+      animation: _hintController,
+      builder: (context, child) {
+        if (!_hintController.isAnimating) {
+          return const SizedBox.shrink();
+        }
+        final pulse =
+            0.6 + 0.4 * math.sin(_hintController.value * math.pi * 6);
+        final fromPx = _cellCenter(from.row, from.column);
+        final toPx = _cellCenter(to.row, to.column);
+        return IgnorePointer(
+          child: _Art((c, s) {
+            final paint = Paint()
+              ..color = gold.withValues(alpha: pulse)
+              ..strokeWidth = 5
+              ..strokeCap = StrokeCap.round;
+            c.drawLine(fromPx, toPx, paint);
+            final angle =
+                math.atan2(toPx.dy - fromPx.dy, toPx.dx - fromPx.dx);
+            const head = 12.0;
+            final path = Path()
+              ..moveTo(toPx.dx, toPx.dy)
+              ..lineTo(
+                toPx.dx - head * math.cos(angle - 0.5),
+                toPx.dy - head * math.sin(angle - 0.5),
+              )
+              ..lineTo(
+                toPx.dx - head * math.cos(angle + 0.5),
+                toPx.dy - head * math.sin(angle + 0.5),
+              )
+              ..close();
+            c.drawPath(path, paint..style = PaintingStyle.fill);
+          }),
+        );
+      },
+    );
+  }
+
+  Widget _waveOverlay() {
+    return AnimatedBuilder(
+      animation: _waveController,
+      builder: (context, child) {
+        final t = Curves.easeOutCubic.transform(_waveController.value);
+        return IgnorePointer(
+          child: _Art((c, s) {
+            c.drawCircle(
+              const Offset(270, 250),
+              t * 350,
+              Paint()
+                ..color = gold.withValues(alpha: (1 - t) * 0.6)
+                ..style = PaintingStyle.stroke
+                ..strokeWidth = 3,
+            );
+          }),
+        );
+      },
+    );
+  }
+
+  Widget _shakeFlashOverlay() {
+    final sq = _shakingCell!;
+    return AnimatedBuilder(
+      animation: _shakeController,
+      builder: (context, child) {
+        if (!_shakeController.isAnimating) {
+          return const SizedBox.shrink();
+        }
+        final t = _shakeController.value;
+        final centre = _cellCenter(sq.row, sq.column);
+        final n = _boardSize;
+        final cellW = 460.0 / n;
+        final cellH = 440.0 / n;
+        return Positioned(
+          left: centre.dx - cellW / 2,
+          top: centre.dy - cellH / 2,
+          child: Container(
+            width: cellW,
+            height: cellH,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: red.withValues(alpha: 0.25 * (1 - t)),
+            ),
           ),
+        );
+      },
+    );
+  }
+
+  // ---------------------------------------------------------- الخلية
+
+  Widget _targetRing() {
+    return Positioned.fill(
+      child: IgnorePointer(
+        child: AnimatedBuilder(
+          animation: _pulseController,
+          builder: (context, child) {
+            final scale = 0.92 + _pulseController.value * 0.16;
+            return Transform.scale(
+              scale: scale,
+              child: _Art((c, s) {
+                final center = s.center(Offset.zero);
+                final radius = math.min(s.width, s.height) * .39;
+                final hole =
+                    Rect.fromCircle(center: center, radius: radius);
+                _dot(
+                  c,
+                  center.dx,
+                  center.dy,
+                  radius,
+                  const Color(0xffc5df88),
+                );
+                for (var i = 0; i < 12; i++) {
+                  c.drawArc(
+                    hole.inflate(3),
+                    i * math.pi / 6,
+                    .28,
+                    false,
+                    Paint()
+                      ..color = const Color(0xff629c52)
+                      ..strokeWidth = 4
+                      ..style = PaintingStyle.stroke,
+                  );
+                }
+              }),
+            );
+          },
         ),
-    ],
-  );
+      ),
+    );
+  }
+
+  Widget _placingRing() {
+    return Positioned.fill(
+      child: AnimatedBuilder(
+        animation: _placeController,
+        builder: (context, child) {
+          final t = _placeController.value;
+          return Opacity(
+            opacity: (1 - t) * 0.6,
+            child: FractionallySizedBox(
+              widthFactor: 0.69 * (0.8 + t * 0.7),
+              heightFactor: 0.69 * (0.8 + t * 0.7),
+              child: Container(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: gold.withValues(alpha: 0.8),
+                    width: 2,
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  /// The stone with the original selection / placement / shake
+  /// effects: gold ring + pulsing glow + lift + grow when selected,
+  /// drop + squash when just placed, shake when the tap was invalid.
+  Widget _stoneWithEffects(
+    Color color, {
+    required bool active,
+    required bool placing,
+    required bool shaking,
+  }) {
+    Widget stone = _stone(color);
+    if (active) {
+      stone = AnimatedBuilder(
+        animation: _breathController,
+        builder: (context, child) {
+          final breath = 0.5 + _breathController.value * 0.5;
+          return Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: gold.withValues(alpha: 0.35 + breath * 0.4),
+                  blurRadius: 14,
+                  spreadRadius: 3,
+                ),
+              ],
+              border: Border.all(color: gold, width: 3),
+            ),
+            child: child,
+          );
+        },
+        child: stone,
+      );
+    }
+    stone = AnimatedScale(
+      scale: active ? 1.12 : 1.0,
+      duration: const Duration(milliseconds: 180),
+      curve: Curves.easeOutBack,
+      child: AnimatedSlide(
+        offset: active ? const Offset(0, -0.10) : Offset.zero,
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOutCubic,
+        child: stone,
+      ),
+    );
+    if (placing) {
+      stone = AnimatedBuilder(
+        animation: _placeController,
+        builder: (context, child) {
+          final t = Curves.easeOutCubic.transform(_placeController.value);
+          final drop = (1 - t) * -28.0;
+          final squash = t < 0.85 ? 1.0 : 1.0 - (t - 0.85) * 0.6;
+          return Transform.translate(
+            offset: Offset(0, drop),
+            child: Transform.scale(
+              scaleY: squash,
+              scaleX: 1 + (1 - squash) * 0.5,
+              child: child,
+            ),
+          );
+        },
+        child: stone,
+      );
+    }
+    if (shaking) {
+      stone = AnimatedBuilder(
+        animation: _shakeController,
+        builder: (context, child) {
+          final t = _shakeController.value;
+          final dx = math.sin(t * math.pi * 6) * 3 * (1 - t);
+          return Transform.translate(
+            offset: Offset(dx, 0),
+            child: Opacity(
+              opacity: 1 - t * 0.2,
+              child: child,
+            ),
+          );
+        },
+        child: stone,
+      );
+    }
+    return stone;
+  }
 
   Widget _cell(int row, int column, AlsijaPiece? piece) {
     final cell = (row: row, column: column);
-    final active = selected == cell, target = targets.contains(cell);
+    final active = widget.selected == cell;
+    final target = widget.targets.contains(cell);
+    final isPlacing = _placingCell == cell;
+    final isShaking =
+        _shakingCell == cell && _shakeController.isAnimating;
+    final hiddenBySlide = _slidingTo == cell;
+    final hiddenByCapture = _capturingCells.contains(cell);
     return _press(
       'الصف ${row + 1}، العمود ${column + 1}',
-      onCell == null ? null : () => onCell!(row, column),
+      widget.onCell == null ? null : () => widget.onCell!(row, column),
       Stack(
         fit: StackFit.expand,
         clipBehavior: Clip.none,
@@ -1085,42 +1832,21 @@ class AlsijaGame extends StatelessWidget {
                   colors: [Color(0xffd9b87c), Color(0xffa47941)],
                 ).createShader(hole),
             );
-            if (target) {
-              _dot(c, center.dx, center.dy, radius, const Color(0xffc5df88));
-              for (var i = 0; i < 12; i++) {
-                c.drawArc(
-                  hole.inflate(3),
-                  i * math.pi / 6,
-                  .28,
-                  false,
-                  Paint()
-                    ..color = const Color(0xff629c52)
-                    ..strokeWidth = 4
-                    ..style = PaintingStyle.stroke,
-                );
-              }
-            }
-            if (active) {
-              c.drawCircle(
-                center,
-                radius + 5,
-                Paint()
-                  ..color = const Color(0xffffdc78)
-                  ..style = PaintingStyle.stroke
-                  ..strokeWidth = 5,
-              );
-            }
           }),
-          if (piece != null)
+          if (target) _targetRing(),
+          if (isPlacing) _placingRing(),
+          if (piece != null && !hiddenBySlide && !hiddenByCapture)
             Positioned.fill(
               child: FractionallySizedBox(
-                widthFactor: active ? .81 : .69,
-                heightFactor: active ? .82 : .69,
-                child: Transform.translate(
-                  offset: active ? const Offset(12, -19) : Offset.zero,
-                  child: _stone(
-                    piece == AlsijaPiece.player ? playerColor : opponentColor,
-                  ),
+                widthFactor: .69,
+                heightFactor: .69,
+                child: _stoneWithEffects(
+                  piece == AlsijaPiece.player
+                      ? widget.playerColor
+                      : widget.opponentColor,
+                  active: active,
+                  placing: isPlacing,
+                  shaking: isShaking,
                 ),
               ),
             ),
@@ -1148,40 +1874,196 @@ class AlsijaGame extends StatelessWidget {
     ),
   ];
 
+  // ---------------------------------------------------------- المقعد العلوي
+
+  /// Player 2's seat (two-player mode): a straw plaque with their
+  /// pebble and name, drawn in the package's own style.
+  Widget _p2Seat() => DecoratedBox(
+    decoration: BoxDecoration(
+      color: const Color(0xffe5cb8d),
+      borderRadius: BorderRadius.circular(14),
+      border: Border.all(color: ink, width: 1.5),
+    ),
+    child: Center(
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            width: 80,
+            height: 80,
+            child: _stone(widget.opponentColor),
+          ),
+          const SizedBox(width: 12),
+          Flexible(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: _text(widget.player2Name, 56),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+
+  /// The top block (figure + lantern + both counters) as one
+  /// positioned unit. In two-player mode the whole block rotates
+  /// 180° so player 2 reads it right-side-up from their side, and
+  /// the computer figure becomes player 2's seat.
+  Widget _topBlock() {
+    final inner = Stack(
+      children: [
+        if (widget.vsComputer)
+          _at(
+            183,
+            0,
+            346,
+            435,
+            _person(variant: widget.opponent.index, seated: true),
+          )
+        else
+          _at(183, 130, 346, 170, _p2Seat()),
+        _at(480, 187, 110, 168, _lantern()),
+        ..._counter(
+          5,
+          279,
+          widget.playerColor,
+          widget.opponentCaptured,
+          true,
+        ),
+        ..._counter(
+          544,
+          279,
+          widget.opponentColor,
+          widget.opponentRemaining,
+          false,
+        ),
+      ],
+    );
+    return Positioned(
+      left: 28,
+      top: 5,
+      width: 713,
+      height: 443,
+      child: widget.vsComputer
+          ? inner
+          : RotatedBox(quarterTurns: 2, child: inner),
+    );
+  }
+
+  // ---------------------------------------------------------- سطر الدور
+
+  Widget _turnLine() {
+    final label = widget.turnLabel ??
+        (widget.playerTurn ? 'دورك: اختر حجراً ثم وجهته' : 'دور الخصم');
+    return _at(
+      68,
+      938,
+      632,
+      64,
+      Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Flexible(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: _text(label, 42),
+            ),
+          ),
+          if (widget.isPlacing) ...[
+            const SizedBox(width: 10),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: List.generate(3, (i) {
+                final filled = i < widget.placedThisTurn;
+                return Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 2),
+                  width: 11,
+                  height: 11,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: filled
+                        ? (widget.playerTurn
+                            ? widget.playerColor
+                            : widget.opponentColor)
+                        : const Color(0xff8a6d4b),
+                    border: Border.all(color: ink, width: 1),
+                  ),
+                );
+              }),
+            ),
+          ],
+          if (widget.isAiThinking) ...[
+            const SizedBox(width: 8),
+            _thinkingDots(),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _thinkingDots() {
+    return AnimatedBuilder(
+      animation: _pulseController,
+      builder: (context, child) {
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          children: List.generate(3, (i) {
+            final phase = (_pulseController.value * 3 - i).clamp(0.0, 1.0);
+            return Container(
+              width: 7,
+              height: 7,
+              margin: const EdgeInsets.symmetric(horizontal: 2),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: ink.withValues(alpha: 0.3 + 0.7 * (1 - phase)),
+              ),
+            );
+          }),
+        );
+      },
+    );
+  }
+
+  // ---------------------------------------------------------- البناء
+
   @override
   Widget build(BuildContext context) => _Stage([
     _stripe(172),
-    _at(18, 24, 117, 122, _coin(Icons.pause, 'إيقاف مؤقت', onPause)),
+    _at(18, 24, 117, 122, _coin(Icons.pause, 'إيقاف مؤقت', widget.onPause)),
     _at(
       634,
       24,
       117,
       122,
       _coin(
-        soundEnabled ? Icons.volume_up : Icons.volume_off,
+        widget.soundEnabled ? Icons.volume_up : Icons.volume_off,
         'الصوت',
-        onSound,
+        widget.onSound,
       ),
     ),
-    _at(211, 5, 346, 435, _person(variant: opponent.index, seated: true)),
-    _at(508, 192, 110, 168, _lantern()),
-    ..._counter(33, 284, playerColor, opponentCaptured, true),
-    ..._counter(572, 284, opponentColor, opponentRemaining, false),
-    _at(114, 437, 540, 500, board ?? _board()),
-    _label(
-      68,
-      938,
-      632,
-      64,
-      playerTurn ? 'دورك: اختر حجراً ثم وجهته' : 'دور الخصم',
-      42,
-    ),
-    ..._counter(42, 994, opponentColor, playerCaptured, true),
-    ..._counter(563, 994, playerColor, playerRemaining, false),
-    _at(262, 1010, 101, 108, _coin(Icons.lightbulb_outline, 'تلميح', onHint)),
-    _at(405, 1010, 101, 108, _coin(Icons.reply, 'تراجع', onUndo)),
-    _label(258, 1116, 110, 48, 'تلميح', 36),
-    _label(399, 1116, 110, 48, 'تراجع', 36),
+    _topBlock(),
+    _at(114, 437, 540, 500, widget.board ?? _board()),
+    _turnLine(),
+    ..._counter(42, 994, widget.opponentColor, widget.playerCaptured, true),
+    ..._counter(563, 994, widget.playerColor, widget.playerRemaining, false),
+    if (widget.vsComputer) ...[
+      _at(
+        262,
+        1010,
+        101,
+        108,
+        _coin(Icons.lightbulb_outline, 'تلميح', widget.onHint),
+      ),
+      _at(
+        405,
+        1010,
+        101,
+        108,
+        _coin(Icons.reply, 'تراجع', widget.onUndo),
+      ),
+      _label(258, 1116, 110, 48, 'تلميح', 36),
+      _label(399, 1116, 110, 48, 'تراجع', 36),
+    ],
     _stripe(1171),
     _at(
       146,
@@ -1195,8 +2077,31 @@ class AlsijaGame extends StatelessWidget {
         ),
       ),
     ),
-    _at(224, 1210, 74, 85, _stone(playerTurn ? playerColor : opponentColor)),
-    _label(299, 1209, 170, 89, playerTurn ? 'أنت' : 'الخصم', 60, color: cream),
+    _at(
+      224,
+      1210,
+      74,
+      85,
+      _stone(
+        widget.playerTurn ? widget.playerColor : widget.opponentColor,
+      ),
+    ),
+    _at(
+      299,
+      1209,
+      170,
+      89,
+      Center(
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: _text(
+            widget.playerTurn ? widget.player1Name : widget.player2Name,
+            60,
+            color: cream,
+          ),
+        ),
+      ),
+    ),
     _at(528, 1191, 96, 115, _lantern()),
     _at(
       0,
@@ -1219,7 +2124,7 @@ class AlsijaGame extends StatelessWidget {
         }
       }),
     ),
-    if (hud != null) ...hud!,
+    if (widget.hud != null) ...widget.hud!,
   ]);
 }
 

@@ -103,7 +103,8 @@ void main() {
     );
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
-    expect(find.text('دورك: اختر حجراً ثم وجهته'), findsOneWidget);
+    // التوزيع ضد الكمبيوتر: سطر الدور يسمّي التوزيع.
+    expect(find.text('دورك: ضع 3 أحجار'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -137,7 +138,8 @@ void main() {
     controller.debugSyncAfterExternalSetup();
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
-    expect(find.text('دورك: اختر حجراً ثم وجهته'), findsOneWidget);
+    // لاعبان: سطر الدور يسمّي اللاعب الحالي.
+    expect(find.text('الدور: اللاعب 1'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

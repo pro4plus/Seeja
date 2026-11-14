@@ -4,9 +4,14 @@
 //
 // التوزيع: النقر على خانة فاضية يضع حجراً (3 كل دور، الوسطى
 // ممنوعة — يمنعها المحرك نفسه). الحركة: اختيار حجر ثم وجهته،
-// والوجهات القانونية حلقات خضراء. التلميح يعرض الحركة المقترحة
-// (اختيار + وجهة). لا حركة انزلاق في الحزمة الجديدة، فتُنهى
-// الحركة فوراً بعد ظهورها (أصوات الهبوط/الأكل + الاستقرار).
+// والوجهات القانونية حلقات خضراء نابضة، والحجر المحدد يرتفع
+// ويكبر مع توهج ذهبي. التلميح يعرض الحركة المقترحة (اختيار +
+// وجهة + سهم ذهبي نابض).
+//
+// الحركات (انزلاق/أكل/سقوط/اهتزاز/موجة) كما في اللوحة الأصلية:
+// أحداث TurnController ترفع عدّادات AlsijaFx، وAlsijaGame تشغّل
+// الحركات ثم تستدعي onFxDone فينادي finishAnimation — فلا يتحرك
+// الذكاء الاصطناعي ولا يستقر الدور إلا بعد انتهاء الحركة.
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -56,12 +61,15 @@ class _GameScreenState extends State<GameScreen> {
   late final Listenable _rebuilder;
   int _seenNonce = 0;
 
+  /// إشارات الحركات إلى AlsijaGame (انزلاق/أكل/سقوط/اهتزاز/
+  /// موجة/تلميح) — مثل BoardFx في اللوحة الأصلية.
+  final _fx = AlsijaFx();
+
   /// حركة التلميح المعروضة حالياً (اختيار + وجهة).
   SeegaMove? _hintMove;
 
   String? _pill;
   Timer? _pillTimer;
-  bool _finishScheduled = false;
 
   Strings get s => Strings(AppSettings.instance.isArabic);
 
@@ -91,35 +99,58 @@ class _GameScreenState extends State<GameScreen> {
     _seenNonce = _controller.eventNonce;
     final event = _controller.lastEvent;
     if (!mounted) return;
-    switch (event) {
-      case ControllerEvent.moved:
-        // لا حركة انزلاق في الشاشة الجديدة: أنهِ الحركة فوراً
-        // (أصوات الهبوط/الأكل + الاستقرار على الدور التالي).
-        _scheduleFinishAnimation();
-        break;
-      case ControllerEvent.placementEnded:
-        _showPill(s.letsPlay);
-        break;
-      case ControllerEvent.pass:
-        _showPill(s.passTurn);
-        break;
-      case ControllerEvent.gameOver:
-      case ControllerEvent.placed:
-      case ControllerEvent.invalid:
-      case ControllerEvent.undo:
-      case ControllerEvent.selected:
-      case ControllerEvent.turnChanged:
-      case null:
-        break;
-    }
-  }
-
-  void _scheduleFinishAnimation() {
-    if (_finishScheduled) return;
-    _finishScheduled = true;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _finishScheduled = false;
-      if (mounted) _controller.finishAnimation();
+    setState(() {
+      switch (event) {
+        case ControllerEvent.placed:
+          _fx.placedNonce++;
+          final placed = _controller.lastPlaced;
+          _fx.placedCell = placed == null
+              ? null
+              : (row: placed[0], column: placed[1]);
+          break;
+        case ControllerEvent.moved:
+          // الانزلاق ثم الأكل في AlsijaGame؛ وfinishAnimation
+          // لا تُستدعى إلا بعد انتهائهما (عبر onFxDone).
+          final result = _controller.lastMoveResult;
+          if (result != null) {
+            _fx.slideNonce++;
+            _fx.slideFrom =
+                (row: result.move.fromRow, column: result.move.fromCol);
+            _fx.slideTo =
+                (row: result.move.toRow, column: result.move.toCol);
+            _fx.slideMover = result.mover == 1
+                ? AlsijaPiece.player
+                : AlsijaPiece.opponent;
+            _fx.slideCaptured = [
+              for (final sq in result.captured)
+                (row: sq[0], column: sq[1]),
+            ];
+          }
+          break;
+        case ControllerEvent.invalid:
+          _fx.shakeNonce++;
+          final square = _controller.lastInvalidSquare;
+          _fx.shakeCell = square == null
+              ? null
+              : (row: square[0], column: square[1]);
+          break;
+        case ControllerEvent.placementEnded:
+          _fx.waveNonce++;
+          _showPill(s.letsPlay);
+          break;
+        case ControllerEvent.pass:
+          _showPill(s.passTurn);
+          break;
+        case ControllerEvent.gameOver:
+        case ControllerEvent.undo:
+          // أوقف أي حركة جارية وألغِ حالتها (تراجع/إعادة لعب).
+          _fx.clearNonce++;
+          break;
+        case ControllerEvent.selected:
+        case ControllerEvent.turnChanged:
+        case null:
+          break;
+      }
     });
   }
 
@@ -146,13 +177,21 @@ class _GameScreenState extends State<GameScreen> {
   void _onHint() {
     final move = _controller.hint();
     if (move != null) {
-      setState(() => _hintMove = move);
+      setState(() {
+        _hintMove = move;
+        _fx.hintNonce++;
+        _fx.hintFrom = (row: move.fromRow, column: move.fromCol);
+        _fx.hintTo = (row: move.toRow, column: move.toCol);
+      });
     }
   }
 
   void _onUndo() {
     if (_controller.undo()) {
-      setState(() => _hintMove = null);
+      setState(() {
+        _hintMove = null;
+        _fx.clearNonce++;
+      });
     }
   }
 
@@ -168,6 +207,24 @@ class _GameScreenState extends State<GameScreen> {
       return player == 1 ? s.player1 : s.player2;
     }
     return player == 1 ? s.you : s.computer;
+  }
+
+  /// سطر الدور كما في الشاشة الأصلية: يسمّي اللاعب الحالي،
+  /// ويظهر حالة التوزيع (مع نقاط الأحجار الثلاثة في الواجهة).
+  String _turnLine() {
+    final controller = _controller;
+    final engine = controller.engine;
+    if (controller.phase == TurnPhase.gameOver) return '';
+    if (engine.placingPhase) {
+      if (widget.config.vsComputer && engine.currentPlayer == 2) {
+        return s.computerPlacing;
+      }
+      if (widget.config.vsComputer) return s.yourTurnPlace;
+      return '${s.turnOf(_nameFor(engine.currentPlayer))} — ${s.placeThree}';
+    }
+    if (controller.isAiThinking) return s.computerThinking;
+    if (widget.config.vsComputer) return s.turnLineChoose;
+    return s.turnOf(_nameFor(engine.currentPlayer));
   }
 
   int _capturedOf(int player) {
@@ -285,6 +342,15 @@ class _GameScreenState extends State<GameScreen> {
       onSound: interactive ? _onSoundToggle : null,
       onHint: interactive && _canHint ? _onHint : null,
       onUndo: interactive && controller.canUndo ? _onUndo : null,
+      vsComputer: widget.config.vsComputer,
+      player1Name: _nameFor(1),
+      player2Name: _nameFor(2),
+      turnLabel: _turnLine(),
+      isPlacing: engine.placingPhase,
+      placedThisTurn: controller.placedThisTurn,
+      isAiThinking: controller.isAiThinking,
+      fx: _fx,
+      onFxDone: () => _controller.finishAnimation(),
     );
   }
 
@@ -325,6 +391,7 @@ class _GameScreenState extends State<GameScreen> {
       draws: controller.sessionDraws,
       onReplay: () {
         _hintMove = null;
+        _fx.clearNonce++;
         _controller.restart();
       },
       onHome: () => Navigator.of(context).popUntil((r) => r.isFirst),
@@ -353,7 +420,10 @@ class _GameScreenState extends State<GameScreen> {
             onTap: () {
               Navigator.of(context).pop();
               _controller.restart();
-              setState(() => _hintMove = null);
+              setState(() {
+                _hintMove = null;
+                _fx.clearNonce++;
+              });
             },
           ),
           _MenuRow(

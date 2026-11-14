@@ -111,7 +111,7 @@ void main() {
     );
     controller.debugSyncAfterExternalSetup();
     await tester.pump();
-    expect(find.text('دورك: اختر حجراً ثم وجهته'), findsOneWidget);
+    expect(find.text('الدور: اللاعب 1'), findsOneWidget);
 
     await tapCell(tester, 2, 2);
     await tester.pump();
@@ -125,7 +125,7 @@ void main() {
     expect(controller.phase, TurnPhase.awaitingHuman);
     expect(controller.lastEvent, ControllerEvent.pass);
     expect(controller.passPlayer, 2);
-    expect(find.text('دورك: اختر حجراً ثم وجهته'), findsOneWidget);
+    expect(find.text('الدور: اللاعب 1'), findsOneWidget);
   });
 
   testWidgets('شاشة النتيجة: أكل آخر حجر يعرض الفوز',
@@ -155,7 +155,7 @@ void main() {
     );
     controller.debugSyncAfterExternalSetup();
     await tester.pump();
-    expect(find.text('دورك: اختر حجراً ثم وجهته'), findsOneWidget);
+    expect(find.text('الدور: اللاعب 1'), findsOneWidget);
 
     await tapCell(tester, 1, 4);
     await tester.pump();
@@ -265,7 +265,7 @@ void main() {
     await tester.pump();
 
     expect(controller.engine.count(2), 1);
-    expect(find.text('دور الخصم'), findsOneWidget);
+    expect(find.text('الدور: اللاعب 2'), findsOneWidget);
 
     // اللوحة المزروعة ناقصة: للاعب 2 حجران فقط، فبعد الأكل
     // يبقى له حجر واحد فيعرض العداد «أكلت 11»، وللاعب 1
@@ -274,5 +274,83 @@ void main() {
     expect(find.text('أكلت 10'), findsOneWidget);
     expect(find.text('باقي 2'), findsOneWidget);
     expect(find.text('باقي 1'), findsOneWidget);
+  });
+
+  testWidgets('لاعبان: مقعد اللاعب 2 أعلى ولا زر تراجع',
+      (WidgetTester tester) async {
+    final controller = TurnController(
+      boardSize: 5,
+      vsComputer: false,
+    );
+    addTearDown(controller.dispose);
+
+    final engine = controller.engine;
+    engine.board[1][1] = 1;
+    engine.board[1][4] = 1;
+    engine.board[1][2] = 2;
+    engine.placingPhase = false;
+    engine.currentPlayer = 1;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: GameScreen(
+          config: _configTwoPlayer,
+          debugController: controller,
+        ),
+      ),
+    );
+    controller.debugSyncAfterExternalSetup();
+    await tester.pump();
+
+    // المقعد العلوي للاعب 2 (وليس شخصية الكمبيوتر).
+    expect(find.text('اللاعب 2'), findsOneWidget);
+    // زر التراجع مخفي في اللعب بين لاعبين (ضد الكمبيوتر فقط).
+    expect(find.bySemanticsLabel('تراجع'), findsNothing);
+    // سطر الدور يسمّي اللاعب الحالي.
+    expect(find.text('الدور: اللاعب 1'), findsOneWidget);
+  });
+
+  testWidgets('الحركة تنزلق قبل الاستقرار: finishAnimation بعد الانزلاق',
+      (WidgetTester tester) async {
+    final controller = TurnController(
+      boardSize: 5,
+      vsComputer: false,
+    );
+    addTearDown(controller.dispose);
+
+    // نفس إعداد عدادات الأكل: الحركة تأكل (1,2) دون إنهاء اللعبة.
+    final engine = controller.engine;
+    engine.board[1][1] = 1;
+    engine.board[1][4] = 1;
+    engine.board[1][2] = 2;
+    engine.board[4][4] = 2;
+    engine.placingPhase = false;
+    engine.currentPlayer = 1;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: GameScreen(
+          config: _configTwoPlayer,
+          debugController: controller,
+        ),
+      ),
+    );
+    controller.debugSyncAfterExternalSetup();
+    await tester.pump();
+
+    await tapCell(tester, 1, 4);
+    await tester.pump();
+    await tapCell(tester, 1, 3);
+    await tester.pump();
+    // الحركة طُبّقت على المحرك، لكن الدور لم يستقر بعد:
+    // الانزلاق (240ms) ثم الأكل (320ms) ما زالا يعملان.
+    expect(controller.phase, TurnPhase.animating);
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(controller.phase, TurnPhase.animating);
+    // بعد 560ms تنتهي الحركتان فيُستدعى finishAnimation.
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(controller.phase, TurnPhase.awaitingHuman);
+    expect(engine.currentPlayer, 2);
+    expect(find.text('الدور: اللاعب 2'), findsOneWidget);
   });
 }

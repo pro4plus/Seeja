@@ -224,52 +224,22 @@ class _GameScreenState extends State<GameScreen> {
           final isGameOver =
               _controller.phase == TurnPhase.gameOver;
           if (isGameOver) return _resultScreen();
-          return Stack(
-            fit: StackFit.expand,
-            children: [
-              _gameWidget(interactive: true),
-              if (_pill != null)
-                Positioned(
-                  left: 0,
-                  right: 0,
-                  top: MediaQuery.of(context).size.height * 0.42,
-                  child: Center(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 18,
-                        vertical: 10,
-                      ),
-                      decoration: BoxDecoration(
-                        color: SudaneseTheme.earthBlack
-                            .withValues(alpha: 0.85),
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                      child: Text(
-                        _pill!,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-          );
+          return _gameWidget(interactive: true);
         },
       ),
     );
   }
 
   /// لوحة اللعب الأصلية (SandBoard) داخل إطار الحزمة الجديدة:
-  /// اللوحة مربعة 500×500 بوحدات التصميم، ممركزة في مساحة
-  /// اللوحة 540×500. كل النقر على الخانات بيد SandBoard
-  /// (onTapPit → المحرك)، وكل الحركات بيدها هي.
+  /// اللوحة مربعة 600×600 بوحدات التصميم (alsijaBoardSize).
+  /// كل النقر على الخانات بيد SandBoard (onTapPit → المحرك)،
+  /// وكل الحركات بيدها هي. لافتة الدور/التوزيع تظهر داخل
+  /// المسرح عند سطر الدور (hud) — لا تغطي اللوحة أبداً.
   Widget _gameWidget({required bool interactive}) {
     final controller = _controller;
     final engine = controller.engine;
     return AlsijaGame(
+      isArabic: s.isArabic,
       playerColor: alsijaColorForPebble(widget.config.p1Pebble).value,
       opponentColor: alsijaColorForPebble(widget.config.p2Pebble).value,
       playerRemaining: _leftOf(1),
@@ -300,6 +270,39 @@ class _GameScreenState extends State<GameScreen> {
           strings: s,
           onTapPit: interactive ? _onCellTap : (r, c) {},
           onFxDone: () => _controller.finishAnimation(),
+        ),
+      ),
+      hud: _pill == null ? null : [_pillWidget()],
+    );
+  }
+
+  /// لافتة الإعلان داخل المسرح عند سطر الدور —
+  /// فوق سطر الدور نفسه، لا فوق اللوحة.
+  Widget _pillWidget() {
+    return Positioned(
+      left: 84,
+      top: 946,
+      width: 600,
+      height: 68,
+      child: Center(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+          decoration: BoxDecoration(
+            color: SudaneseTheme.earthBlack.withValues(alpha: 0.85),
+            borderRadius: BorderRadius.circular(24),
+          ),
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              _pill!,
+              softWrap: false,
+              style: const TextStyle(
+                fontSize: 30,
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
+              ),
+            ),
+          ),
         ),
       ),
     );
@@ -340,6 +343,7 @@ class _GameScreenState extends State<GameScreen> {
       wins: controller.sessionWins,
       losses: controller.sessionLosses,
       draws: controller.sessionDraws,
+      isArabic: s.isArabic,
       onReplay: () {
         _fx.move = null;
         _fx.hintMove = null;

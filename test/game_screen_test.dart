@@ -34,15 +34,15 @@ const _configTwoPlayer = GameConfig(
   p2Pebble: 1,
 );
 
-/// مركز حفرة (r,c) في لوحة الرمل: اللوحة مربعة 500×500 بوحدات
-/// التصميم داخل FittedBox، بحشوة 8px — فيُحسب مركز الحفرة
-/// بالنسبة لمقياس عرض اللوحة الفعلي.
+/// مركز حفرة (r,c) في لوحة الرمل: اللوحة مربعة (alsijaBoardSize
+/// بوحدات التصميم) داخل FittedBox، بحشوة 8px في إحداثيات
+/// اللوحة نفسها — فيُحسب مركز الحفرة من مستطيل SandBoard
+/// الفعلي مباشرة، بلا أي حجم مثبّت.
 Offset centreOf(WidgetTester tester, int r, int c) {
   final boardRect = tester.getRect(find.byType(SandBoard));
-  final scale = boardRect.width / 500;
-  final cell = (boardRect.width - 16 * scale) / 5;
+  final cell = (boardRect.width - 16) / 5;
   return boardRect.topLeft +
-      Offset(8 * scale + (c + 0.5) * cell, 8 * scale + (r + 0.5) * cell);
+      Offset(8 + (c + 0.5) * cell, 8 + (r + 0.5) * cell);
 }
 
 /// هل ترسم اللوحة حلقة ذهبية حول حجر محدد؟

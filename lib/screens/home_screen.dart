@@ -37,6 +37,7 @@ class HomeScreen extends StatelessWidget {
         // رابط تيك توك يفتح صفحة «عن اللعبة» كما كان —
         // وفيها زر تيك توك والبريد.
         onTikTok: () => showAboutSheet(context, s),
+        isArabic: s.isArabic,
       ),
     );
   }

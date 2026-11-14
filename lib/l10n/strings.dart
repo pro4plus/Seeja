@@ -3,7 +3,7 @@ class Strings {
   final bool isArabic;
   const Strings(this.isArabic);
 
-  String get homeTitle => isArabic ? 'السيجا' : 'Seega';
+  String get homeTitle => isArabic ? 'السيجا' : 'Alseeja';
   String get homeSubtitle => isArabic
       ? 'السودانية · لعبة الحصار والدهاء'
       : 'Sudanese · The game of siege and wit';
@@ -138,6 +138,14 @@ class Strings {
   String get wins => isArabic ? 'فوز' : 'Wins';
   String get losses => isArabic ? 'خسارة' : 'Losses';
   String get draws => isArabic ? 'تعادل' : 'Draws';
+  String get back => isArabic ? 'رجوع' : 'Back';
+  String get betterLuck => isArabic ? 'حظ أوفر!' : 'Better luck!';
+  String get tryAgain => isArabic ? 'جرّب مرة تانية' : 'Try again';
+  String get drawSubtitle =>
+      isArabic ? 'المباراة انتهت بالتعادل' : 'The match ended in a draw';
+  List<String> get pebbleColorNames => isArabic
+      ? ['رمادي', 'ذهبي', 'فيروزي', 'أحمر', 'أخضر', 'نحاسي', 'أزرق']
+      : ['Grey', 'Gold', 'Turquoise', 'Red', 'Green', 'Copper', 'Blue'];
   String get sound => isArabic ? 'الصوت' : 'Sound';
   String get volume => isArabic ? 'مستوى الصوت' : 'Volume';
   String get haptics => isArabic ? 'الاهتزاز' : 'Haptics';

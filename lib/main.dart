@@ -1,6 +1,8 @@
 // نقطة دخول اللعبة v4: Splash (طبق + جدار) → الرئيسية → الإعداد → اللعب.
 // الاتجاه RTL عند العربية وLTR عند الإنجليزية.
+// اللعبة ملء الشاشة: شريط الحالة وأزرار التنقل مخفية.
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'game/sound_manager.dart';
 import 'screens/game_screen.dart';
@@ -10,6 +12,13 @@ import 'theme/sudanese_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      systemNavigationBarColor: Colors.transparent,
+    ),
+  );
   await AppSettings.instance.load();
   await SoundManager.instance.init();
   runApp(const SeegaGame());

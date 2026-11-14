@@ -39,7 +39,9 @@ class ArchedPanel extends StatelessWidget {
   const ArchedPanel({
     super.key,
     required this.child,
-    this.padding = const EdgeInsets.fromLTRB(20, 26, 20, 28),
+    // المحتوى داخل الخط المتقطع بفارق واضح (كان 20 مقابل
+    // خط على بُعد 14 فبدا الكلام خارجاً على الهاتف).
+    this.padding = const EdgeInsets.fromLTRB(30, 26, 30, 28),
   });
 
   static const double _archRadius = 190;
@@ -84,7 +86,7 @@ class ArchedPanel extends StatelessWidget {
 class _DashedArchPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    const inset = 14.0;
+    const inset = 12.0;
     final r = (size.width / 2 - inset).clamp(0.0, 190.0);
     final path = Path()
       ..moveTo(inset, size.height - inset)

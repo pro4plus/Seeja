@@ -71,6 +71,8 @@ class _SetupScreenState extends State<SetupScreen> {
       return AlsijaSetup(
         onBack: () => Navigator.of(context).pop(),
         onStart: _startVsComputer,
+        isArabic: s.isArabic,
+        showOpponents: true,
       );
     }
     // لاعبان: الخطوة نفسها على الشاشة نفسها — مفتاح مختلف
@@ -86,6 +88,8 @@ class _SetupScreenState extends State<SetupScreen> {
             alsijaColorForPebble((p1 + 3) % SudaneseTheme.pebbles.length),
         initialBoardSize: _boardSize,
         title: s.chooseStoneP2First,
+        isArabic: s.isArabic,
+        showOpponents: false,
       );
     }
     return AlsijaSetup(
@@ -94,6 +98,8 @@ class _SetupScreenState extends State<SetupScreen> {
       onStart: _onP1Chosen,
       initialColor: alsijaColorForPebble(_p1Pebble ?? 0),
       initialBoardSize: _boardSize,
+      isArabic: s.isArabic,
+      showOpponents: false,
     );
   }
 }

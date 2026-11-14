@@ -2,6 +2,12 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../l10n/strings.dart';
+
+/// Play-square size in stage design units (768x1376 canvas).
+/// The board container and the tests derive from this.
+const double alsijaBoardSize = 600;
+
 const ink = Color(0xff391b10);
 const cream = Color(0xfff3e6c6);
 const red = Color(0xffa82119);
@@ -41,7 +47,6 @@ Widget _text(
   FontWeight weight = FontWeight.w800,
 }) => Text(
   value,
-  textDirection: TextDirection.rtl,
   textAlign: TextAlign.center,
   style: TextStyle(
     fontSize: size,
@@ -59,7 +64,18 @@ Widget _label(
   String value,
   double size, {
   Color color = ink,
-}) => _at(x, y, w, h, Center(child: _text(value, size, color: color)));
+  bool rotate = false,
+}) => _at(
+  x,
+  y,
+  w,
+  h,
+  Center(
+    child: rotate
+        ? RotatedBox(quarterTurns: 2, child: _text(value, size, color: color))
+        : _text(value, size, color: color),
+  ),
+);
 
 class _Art extends StatelessWidget {
   const _Art(this.paint);
@@ -459,18 +475,27 @@ Widget _person({int variant = 1, bool seated = false}) => _Art((c, s) {
   c.restore();
 });
 
-Widget _lantern() => _Art((c, s) {
+/// Lantern: bright yellow glass + glow when [lit] (current player's
+/// turn), dim grey-brown glass with no glow otherwise.
+Widget _lantern({bool lit = true}) => _Art((c, s) {
   c.save();
   c.scale(s.width / 100, s.height / 140);
-  c.drawCircle(
-    const Offset(50, 74),
-    45,
-    Paint()
-      ..shader = const RadialGradient(
-        colors: [Color(0xffffd449), Color(0x00ffcb43)],
-      ).createShader(const Rect.fromLTWH(5, 29, 90, 90)),
+  if (lit) {
+    c.drawCircle(
+      const Offset(50, 74),
+      45,
+      Paint()
+        ..shader = const RadialGradient(
+          colors: [Color(0xffffd449), Color(0x00ffcb43)],
+        ).createShader(const Rect.fromLTWH(5, 29, 90, 90)),
+    );
+  }
+  _round(
+    c,
+    const Rect.fromLTWH(31, 47, 38, 63),
+    13,
+    lit ? const Color(0xffffd65d) : const Color(0xff8a7a5e),
   );
-  _round(c, const Rect.fromLTWH(31, 47, 38, 63), 13, const Color(0xffffd65d));
   c.drawRRect(
     RRect.fromRectAndRadius(
       const Rect.fromLTWH(20, 34, 60, 84),
@@ -640,21 +665,33 @@ class AlsijaHome extends StatelessWidget {
     this.onHowTo,
     this.onAbout,
     this.onTikTok,
+    this.isArabic = true,
   });
   final VoidCallback onComputer, onLocal;
   final VoidCallback? onSettings, onHowTo, onAbout, onTikTok;
+  final bool isArabic;
+
+  Strings get _s => Strings(isArabic);
 
   @override
   Widget build(BuildContext context) => _Stage([
-    _at(25, 28, 96, 105, _coin(Icons.settings, 'الإعدادات', onSettings)),
-    _label(145, 57, 482, 150, 'السيجا', 132, color: red),
-    _label(139, 50, 482, 150, 'السيجا', 132, color: const Color(0xff28234c)),
+    _at(25, 28, 96, 105, _coin(Icons.settings, _s.settings, onSettings)),
+    _label(145, 57, 482, 150, _s.homeTitle, 132, color: red),
+    _label(
+      139,
+      50,
+      482,
+      150,
+      _s.homeTitle,
+      132,
+      color: const Color(0xff28234c),
+    ),
     _label(
       119,
       203,
       530,
       56,
-      'السودانية • لعبة الحصار والدهاء',
+      _s.homeSubtitle,
       36,
       color: const Color(0xff28234c),
     ),
@@ -724,8 +761,8 @@ class AlsijaHome extends StatelessWidget {
       562,
       130,
       _plank(
-        'العب ضد الكمبيوتر',
-        'اجلس قبالة الشيخ وجرّب حظك',
+        _s.playVsComputer,
+        _s.playVsComputerCaption,
         onComputer,
         crimson: true,
         angled: true,
@@ -737,16 +774,16 @@ class AlsijaHome extends StatelessWidget {
       562,
       130,
       _plank(
-        'لاعبان على جهاز واحد',
-        'تحدّ صديقك وجهاً لوجه',
+        _s.playVsFriend,
+        _s.playVsFriendCaption,
         onLocal,
         angled: true,
       ),
     ),
     for (final (x, w, text, tap) in [
-      (502.0, 200.0, 'طريقة اللعب', onHowTo),
-      (350.0, 153.0, 'عن اللعبة', onAbout),
-      (67.0, 282.0, 'تيك توك @nubax', onTikTok),
+      (502.0, 200.0, _s.howToPlay, onHowTo),
+      (350.0, 153.0, _s.aboutGame, onAbout),
+      (67.0, 282.0, _s.tiktokLink, onTikTok),
     ])
       _at(x, 1310, w, 59, _press(text, tap, Center(child: _text(text, 30)))),
   ], home: true);
@@ -761,10 +798,18 @@ class AlsijaSetup extends StatefulWidget {
     this.initialColor = AlsijaColor.blue,
     this.initialBoardSize = 5,
     this.title,
+    this.isArabic = true,
+    this.showOpponents = true,
   });
 
   final VoidCallback onBack;
   final ValueChanged<AlsijaSettings> onStart;
+  final bool isArabic;
+
+  /// Opponent niches (Sheikh / Wad El-Balad / Teacher) are
+  /// computer-opponent choices: shown vs computer, hidden in
+  /// two-player setup (the original showed them vs computer only).
+  final bool showOpponents;
 
   /// لون مقفل لا يُختار (حجر اللاعب 1 في خطوة اللاعب 2).
   final AlsijaColor? lockedColor;
@@ -776,6 +821,8 @@ class AlsijaSetup extends StatefulWidget {
 
   /// عنوان اللوحة الخشبية أعلى الشاشة (افتراضياً «اجلس للعب»).
   final String? title;
+
+  Strings get strings => Strings(isArabic);
 
   @override
   State<AlsijaSetup> createState() => _SetupState();
@@ -795,10 +842,15 @@ class _SetupState extends State<AlsijaSetup> {
 
   Widget _opponent(AlsijaOpponent option) {
     final i = option.index, active = option == opponent;
-    final name = const ['ود البلد', 'الأستاذ', 'الشيخ'][i];
-    final level = const ['سهل', 'وسط', 'صعب'][i];
+    final strings = widget.strings;
+    final name = [
+      strings.elderYoung,
+      strings.elderTeacher,
+      strings.elderElder,
+    ][i];
+    final level = [strings.easy, strings.medium, strings.hard][i];
     return _press(
-      '$name، $level',
+      '${name}${widget.isArabic ? '، ' : ', '}$level',
       () => setState(() => opponent = option),
       Stack(
         fit: StackFit.expand,
@@ -872,7 +924,14 @@ class _SetupState extends State<AlsijaSetup> {
               _line(c, Offset(grid.left, y), Offset(grid.right, y), ink, 2);
             }
           }),
-          _label(0, 218, 225, 48, n == 5 ? '٥×٥ • سريعة' : '٧×٧ • طويلة', 34),
+          _label(
+            0,
+            218,
+            225,
+            48,
+            n == 5 ? widget.strings.board5Short : widget.strings.board7Short,
+            34,
+          ),
         ],
       ),
       selected: active,
@@ -880,46 +939,64 @@ class _SetupState extends State<AlsijaSetup> {
   }
 
   @override
-  Widget build(BuildContext context) => _Stage([
-    _stripe(81),
-    _at(24, 24, 95, 106, _coin(Icons.arrow_back, 'رجوع', widget.onBack)),
-    _at(209, 36, 350, 84, _plank(widget.title ?? 'اجلس للعب', null, null)),
-    _label(200, 145, 368, 60, 'ضد من ؟', 45),
-    for (final option in AlsijaOpponent.values)
-      _at(42 + option.index * 239.0, 215, 204, 355, _opponent(option)),
-    _label(250, 592, 268, 56, 'اللوحة', 48),
-    _at(127, 646, 225, 266, _board(5)),
-    _at(418, 650, 225, 266, _board(7)),
-    _at(
-      60,
-      945,
-      648,
-      171,
-      _Art((c, s) {
-        _round(c, Offset.zero & s, 23, const Color(0xff49251b));
-        _round(
-          c,
-          Rect.fromLTWH(15, 17, s.width - 30, s.height - 42),
-          17,
-          const Color(0xff2b1510),
-        );
-      }),
-    ),
-    for (final choice in AlsijaColor.values)
+  Widget build(BuildContext context) {
+    // Without the opponent niches (two-player setup) the board,
+    // colour and start sections move up so no empty band is left
+    // where the niches were.
+    final compact = !widget.showOpponents;
+    final boardLabelY = compact ? 180.0 : 592.0;
+    final boardY = compact ? 245.0 : 646.0;
+    final trayY = compact ? 600.0 : 945.0;
+    final diskY = compact ? 860.0 : 1144.0;
+    final goY = compact ? 907.0 : 1191.0;
+    final strings = widget.strings;
+    return _Stage([
+      _stripe(81),
       _at(
-        88 + choice.index * 85.0,
-        choice == color ? 915 : 971,
-        80,
-        103,
-        _press(
-          const ['رمادي',
-            'ذهبي',
-            'فيروزي',
-            'أحمر',
-            'أخضر',
-            'نحاسي',
-            'أزرق',
-          ][choice.index],
+        24,
+        24,
+        95,
+        106,
+        _coin(Icons.arrow_back, strings.back, widget.onBack),
+      ),
+      _at(
+        209,
+        36,
+        350,
+        84,
+        _plank(widget.title ?? strings.sitToPlay, null, null),
+      ),
+      if (widget.showOpponents) ...[
+        _label(200, 145, 368, 60, strings.againstWho, 45),
+        for (final option in AlsijaOpponent.values)
+          _at(42 + option.index * 239.0, 215, 204, 355, _opponent(option)),
+      ],
+      _label(250, boardLabelY, 268, 56, strings.boardSection, 48),
+      _at(127, boardY, 225, 266, _board(5)),
+      _at(418, boardY + 4, 225, 266, _board(7)),
+      _at(
+        60,
+        trayY,
+        648,
+        171,
+        _Art((c, s) {
+          _round(c, Offset.zero & s, 23, const Color(0xff49251b));
+          _round(
+            c,
+            Rect.fromLTWH(15, 17, s.width - 30, s.height - 42),
+            17,
+            const Color(0xff2b1510),
+          );
+        }),
+      ),
+      for (final choice in AlsijaColor.values)
+        _at(
+          88 + choice.index * 85.0,
+          choice == color ? trayY - 30 : trayY + 26,
+          80,
+          103,
+          _press(
+            strings.pebbleColorNames[choice.index],
           choice == widget.lockedColor
               ? null
               : () => setState(() => color = choice),
@@ -946,14 +1023,14 @@ class _SetupState extends State<AlsijaSetup> {
         ),
       ),
     _stripe(1227),
-    _at(283, 1144, 202, 208, _disk(false)),
+    _at(283, diskY, 202, 208, _disk(false)),
     _at(
       327,
-      1191,
+      goY,
       114,
       116,
       _press(
-        'يلا',
+        strings.letsGo,
         () {
           widget.onStart((
             opponent: opponent,
@@ -967,11 +1044,12 @@ class _SetupState extends State<AlsijaSetup> {
             shape: BoxShape.circle,
             border: Border.all(color: ink, width: 6),
           ),
-          child: Center(child: _text('يلا', 49, color: cream)),
+          child: Center(child: _text(strings.letsGo, 49, color: cream)),
         ),
       ),
     ),
-  ]);
+    ]);
+  }
 }
 
 enum AlsijaPiece { player, opponent }
@@ -1039,12 +1117,13 @@ class AlsijaGame extends StatefulWidget {
     this.board,
     this.hud,
     this.vsComputer = true,
-    this.player1Name = 'أنت',
-    this.player2Name = 'الخصم',
+    this.player1Name,
+    this.player2Name,
     this.turnLabel,
     this.isPlacing = false,
     this.placedThisTurn = 0,
     this.isAiThinking = false,
+    this.isArabic = true,
   });
 
   final List<List<AlsijaPiece?>> cells;
@@ -1062,10 +1141,13 @@ class AlsijaGame extends StatefulWidget {
   final Widget? board;
   final List<Widget>? hud;
 
-  /// Two-player mode: the top block rotates 180° and shows the
-  /// second player's seat instead of the computer figure.
+  /// Two-player mode: the top shows the second player's plaque
+  /// instead of the computer figure.
   final bool vsComputer;
-  final String player1Name, player2Name;
+
+  /// Null resolves to the localized defaults (You / Opponent).
+  final String? player1Name, player2Name;
+  final bool isArabic;
 
   /// Full turn-line text (computed by the screen from the real
   /// phase/player, e.g. «الدور: اللاعب 1 — ضع 3 أحجار»).
@@ -1084,6 +1166,10 @@ class _AlsijaGameState extends State<AlsijaGame>
   // نبض نقاط التفكير في سطر الدور فقط — اللوحة الحقيقية
   // (SandBoard) تملك حركاتها هي، وهذه الشاشة بلا حركات.
   late final AnimationController _pulseController;
+
+  Strings get _s => Strings(widget.isArabic);
+  String get _p1Name => widget.player1Name ?? _s.you;
+  String get _p2Name => widget.player2Name ?? _s.computer;
 
   @override
   void initState() {
@@ -1127,8 +1213,8 @@ class _AlsijaGameState extends State<AlsijaGame>
         }),
         if (widget.cells.isNotEmpty && widget.cells.first.isNotEmpty)
           _at(
-            40,
-            20,
+            70,
+            80,
             460,
             440,
             Column(
@@ -1159,7 +1245,7 @@ class _AlsijaGameState extends State<AlsijaGame>
     final active = widget.selected == cell;
     final target = widget.targets.contains(cell);
     return _press(
-      'الصف ${row + 1}، العمود ${column + 1}',
+      _s.tileLabel(row, column),
       widget.onCell == null ? null : () => widget.onCell!(row, column),
       Stack(
         fit: StackFit.expand,
@@ -1233,103 +1319,76 @@ class _AlsijaGameState extends State<AlsijaGame>
     double y,
     Color color,
     int number,
-    bool captured,
-  ) => [
+    bool captured, {
+    bool rotateLabel = false,
+  }) => [
     _at(x, y, 164, 116, _bowl(color, number)),
     _label(
       x - 5,
       y + 116,
       174,
       48,
-      '${captured ? 'أكلت' : 'باقي'} $number',
+      '${captured ? _s.captured : _s.remaining} $number',
       36,
+      rotate: rotateLabel,
     ),
   ];
 
-  // ---------------------------------------------------------- المقعد العلوي
+  // ---------------------------------------------------------- لوحة اللاعب
 
-  /// Player 2's seat (two-player mode): a straw plaque with their
-  /// pebble and name, drawn in the package's own style.
-  Widget _p2Seat() => DecoratedBox(
-    decoration: BoxDecoration(
-      color: const Color(0xffe5cb8d),
-      borderRadius: BorderRadius.circular(14),
-      border: Border.all(color: ink, width: 1.5),
-    ),
-    child: Center(
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          SizedBox(
-            width: 80,
-            height: 80,
-            child: _stone(widget.opponentColor),
-          ),
-          const SizedBox(width: 12),
-          Flexible(
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              child: _text(widget.player2Name, 56),
-            ),
-          ),
-        ],
+  /// One player's plaque (stone + name + «دورك» on their turn +
+  /// lantern, lit on their turn). The top plaque and the bottom
+  /// bar are the SAME widget, so they look identical. In
+  /// two-player mode the top plaque is rotated 180° so player 2
+  /// reads it right-side-up from their side (its rect does not
+  /// move, so nothing can overlap the coins).
+  Widget _playerPlaque({
+    required Color stoneColor,
+    required String name,
+    required bool isTurn,
+    bool rotate = false,
+  }) {
+    final inner = DecoratedBox(
+      decoration: BoxDecoration(
+        color: const Color(0xffe5cb8d),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: ink, width: 1.5),
       ),
-    ),
-  );
-
-  /// The top block (figure + lantern + both counters) as one
-  /// positioned unit. In two-player mode the whole block rotates
-  /// 180° so player 2 reads it right-side-up from their side, and
-  /// the computer figure becomes player 2's seat.
-  Widget _topBlock() {
-    final inner = Stack(
-      children: [
-        if (widget.vsComputer)
-          _at(
-            183,
-            0,
-            346,
-            435,
-            _person(variant: widget.opponent.index, seated: true),
-          )
-        else
-          _at(183, 130, 346, 170, _p2Seat()),
-        _at(480, 187, 110, 168, _lantern()),
-        ..._counter(
-          5,
-          279,
-          widget.playerColor,
-          widget.opponentCaptured,
-          true,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        child: Row(
+          children: [
+            SizedBox(width: 76, height: 76, child: _stone(stoneColor)),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: _text(name, 44),
+                  ),
+                  if (isTurn) _text(_s.yourTurn, 28, color: red),
+                ],
+              ),
+            ),
+            const SizedBox(width: 10),
+            SizedBox(width: 70, height: 100, child: _lantern(lit: isTurn)),
+          ],
         ),
-        ..._counter(
-          544,
-          279,
-          widget.opponentColor,
-          widget.opponentRemaining,
-          false,
-        ),
-      ],
+      ),
     );
-    return Positioned(
-      left: 28,
-      top: 5,
-      width: 713,
-      height: 443,
-      child: widget.vsComputer
-          ? inner
-          : RotatedBox(quarterTurns: 2, child: inner),
-    );
+    return rotate ? RotatedBox(quarterTurns: 2, child: inner) : inner;
   }
 
   // ---------------------------------------------------------- سطر الدور
 
   Widget _turnLine() {
     final label = widget.turnLabel ??
-        (widget.playerTurn ? 'دورك: اختر حجراً ثم وجهته' : 'دور الخصم');
+        (widget.playerTurn ? _s.turnLineChoose : _s.turnOf(_p2Name));
     return _at(
       68,
-      938,
+      950,
       632,
       64,
       Row(
@@ -1401,7 +1460,7 @@ class _AlsijaGameState extends State<AlsijaGame>
   @override
   Widget build(BuildContext context) => _Stage([
     _stripe(172),
-    _at(18, 24, 117, 122, _coin(Icons.pause, 'إيقاف مؤقت', widget.onPause)),
+    _at(18, 24, 117, 122, _coin(Icons.pause, _s.pause, widget.onPause)),
     _at(
       634,
       24,
@@ -1409,72 +1468,97 @@ class _AlsijaGameState extends State<AlsijaGame>
       122,
       _coin(
         widget.soundEnabled ? Icons.volume_up : Icons.volume_off,
-        'الصوت',
+        _s.sound,
         widget.onSound,
       ),
     ),
-    _topBlock(),
-    _at(114, 437, 540, 500, widget.board ?? _board()),
+    // Top: vs computer keeps the person figure + lantern; two
+    // players get the second player's plaque (rotated so player 2
+    // reads it). The counters sit at the same place in both modes
+    // — below the coins, never over them — with only their labels
+    // rotated in 2P; in 2P the two counters swap sides so each
+    // player sees «باقي» on their right, as in the original.
+    if (widget.vsComputer) ...[
+      _at(
+        254,
+        5,
+        260,
+        327,
+        _person(variant: widget.opponent.index, seated: true),
+      ),
+      _at(470, 180, 100, 148, _lantern(lit: !widget.playerTurn)),
+      ..._counter(5, 160, widget.playerColor, widget.opponentCaptured, true),
+      ..._counter(
+        599,
+        160,
+        widget.opponentColor,
+        widget.opponentRemaining,
+        false,
+      ),
+    ] else ...[
+      _at(
+        150,
+        24,
+        468,
+        110,
+        _playerPlaque(
+          stoneColor: widget.opponentColor,
+          name: _p2Name,
+          isTurn: !widget.playerTurn,
+          rotate: true,
+        ),
+      ),
+      ..._counter(
+        5,
+        160,
+        widget.opponentColor,
+        widget.opponentRemaining,
+        false,
+        rotateLabel: true,
+      ),
+      ..._counter(
+        599,
+        160,
+        widget.playerColor,
+        widget.opponentCaptured,
+        true,
+        rotateLabel: true,
+      ),
+    ],
+    _at(84, 340, alsijaBoardSize, alsijaBoardSize, widget.board ?? _board()),
     _turnLine(),
-    ..._counter(42, 994, widget.opponentColor, widget.playerCaptured, true),
-    ..._counter(563, 994, widget.playerColor, widget.playerRemaining, false),
+    ..._counter(42, 1024, widget.opponentColor, widget.playerCaptured, true),
+    ..._counter(563, 1024, widget.playerColor, widget.playerRemaining, false),
     if (widget.vsComputer) ...[
       _at(
         262,
-        1010,
+        1032,
         101,
         108,
-        _coin(Icons.lightbulb_outline, 'تلميح', widget.onHint),
+        _coin(Icons.lightbulb_outline, _s.hint, widget.onHint),
       ),
       _at(
         405,
-        1010,
+        1032,
         101,
         108,
-        _coin(Icons.reply, 'تراجع', widget.onUndo),
+        _coin(Icons.reply, _s.undo, widget.onUndo),
       ),
-      _label(258, 1116, 110, 48, 'تلميح', 36),
-      _label(399, 1116, 110, 48, 'تراجع', 36),
+      _label(258, 1140, 110, 48, _s.hint, 36),
+      _label(399, 1140, 110, 48, _s.undo, 36),
     ],
-    _stripe(1171),
+    // Bottom bar: the same plaque as the top one (player 1).
     _at(
-      146,
-      1201,
-      481,
-      104,
-      DecoratedBox(
-        decoration: BoxDecoration(
-          color: const Color(0xff57321b),
-          borderRadius: BorderRadius.circular(24),
-        ),
+      150,
+      1200,
+      468,
+      110,
+      _playerPlaque(
+        stoneColor: widget.playerColor,
+        name: _p1Name,
+        isTurn: widget.playerTurn,
       ),
     ),
-    _at(
-      224,
-      1210,
-      74,
-      85,
-      _stone(
-        widget.playerTurn ? widget.playerColor : widget.opponentColor,
-      ),
-    ),
-    _at(
-      299,
-      1209,
-      170,
-      89,
-      Center(
-        child: FittedBox(
-          fit: BoxFit.scaleDown,
-          child: _text(
-            widget.playerTurn ? widget.player1Name : widget.player2Name,
-            60,
-            color: cream,
-          ),
-        ),
-      ),
-    ),
-    _at(528, 1191, 96, 115, _lantern()),
     _at(
       0,
       1321,
@@ -1513,12 +1597,16 @@ class AlsijaResult extends StatelessWidget {
     this.draws = 0,
     this.background,
     this.scoreCards,
+    this.isArabic = true,
   });
 
   final VoidCallback onReplay, onHome;
   final AlsijaOutcome outcome;
   final int wins, losses, draws;
   final Widget? background, scoreCards;
+  final bool isArabic;
+
+  Strings get _s => Strings(isArabic);
 
   @override
   Widget build(BuildContext context) => _Stage([
@@ -1576,25 +1664,25 @@ class AlsijaResult extends StatelessWidget {
       652,
       111,
       switch (outcome) {
-        AlsijaOutcome.win => 'مبروووك!',
-        AlsijaOutcome.loss => 'حظ أوفر!',
-        AlsijaOutcome.draw => 'تعادل!',
+        AlsijaOutcome.win => _s.victory,
+        AlsijaOutcome.loss => _s.betterLuck,
+        AlsijaOutcome.draw => _s.draw,
       },
       86,
       color: red,
     ),
     _label(70, 716, 628, 62, switch (outcome) {
-      AlsijaOutcome.win => 'فزت! شغل نضيف والله',
-      AlsijaOutcome.loss => 'جرّب مرة تانية',
-      AlsijaOutcome.draw => 'المباراة انتهت بالتعادل',
+      AlsijaOutcome.win => _s.youWon,
+      AlsijaOutcome.loss => _s.tryAgain,
+      AlsijaOutcome.draw => _s.drawSubtitle,
     }, 40),
     if (scoreCards != null)
       _at(72, 814, 624, 134, scoreCards!)
     else
       for (final (index, (title, value)) in [
-        ('تعادل', draws),
-        ('خسارة', losses),
-        ('فوز', wins),
+        (_s.draws, draws),
+        (_s.losses, losses),
+        (_s.wins, wins),
       ].indexed)
         _at(
           72 + index * 214.0,
@@ -1621,8 +1709,8 @@ class AlsijaResult extends StatelessWidget {
       1005,
       611,
       132,
-      _plank('العب تاني', 'نفس الإعدادات', onReplay, crimson: true),
+      _plank(_s.playAgain, _s.playAgainCaption, onReplay, crimson: true),
     ),
-    _at(82, 1153, 611, 121, _plank('العودة للرئيسية', null, onHome)),
+    _at(82, 1153, 611, 121, _plank(_s.backHome, null, onHome)),
   ]);
 }

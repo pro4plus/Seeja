@@ -187,7 +187,10 @@ Future<void> showSettingsSheet(
                 Text(s.haptics, style: SudaneseTheme.bodyBold),
                 _Toggle(
                   value: settings.hapticsOn,
-                  onChanged: (v) => settings.setHapticsOn(v),
+                  onChanged: (v) {
+                    settings.setHapticsOn(v);
+                    SoundManager.instance.tap();
+                  },
                 ),
               ],
             ),
@@ -234,7 +237,10 @@ class _LangButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: () {
+        SoundManager.instance.tap();
+        onTap();
+      },
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(

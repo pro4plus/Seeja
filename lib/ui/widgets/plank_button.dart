@@ -6,6 +6,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../../game/sound_manager.dart';
 import '../../theme/sudanese_theme.dart';
 
 enum PlankKind { red, dark }
@@ -71,6 +72,7 @@ class _PlankButtonState extends State<PlankButton>
       onTapDown: (_) => _down(),
       onTapUp: (_) {
         _up();
+        SoundManager.instance.tap();
         widget.onPressed?.call();
       },
       onTapCancel: _up,

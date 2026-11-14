@@ -7,7 +7,6 @@
 // اللاعب (+3 ضمن الأحجار السبعة) كما كان.
 import 'package:flutter/material.dart';
 
-import '../game/sound_manager.dart';
 import '../l10n/strings.dart';
 import '../services/settings_store.dart';
 import '../theme/sudanese_theme.dart';
@@ -33,7 +32,7 @@ class _SetupScreenState extends State<SetupScreen> {
   Strings get s => Strings(AppSettings.instance.isArabic);
 
   void _startVsComputer(AlsijaSettings settings) {
-    SoundManager.instance.tap();
+    // النقرة تصدر من _press نفسه في زر «يلا».
     final p1 = pebbleForAlsijaColor(settings.color);
     final config = GameConfig(
       boardSize: settings.boardSize,
@@ -46,7 +45,6 @@ class _SetupScreenState extends State<SetupScreen> {
   }
 
   void _onP1Chosen(AlsijaSettings settings) {
-    SoundManager.instance.tap();
     setState(() {
       _boardSize = settings.boardSize;
       _p1Pebble = pebbleForAlsijaColor(settings.color);
@@ -55,7 +53,6 @@ class _SetupScreenState extends State<SetupScreen> {
   }
 
   void _startTwoPlayer(AlsijaSettings settings) {
-    SoundManager.instance.tap();
     final config = GameConfig(
       boardSize: settings.boardSize,
       vsComputer: false,

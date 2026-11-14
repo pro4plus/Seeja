@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../game/sound_manager.dart';
 import '../l10n/strings.dart';
 
 /// Play-square size in stage design units (768x1376 canvas).
@@ -202,50 +203,66 @@ Widget _stripe(double y) => _at(
   }),
 );
 
+/// كل الأزرار تمر من هنا — والضغطة تصدر صوت نقر قصير
+/// (ui_tap) ما لم يُطلب غير ذلك (زرا التلميح والتراجع لهما
+/// صوتاهما الخاصان في المحرك فلا نضيف نقرة فوقهما).
+/// الصوت يحترم إعداد الصوت ومستواه داخل SoundManager.
 Widget _press(
   String label,
   VoidCallback? tap,
   Widget child, {
   bool? selected,
-}) => Semantics(
-  button: true,
-  selected: selected,
-  label: label,
-  child: Material(
-    type: MaterialType.transparency,
-    child: InkWell(
-      onTap: tap,
-      child: ExcludeSemantics(child: child),
+  bool clickSound = true,
+}) {
+  final onTap = tap;
+  return Semantics(
+    button: true,
+    selected: selected,
+    label: label,
+    child: Material(
+      type: MaterialType.transparency,
+      child: InkWell(
+        onTap: onTap == null
+            ? null
+            : () {
+                if (clickSound) SoundManager.instance.tap();
+                onTap();
+              },
+        child: ExcludeSemantics(child: child),
+      ),
     ),
-  ),
-);
+  );
+}
 
-Widget _coin(IconData icon, String label, VoidCallback? tap) => _press(
-  label,
-  tap,
-  Stack(
-    fit: StackFit.expand,
-    children: [
-      _Art((c, s) {
-        final r = Rect.fromLTWH(3, 4, s.width - 6, s.height - 15);
-        _oval(c, r.shift(const Offset(0, 9)), const Color(0xff866330));
-        _oval(c, r, gold);
-        _oval(c, r.deflate(5), const Color(0xff744721));
-        for (var i = 1; i < 5; i++) {
-          final x = r.left + r.width * i / 5;
-          _line(
-            c,
-            Offset(x, r.top + 23),
-            Offset(x, r.bottom - 23),
-            const Color(0x22532b14),
-            2,
-          );
-        }
-      }),
-      Center(child: Icon(icon, size: 57, color: cream)),
-    ],
-  ),
-);
+Widget _coin(IconData icon, String label, VoidCallback? tap,
+        {bool clickSound = true}) =>
+    _press(
+      label,
+      tap,
+      Stack(
+        fit: StackFit.expand,
+        children: [
+          _Art((c, s) {
+            final r = Rect.fromLTWH(3, 4, s.width - 6, s.height - 15);
+            _oval(c, r.shift(const Offset(0, 9)), const Color(0xff866330));
+            _oval(c, r, gold);
+            _oval(c, r.deflate(5), const Color(0xff744721));
+            for (var i = 1; i < 5; i++) {
+              final x = r.left + r.width * i / 5;
+              _line(
+                c,
+                Offset(x, r.top + 23),
+                Offset(x, r.bottom - 23),
+                const Color(0x22532b14),
+                2,
+              );
+            }
+          }),
+          Center(child: Icon(icon, size: 57, color: cream)),
+        ],
+      ),
+      clickSound: clickSound,
+    );
 
 Widget _plank(
   String title,
@@ -1597,14 +1614,26 @@ class _AlsijaGameState extends State<AlsijaGame>
         1032,
         101,
         108,
-        _coin(Icons.lightbulb_outline, _s.hint, widget.onHint),
+        // بلا نقرة: التلميح والتراجع يصدران صوتيهما الخاصين
+        // من المحرك، فالنقرة فوقهما صوتان متداخلان.
+        _coin(
+          Icons.lightbulb_outline,
+          _s.hint,
+          widget.onHint,
+          clickSound: false,
+        ),
       ),
       _at(
         405,
         1032,
         101,
         108,
-        _coin(Icons.reply, _s.undo, widget.onUndo),
+        _coin(
+          Icons.reply,
+          _s.undo,
+          widget.onUndo,
+          clickSound: false,
+        ),
       ),
       _label(258, 1140, 110, 48, _s.hint, 36),
       _label(399, 1140, 110, 48, _s.undo, 36),

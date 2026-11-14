@@ -2,7 +2,6 @@
 // التنقل والإعدادات وطريقة اللعب وعن اللعبة والتيك توك كما كانت.
 import 'package:flutter/material.dart';
 
-import '../game/sound_manager.dart';
 import '../l10n/strings.dart';
 import '../services/settings_store.dart';
 import '../theme/sudanese_theme.dart';
@@ -16,7 +15,7 @@ class HomeScreen extends StatelessWidget {
   Strings get s => Strings(AppSettings.instance.isArabic);
 
   void _goSetup(BuildContext context, bool vsComputer) {
-    SoundManager.instance.tap();
+    // النقرة تصدر من _press نفسه في AlsijaHome.
     Navigator.of(context).push(
       FadeSlidePageRoute(
         builder: (_) => SetupScreen(vsComputer: vsComputer),

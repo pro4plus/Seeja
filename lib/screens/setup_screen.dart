@@ -343,7 +343,9 @@ class _SetupScreenState extends State<SetupScreen>
                                 ],
                               ),
                             ),
-                            const Spacer(),
+                            // فاصل ثابت بدل Spacer: العمود داخل تمرير
+                            // عمودي فلا يقبل أبناء flex.
+                            const SizedBox(height: 24),
                             // ---- زر يلا على شريط منسوج ----
                             SizedBox(
                               height: 104,

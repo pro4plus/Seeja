@@ -164,8 +164,6 @@ void main() {
 
   testWidgets('شاشة النتيجة: أكل آخر حجر يعرض الفوز',
       (WidgetTester tester) async {
-    final semantics = tester.ensureSemantics();
-    addTearDown(semantics.dispose);
     final controller = TurnController(
       boardSize: 5,
       vsComputer: false,

@@ -22,8 +22,6 @@ void main() {
   testWidgets('الرئيسية: لا تجاوز عند 360 بكسل وخط 130%',
       (WidgetTester tester) async {
     await _setSmallScreen(tester);
-    final semantics = tester.ensureSemantics();
-    addTearDown(semantics.dispose);
     await tester.pumpWidget(const SeegaGame());
     await tester.pump(const Duration(milliseconds: 2600));
     await tester.pump(const Duration(milliseconds: 500));
@@ -38,8 +36,6 @@ void main() {
   testWidgets('الإعداد ضد الكمبيوتر: لا تجاوز',
       (WidgetTester tester) async {
     await _setSmallScreen(tester);
-    final semantics = tester.ensureSemantics();
-    addTearDown(semantics.dispose);
     await tester.pumpWidget(
       const MaterialApp(home: SetupScreen(vsComputer: true)),
     );
@@ -53,8 +49,6 @@ void main() {
   testWidgets('الإعداد لاعبان: لا تجاوز',
       (WidgetTester tester) async {
     await _setSmallScreen(tester);
-    final semantics = tester.ensureSemantics();
-    addTearDown(semantics.dispose);
     await tester.pumpWidget(
       const MaterialApp(home: SetupScreen(vsComputer: false)),
     );
@@ -68,8 +62,6 @@ void main() {
   testWidgets('الإعداد ضد الكمبيوتر: ثلاث كوات للخصوم',
       (WidgetTester tester) async {
     await _setSmallScreen(tester);
-    final semantics = tester.ensureSemantics();
-    addTearDown(semantics.dispose);
     await tester.pumpWidget(
       const MaterialApp(home: SetupScreen(vsComputer: true)),
     );

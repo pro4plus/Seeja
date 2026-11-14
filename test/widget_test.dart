@@ -4,8 +4,6 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   testWidgets('التطبيق يفتح على شاشة البداية ثم الرئيسية',
       (WidgetTester tester) async {
-    final semantics = tester.ensureSemantics();
-    addTearDown(semantics.dispose);
     await tester.pumpWidget(const SeegaGame());
     // شاشة البداية: عنوان "السيجا السودانية" بظل أحمر صلب.
     expect(find.text('السيجا السودانية'), findsOneWidget);

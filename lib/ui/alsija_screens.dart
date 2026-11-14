@@ -1187,7 +1187,7 @@ class AlsijaGame extends StatelessWidget {
       104,
       DecoratedBox(
         decoration: BoxDecoration(
-          color: Color(0xff57321b),
+          color: const Color(0xff57321b),
           borderRadius: BorderRadius.circular(24),
         ),
       ),
@@ -1323,7 +1323,7 @@ class AlsijaResult extends StatelessWidget {
           134,
           DecoratedBox(
             decoration: BoxDecoration(
-              color: Color(0xffe5cb8d),
+              color: const Color(0xffe5cb8d),
               borderRadius: BorderRadius.circular(24),
             ),
             child: Column(

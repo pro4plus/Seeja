@@ -2,22 +2,18 @@
 // موصولة بمحرّك اللعبة الحقيقي عبر TurnController — القواعد
 // والذكاء الاصطناعي والأصوات كما هي، بلا أي تغيير.
 //
-// التوزيع: النقر على خانة فاضية يضع حجراً (3 كل دور، الوسطى
-// ممنوعة — يمنعها المحرك نفسه). الحركة: اختيار حجر ثم وجهته،
-// والوجهات القانونية حلقات خضراء نابضة، والحجر المحدد يرتفع
-// ويكبر مع توهج ذهبي. التلميح يعرض الحركة المقترحة (اختيار +
-// وجهة + سهم ذهبي نابض).
-//
-// الحركات (انزلاق/أكل/سقوط/اهتزاز/موجة) كما في اللوحة الأصلية:
-// أحداث TurnController ترفع عدّادات AlsijaFx، وAlsijaGame تشغّل
-// الحركات ثم تستدعي onFxDone فينادي finishAnimation — فلا يتحرك
+// اللوحة هي لوحة الرمل الأصلية (SandBoard) كما كانت تماماً:
+// الانزلاق 240ms، الأكل 320ms، السقوط، الاهتزاز، الموجة،
+// التلميح، الأثر — وأحداث TurnController ترفع عدّادات BoardFx،
+// وSandBoard تستدعي onFxDone فينادي finishAnimation، فلا يتحرك
 // الذكاء الاصطناعي ولا يستقر الدور إلا بعد انتهاء الحركة.
+// شكل اللوحة والحجارة فقط من الحزمة الجديدة (BoardPainter
+// وPebblePainter أُعيد رسمهما على شكل الحزمة).
 import 'dart:async';
 
 import 'package:flutter/material.dart';
 
 import '../game/seega_ai.dart';
-import '../game/seega_engine.dart';
 import '../game/sound_manager.dart';
 import '../game/turn_controller.dart';
 import '../l10n/strings.dart';
@@ -25,6 +21,7 @@ import '../services/settings_store.dart';
 import '../theme/sudanese_theme.dart';
 import '../ui/alsija_pebbles.dart';
 import '../ui/alsija_screens.dart';
+import '../ui/sand_board.dart';
 import '../ui/sheets.dart';
 import '../ui/widgets/arched_sheet.dart';
 
@@ -61,12 +58,9 @@ class _GameScreenState extends State<GameScreen> {
   late final Listenable _rebuilder;
   int _seenNonce = 0;
 
-  /// إشارات الحركات إلى AlsijaGame (انزلاق/أكل/سقوط/اهتزاز/
-  /// موجة/تلميح) — مثل BoardFx في اللوحة الأصلية.
-  final _fx = AlsijaFx();
-
-  /// حركة التلميح المعروضة حالياً (اختيار + وجهة).
-  SeegaMove? _hintMove;
+  /// إشارات الحركات إلى SandBoard (انزلاق/أكل/سقوط/اهتزاز/
+  /// موجة/تلميح) — BoardFx الأصلية من اللوحة الأصلية.
+  final _fx = BoardFx();
 
   String? _pill;
   Timer? _pillTimer;
@@ -103,36 +97,15 @@ class _GameScreenState extends State<GameScreen> {
       switch (event) {
         case ControllerEvent.placed:
           _fx.placedNonce++;
-          final placed = _controller.lastPlaced;
-          _fx.placedCell = placed == null
-              ? null
-              : (row: placed[0], column: placed[1]);
+          _fx.placedSquare = _controller.lastPlaced;
           break;
         case ControllerEvent.moved:
-          // الانزلاق ثم الأكل في AlsijaGame؛ وfinishAnimation
-          // لا تُستدعى إلا بعد انتهائهما (عبر onFxDone).
-          final result = _controller.lastMoveResult;
-          if (result != null) {
-            _fx.slideNonce++;
-            _fx.slideFrom =
-                (row: result.move.fromRow, column: result.move.fromCol);
-            _fx.slideTo =
-                (row: result.move.toRow, column: result.move.toCol);
-            _fx.slideMover = result.mover == 1
-                ? AlsijaPiece.player
-                : AlsijaPiece.opponent;
-            _fx.slideCaptured = [
-              for (final sq in result.captured)
-                (row: sq[0], column: sq[1]),
-            ];
-          }
+          _fx.moveNonce++;
+          _fx.move = _controller.lastMoveResult;
           break;
         case ControllerEvent.invalid:
           _fx.shakeNonce++;
-          final square = _controller.lastInvalidSquare;
-          _fx.shakeCell = square == null
-              ? null
-              : (row: square[0], column: square[1]);
+          _fx.shakeSquare = _controller.lastInvalidSquare;
           break;
         case ControllerEvent.placementEnded:
           _fx.waveNonce++;
@@ -143,9 +116,6 @@ class _GameScreenState extends State<GameScreen> {
           break;
         case ControllerEvent.gameOver:
         case ControllerEvent.undo:
-          // أوقف أي حركة جارية وألغِ حالتها (تراجع/إعادة لعب).
-          _fx.clearNonce++;
-          break;
         case ControllerEvent.selected:
         case ControllerEvent.turnChanged:
         case null:
@@ -164,9 +134,6 @@ class _GameScreenState extends State<GameScreen> {
   }
 
   void _onCellTap(int r, int c) {
-    if (_hintMove != null) {
-      setState(() => _hintMove = null);
-    }
     if (_controller.isPlacing) {
       _controller.placeStone(r, c);
     } else {
@@ -178,10 +145,8 @@ class _GameScreenState extends State<GameScreen> {
     final move = _controller.hint();
     if (move != null) {
       setState(() {
-        _hintMove = move;
         _fx.hintNonce++;
-        _fx.hintFrom = (row: move.fromRow, column: move.fromCol);
-        _fx.hintTo = (row: move.toRow, column: move.toCol);
+        _fx.hintMove = move;
       });
     }
   }
@@ -189,8 +154,8 @@ class _GameScreenState extends State<GameScreen> {
   void _onUndo() {
     if (_controller.undo()) {
       setState(() {
-        _hintMove = null;
-        _fx.clearNonce++;
+        _fx.move = null;
+        _fx.hintMove = null;
       });
     }
   }
@@ -297,37 +262,14 @@ class _GameScreenState extends State<GameScreen> {
     );
   }
 
-  /// لوحة اللعب من حالة المحرك: 1 = لاعب، 2 = خصم، 0 = فارغ.
-  /// أثناء التوزيع بلا حلقات وجهات؛ أثناء الحركة: اختيار اللاعب
-  /// + وجهاته القانونية (أو حركة التلميح إن عُرضت).
+  /// لوحة اللعب الأصلية (SandBoard) داخل إطار الحزمة الجديدة:
+  /// اللوحة مربعة 500×500 بوحدات التصميم، ممركزة في مساحة
+  /// اللوحة 540×500. كل النقر على الخانات بيد SandBoard
+  /// (onTapPit → المحرك)، وكل الحركات بيدها هي.
   Widget _gameWidget({required bool interactive}) {
     final controller = _controller;
     final engine = controller.engine;
-    final size = engine.size;
-    final cells = List.generate(size, (r) => List.generate(size, (c) {
-          final v = engine.board[r][c];
-          if (v == 1) return AlsijaPiece.player;
-          if (v == 2) return AlsijaPiece.opponent;
-          return null;
-        }));
-    AlsijaCell? selected;
-    Set<AlsijaCell> targets = {};
-    if (_hintMove != null) {
-      selected = (row: _hintMove!.fromRow, column: _hintMove!.fromCol);
-      targets = {(row: _hintMove!.toRow, column: _hintMove!.toCol)};
-    } else if (!engine.placingPhase && controller.selectedTile != null) {
-      final sel = controller.selectedTile!;
-      selected = (row: sel[0], column: sel[1]);
-      targets = {
-        for (final m in engine.legalMoves(engine.currentPlayer))
-          if (m.fromRow == sel[0] && m.fromCol == sel[1])
-            (row: m.toRow, column: m.toCol),
-      };
-    }
     return AlsijaGame(
-      cells: cells,
-      selected: selected,
-      targets: targets,
       playerColor: alsijaColorForPebble(widget.config.p1Pebble).value,
       opponentColor: alsijaColorForPebble(widget.config.p2Pebble).value,
       playerRemaining: _leftOf(1),
@@ -337,7 +279,6 @@ class _GameScreenState extends State<GameScreen> {
       playerTurn: engine.currentPlayer == 1,
       soundEnabled: AppSettings.instance.soundOn,
       opponent: opponentForDifficulty(widget.config.difficulty),
-      onCell: interactive ? _onCellTap : null,
       onPause: interactive ? _showPauseMenu : null,
       onSound: interactive ? _onSoundToggle : null,
       onHint: interactive && _canHint ? _onHint : null,
@@ -349,8 +290,18 @@ class _GameScreenState extends State<GameScreen> {
       isPlacing: engine.placingPhase,
       placedThisTurn: controller.placedThisTurn,
       isAiThinking: controller.isAiThinking,
-      fx: _fx,
-      onFxDone: () => _controller.finishAnimation(),
+      board: Center(
+        child: SandBoard(
+          engine: engine,
+          controller: controller,
+          fx: _fx,
+          p1Pebble: widget.config.p1Pebble,
+          p2Pebble: widget.config.p2Pebble,
+          strings: s,
+          onTapPit: interactive ? _onCellTap : (_, _) {},
+          onFxDone: () => _controller.finishAnimation(),
+        ),
+      ),
     );
   }
 
@@ -390,8 +341,8 @@ class _GameScreenState extends State<GameScreen> {
       losses: controller.sessionLosses,
       draws: controller.sessionDraws,
       onReplay: () {
-        _hintMove = null;
-        _fx.clearNonce++;
+        _fx.move = null;
+        _fx.hintMove = null;
         _controller.restart();
       },
       onHome: () => Navigator.of(context).popUntil((r) => r.isFirst),
@@ -421,8 +372,8 @@ class _GameScreenState extends State<GameScreen> {
               Navigator.of(context).pop();
               _controller.restart();
               setState(() {
-                _hintMove = null;
-                _fx.clearNonce++;
+                _fx.move = null;
+                _fx.hintMove = null;
               });
             },
           ),

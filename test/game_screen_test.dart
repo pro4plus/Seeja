@@ -1,17 +1,19 @@
-// اختبارات شاشة اللعب (شاشات الحزمة الجديدة):
+// اختبارات شاشة اللعب (شاشات الحزمة الجديدة + لوحة الرمل الأصلية):
 //  * عطل التجمد عبر الواجهة: بعد انتهاء التوزيع والدور للكمبيوتر،
 //    يجب أن يتحرك الكمبيوتر وتظهر لافتة "دورك" (لا تجمد).
 //  * قانون التمرير عبر الواجهة: لاعب بلا حركة يُمرَّر دوره.
 //  * شاشة النتيجة: أكل آخر حجر للخصم يعرض الفوز و"العب تاني".
-//  * الاختيار يظهر فوراً: الحجر المحدد (علامة semantics) ثم
-//    النقر على وجهة قانونية ينفذ الحركة.
+//  * الاختيار يظهر فوراً: حلقة ذهبية حول الحجر المحدد وحلقات
+//    وجهات خضراء، ثم النقر على وجهة قانونية ينفذ الحركة.
 //  * عدادات «أكلت» و«باقي» تعكس الأكل بعد الحركة.
-// النقر على الخانات عبر تسمياتها: «الصف R، العمود C»
-// (تسمية _press في شاشة الحزمة).
+// النقر على الخانات بموضعها في اللوحة (centreOf) كما في الأصل،
+// لأن تسميات SandBoard تتضمن حالة الخانة (فاضية/حجرك/حجر الخصم).
 
 import 'package:alseeja/game/seega_ai.dart';
 import 'package:alseeja/game/turn_controller.dart';
 import 'package:alseeja/screens/game_screen.dart';
+import 'package:alseeja/theme/sudanese_theme.dart';
+import 'package:alseeja/ui/sand_board.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -32,11 +34,48 @@ const _configTwoPlayer = GameConfig(
   p2Pebble: 1,
 );
 
-/// النقر على خانة (r,c) عبر تسميتها في شاشة الحزمة.
-Future<void> tapCell(WidgetTester tester, int r, int c) =>
-    tester.tap(
-      find.bySemanticsLabel('الصف ${r + 1}، العمود ${c + 1}'),
-    );
+/// مركز حفرة (r,c) في لوحة الرمل: اللوحة مربعة 500×500 بوحدات
+/// التصميم داخل FittedBox، بحشوة 8px — فيُحسب مركز الحفرة
+/// بالنسبة لمقياس عرض اللوحة الفعلي.
+Offset centreOf(WidgetTester tester, int r, int c) {
+  final boardRect = tester.getRect(find.byType(SandBoard));
+  final scale = boardRect.width / 500;
+  final cell = (boardRect.width - 16 * scale) / 5;
+  return boardRect.topLeft +
+      Offset(8 * scale + (c + 0.5) * cell, 8 * scale + (r + 0.5) * cell);
+}
+
+/// هل ترسم اللوحة حلقة ذهبية حول حجر محدد؟
+bool _hasGoldRing() {
+  return find
+      .descendant(
+        of: find.byType(SandBoard),
+        matching: find.byWidgetPredicate((w) =>
+            w is Container &&
+            w.decoration is BoxDecoration &&
+            (w.decoration as BoxDecoration).border is Border &&
+            ((w.decoration as BoxDecoration).border as Border)
+                    .top
+                    .color ==
+                SudaneseTheme.sunGold),
+      )
+      .evaluate()
+      .isNotEmpty;
+}
+
+/// هل ترسم اللوحة حلقات وجهات قانونية؟
+bool _hasDestRings() {
+  return find
+      .descendant(
+        of: find.byType(SandBoard),
+        matching: find.byWidgetPredicate((w) =>
+            w is CustomPaint &&
+            w.painter != null &&
+            w.painter.runtimeType.toString().contains('DestRing')),
+      )
+      .evaluate()
+      .isNotEmpty;
+}
 
 void main() {
   testWidgets('التجمد عبر الواجهة: الكمبيوتر يتحرك بعد التوزيع',
@@ -113,9 +152,9 @@ void main() {
     await tester.pump();
     expect(find.text('الدور: اللاعب 1'), findsOneWidget);
 
-    await tapCell(tester, 2, 2);
+    await tester.tapAt(centreOf(tester, 2, 2));
     await tester.pump();
-    await tapCell(tester, 2, 3);
+    await tester.tapAt(centreOf(tester, 2, 3));
     await tester.pump(const Duration(milliseconds: 400));
     await tester.pump(const Duration(milliseconds: 500));
     await tester.pump();
@@ -157,9 +196,9 @@ void main() {
     await tester.pump();
     expect(find.text('الدور: اللاعب 1'), findsOneWidget);
 
-    await tapCell(tester, 1, 4);
+    await tester.tapAt(centreOf(tester, 1, 4));
     await tester.pump();
-    await tapCell(tester, 1, 3);
+    await tester.tapAt(centreOf(tester, 1, 3));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
     await tester.pump(const Duration(milliseconds: 500));
@@ -171,7 +210,7 @@ void main() {
     expect(find.bySemanticsLabel('العودة للرئيسية'), findsOneWidget);
   });
 
-  testWidgets('الاختيار يظهر فوراً: الحجر المحدد ثم الحركة',
+  testWidgets('الاختيار يظهر فوراً: حلقة ذهبية وحلقات وجهات',
       (WidgetTester tester) async {
     final controller = TurnController(
       boardSize: 5,
@@ -198,27 +237,29 @@ void main() {
     await tester.pump();
 
     expect(controller.selectedTile, isNull);
+    expect(_hasGoldRing(), isFalse);
+    expect(_hasDestRings(), isFalse);
 
-    // النقر على الحجر يختاره (علامة isSelected في semantics —
-    // وهي نفس الحالة التي ترسم الحلقة الذهبية حوله).
-    await tapCell(tester, 1, 4);
+    // النقر على الحجر نفسه (وسط صورته) يختاره ويظهر الحلقة.
+    await tester.tapAt(centreOf(tester, 1, 4));
     await tester.pump();
     expect(controller.selectedTile, [1, 4]);
-    final node = tester.getSemantics(
-      find.bySemanticsLabel('الصف 2، العمود 5'),
-    );
-    expect(node.getSemanticsData().flagsCollection.isSelected, isTrue,
-        reason: 'النقر على الحجر لم يحدده');
+    expect(_hasGoldRing(), isTrue,
+        reason: 'النقر على الحجر لم يرسم الحلقة الذهبية حوله');
+    expect(_hasDestRings(), isTrue,
+        reason: 'لم تظهر حلقات الوجهات القانونية بعد الاختيار');
 
-    // النقر على الحجر المحدد نفسه يلغي الاختيار.
-    await tapCell(tester, 1, 4);
+    // النقر على الحجر المحدد نفسه يلغي الاختيار ويخفي الحلقة.
+    await tester.tapAt(centreOf(tester, 1, 4));
     await tester.pump();
     expect(controller.selectedTile, isNull);
+    expect(_hasGoldRing(), isFalse);
+    expect(_hasDestRings(), isFalse);
 
     // إعادة الاختيار ثم النقر على وجهة قانونية ينفذ الحركة.
-    await tapCell(tester, 1, 4);
+    await tester.tapAt(centreOf(tester, 1, 4));
     await tester.pump();
-    await tapCell(tester, 1, 3);
+    await tester.tapAt(centreOf(tester, 1, 3));
     await tester.pump();
     expect(controller.selectedTile, isNull);
     expect(engine.board[1][4], 0);
@@ -255,9 +296,9 @@ void main() {
     controller.debugSyncAfterExternalSetup();
     await tester.pump();
 
-    await tapCell(tester, 1, 4);
+    await tester.tapAt(centreOf(tester, 1, 4));
     await tester.pump();
-    await tapCell(tester, 1, 3);
+    await tester.tapAt(centreOf(tester, 1, 3));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
     await tester.pump(const Duration(milliseconds: 500));
@@ -338,9 +379,9 @@ void main() {
     controller.debugSyncAfterExternalSetup();
     await tester.pump();
 
-    await tapCell(tester, 1, 4);
+    await tester.tapAt(centreOf(tester, 1, 4));
     await tester.pump();
-    await tapCell(tester, 1, 3);
+    await tester.tapAt(centreOf(tester, 1, 3));
     await tester.pump();
     // الحركة طُبّقت على المحرك، لكن الدور لم يستقر بعد:
     // الانزلاق (240ms) ثم الأكل (320ms) ما زالا يعملان.

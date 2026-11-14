@@ -1,11 +1,10 @@
-// الإعداد: شاشة الحزمة الجديدة (AlsijaSetup) + خطوة ثانية لاختيار
-// حجر اللاعب 2 في وضع اللاعبين — الحزمة فيها لون واحد فقط،
-// واللاعب 2 يجب أن يختار لونه هو أيضاً (كما كان).
+// الإعداد: شاشة الحزمة الجديدة (AlsijaSetup) — واختيار حجر
+// اللاعب 2 في خطوة ثانية على الشاشة نفسها (بلا شاشة ثانية):
+// الخطوة 0 تختار حجم اللوحة ولون اللاعب 1، والخطوة 1 تختار
+// لون اللاعب 2 ولون اللاعب 1 مقفل فيها — كما كان في الأصل.
 //
 // ضد الكمبيوتر: إعداد واحد يكفي؛ حجر الكمبيوتر يُشتق من حجر
 // اللاعب (+3 ضمن الأحجار السبعة) كما كان.
-// لاعبان: الإعداد الأول يأخذ حجم اللوحة ولون اللاعب 1، ثم خطوة
-// ثانية للون اللاعب 2 (بلا لون اللاعب 1).
 import 'package:flutter/material.dart';
 
 import '../game/sound_manager.dart';
@@ -15,18 +14,6 @@ import '../theme/sudanese_theme.dart';
 import '../ui/alsija_pebbles.dart';
 import '../ui/alsija_screens.dart';
 import 'game_screen.dart';
-
-/// أسماء ألوان الحزمة (نفس ترتيب AlsijaColor.values ونفس
-// الأسماء المثبتة في شاشة الإعداد بالحزمة).
-const _colorNames = [
-  'رمادي',
-  'ذهبي',
-  'فيروزي',
-  'أحمر',
-  'أخضر',
-  'نحاسي',
-  'أزرق',
-];
 
 class SetupScreen extends StatefulWidget {
   final bool vsComputer;
@@ -38,8 +25,7 @@ class SetupScreen extends StatefulWidget {
 }
 
 class _SetupScreenState extends State<SetupScreen> {
-  /// وضع اللاعبين فقط: 0 = إعداد اللاعب 1 (الحزمة)،
-  /// 1 = اختيار لون اللاعب 2.
+  /// وضع اللاعبين فقط: 0 = إعداد اللاعب 1، 1 = اختيار لون اللاعب 2.
   int _step = 0;
   int _boardSize = 5;
   int? _p1Pebble;
@@ -68,188 +54,46 @@ class _SetupScreenState extends State<SetupScreen> {
     });
   }
 
-  void _startTwoPlayer(int p2Pebble) {
+  void _startTwoPlayer(AlsijaSettings settings) {
     SoundManager.instance.tap();
     final config = GameConfig(
-      boardSize: _boardSize,
+      boardSize: settings.boardSize,
       vsComputer: false,
       p1Pebble: _p1Pebble ?? 0,
-      p2Pebble: p2Pebble,
+      p2Pebble: pebbleForAlsijaColor(settings.color),
     );
     Navigator.of(context).pushNamed('/game', arguments: config);
   }
 
   @override
   Widget build(BuildContext context) {
-    if (!widget.vsComputer && _step == 1) {
-      return _P2ColorStep(
-        lockedPebble: _p1Pebble ?? 0,
+    if (widget.vsComputer) {
+      return AlsijaSetup(
+        onBack: () => Navigator.of(context).pop(),
+        onStart: _startVsComputer,
+      );
+    }
+    // لاعبان: الخطوة نفسها على الشاشة نفسها — مفتاح مختلف
+    // لكل خطوة فيعيد AlsijaSetup حالته من المعاملات.
+    if (_step == 1) {
+      final p1 = _p1Pebble ?? 0;
+      return AlsijaSetup(
+        key: const ValueKey(1),
         onBack: () => setState(() => _step = 0),
-        onPick: _startTwoPlayer,
+        onStart: _startTwoPlayer,
+        lockedColor: alsijaColorForPebble(p1),
+        initialColor:
+            alsijaColorForPebble((p1 + 3) % SudaneseTheme.pebbles.length),
+        initialBoardSize: _boardSize,
+        title: s.chooseStoneP2First,
       );
     }
     return AlsijaSetup(
+      key: const ValueKey(0),
       onBack: () => Navigator.of(context).pop(),
-      onStart: widget.vsComputer ? _startVsComputer : _onP1Chosen,
-    );
-  }
-}
-
-/// خطوة اختيار لون اللاعب 2: دوائر ألوان الحزمة السبعة،
-// لون اللاعب 1 مقفل (معتم ولا يُختار)، وزر «يلا» يبدأ اللعب.
-class _P2ColorStep extends StatefulWidget {
-  final int lockedPebble;
-  final VoidCallback onBack;
-  final ValueChanged<int> onPick;
-
-  const _P2ColorStep({
-    required this.lockedPebble,
-    required this.onBack,
-    required this.onPick,
-  });
-
-  @override
-  State<_P2ColorStep> createState() => _P2ColorStepState();
-}
-
-class _P2ColorStepState extends State<_P2ColorStep> {
-  AlsijaColor? _picked;
-
-  Strings get s => Strings(AppSettings.instance.isArabic);
-
-  @override
-  Widget build(BuildContext context) {
-    final lockedColor = alsijaColorForPebble(widget.lockedPebble);
-    return Scaffold(
-      backgroundColor: SudaneseTheme.mudBrickDark,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: SudaneseTheme.cream),
-          onPressed: widget.onBack,
-        ),
-      ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                s.chooseStoneP2First,
-                style: SudaneseTheme.title.copyWith(
-                  color: SudaneseTheme.cream,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                '${s.chooseStoneP1First}: ${_colorNames[lockedColor.index]}',
-                style: SudaneseTheme.body.copyWith(
-                  color: SudaneseTheme.cream,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 32),
-              Wrap(
-                alignment: WrapAlignment.center,
-                spacing: 16,
-                runSpacing: 16,
-                children: [
-                  for (final color in AlsijaColor.values)
-                    _ColorDot(
-                      color: color,
-                      name: _colorNames[color.index],
-                      locked: color == lockedColor,
-                      selected: color == _picked,
-                      onTap: color == lockedColor
-                          ? null
-                          : () => setState(() => _picked = color),
-                    ),
-                ],
-              ),
-              const Spacer(),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 24),
-                child: ElevatedButton(
-                  onPressed: _picked == null
-                      ? null
-                      : () => widget
-                          .onPick(pebbleForAlsijaColor(_picked!)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: SudaneseTheme.tabaqRed,
-                    foregroundColor: SudaneseTheme.cream,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    textStyle: SudaneseTheme.title.copyWith(fontSize: 24),
-                  ),
-                  child: Text(s.letsGo),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ColorDot extends StatelessWidget {
-  final AlsijaColor color;
-  final String name;
-  final bool locked;
-  final bool selected;
-  final VoidCallback? onTap;
-
-  const _ColorDot({
-    required this.color,
-    required this.name,
-    required this.locked,
-    required this.selected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      selected: selected,
-      label: name,
-      child: GestureDetector(
-        onTap: onTap,
-        child: Opacity(
-          opacity: locked ? 0.35 : 1.0,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 64,
-                height: 64,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: color.value,
-                  border: selected
-                      ? Border.all(
-                          color: SudaneseTheme.sunGold,
-                          width: 4,
-                        )
-                      : Border.all(
-                          color: SudaneseTheme.earthBlack,
-                          width: 2,
-                        ),
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                name,
-                style: SudaneseTheme.caption.copyWith(
-                  color: SudaneseTheme.cream,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+      onStart: _onP1Chosen,
+      initialColor: alsijaColorForPebble(_p1Pebble ?? 0),
+      initialBoardSize: _boardSize,
     );
   }
 }

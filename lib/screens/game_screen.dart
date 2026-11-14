@@ -298,7 +298,7 @@ class _GameScreenState extends State<GameScreen> {
           p1Pebble: widget.config.p1Pebble,
           p2Pebble: widget.config.p2Pebble,
           strings: s,
-          onTapPit: interactive ? _onCellTap : (_, _) {},
+          onTapPit: interactive ? _onCellTap : (_r, _c) {},
           onFxDone: () => _controller.finishAnimation(),
         ),
       ),

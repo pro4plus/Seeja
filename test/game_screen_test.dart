@@ -8,7 +8,6 @@
 //  * عدادات «أكلت» و«باقي» تعكس الأكل بعد الحركة.
 // النقر على الخانات عبر تسمياتها: «الصف R، العمود C»
 // (تسمية _press في شاشة الحزمة).
-import 'dart:ui' as ui;
 
 import 'package:alseeja/game/seega_ai.dart';
 import 'package:alseeja/game/turn_controller.dart';
@@ -208,7 +207,7 @@ void main() {
     final node = tester.getSemantics(
       find.bySemanticsLabel('الصف 2، العمود 5'),
     );
-    expect(node.hasFlag(ui.SemanticsFlag.isSelected), isTrue,
+    expect(node.getSemanticsData().flagsCollection.isSelected, isTrue,
         reason: 'النقر على الحجر لم يحدده');
 
     // النقر على الحجر المحدد نفسه يلغي الاختيار.

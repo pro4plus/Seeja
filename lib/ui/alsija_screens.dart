@@ -109,9 +109,9 @@ class _Stage extends StatelessWidget {
 
 Color _shade(Color c, double factor) => Color.fromARGB(
   255,
-  (c.red * factor).round().clamp(0, 255).toInt(),
-  (c.green * factor).round().clamp(0, 255).toInt(),
-  (c.blue * factor).round().clamp(0, 255).toInt(),
+  (c.r * 255.0 * factor).round().clamp(0, 255).toInt(),
+  (c.g * 255.0 * factor).round().clamp(0, 255).toInt(),
+  (c.b * 255.0 * factor).round().clamp(0, 255).toInt(),
 );
 
 void _rect(Canvas c, Rect r, Color color) =>
@@ -437,8 +437,9 @@ Widget _person({int variant = 1, bool seated = false}) => _Art((c, s) {
       );
     }
   }
-  if (variant == 1)
+  if (variant == 1) {
     _line(c, const Offset(146, 107), const Offset(154, 107), ink, 3);
+  }
   if (variant == 2 || seated) {
     _poly(c, const [
       Offset(115, 120),
@@ -892,7 +893,7 @@ class _SetupState extends State<AlsijaSetup> {
           Container(
             decoration: choice != color
                 ? null
-                : const BoxDecoration(
+                : BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(color: gold, width: 6),
                   ),
@@ -918,7 +919,7 @@ class _SetupState extends State<AlsijaSetup> {
           ));
         },
         DecoratedBox(
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             color: red,
             shape: BoxShape.circle,
             border: Border.all(color: ink, width: 6),
@@ -1185,7 +1186,7 @@ class AlsijaGame extends StatelessWidget {
       481,
       104,
       DecoratedBox(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: Color(0xff57321b),
           borderRadius: BorderRadius.circular(24),
         ),
@@ -1321,7 +1322,7 @@ class AlsijaResult extends StatelessWidget {
           196,
           134,
           DecoratedBox(
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               color: Color(0xffe5cb8d),
               borderRadius: BorderRadius.circular(24),
             ),

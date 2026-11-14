@@ -1,5 +1,6 @@
-// تخطيط v4 (§9): كل شاشة يجب أن تتسع بلا تجاوز عند
+// تخطيط: كل شاشة يجب أن تتسع بلا تجاوز عند
 // عرض 360 بكسل وخط مكبّر 130%.
+// الشاشات الجديدة قماش ثابت 768×1376 مع FittedBox فيتسع دائماً.
 import 'package:alseeja/game/seega_ai.dart';
 import 'package:alseeja/game/turn_controller.dart';
 import 'package:alseeja/main.dart';
@@ -26,8 +27,10 @@ void main() {
     await tester.pump(const Duration(milliseconds: 2600));
     await tester.pump(const Duration(milliseconds: 500));
     await tester.pump(const Duration(milliseconds: 500));
-    expect(find.text('العب ضد الكمبيوتر'), findsOneWidget);
-    expect(find.text('لاعبان على جهاز واحد'), findsOneWidget);
+    expect(find.bySemanticsLabel('العب ضد الكمبيوتر'),
+        findsOneWidget);
+    expect(find.bySemanticsLabel('لاعبان على جهاز واحد'),
+        findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -39,8 +42,8 @@ void main() {
     );
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
-    expect(find.text('اجلس للعب'), findsOneWidget);
-    expect(find.text('يلا'), findsOneWidget);
+    expect(find.bySemanticsLabel('اجلس للعب'), findsOneWidget);
+    expect(find.bySemanticsLabel('يلا'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -52,8 +55,23 @@ void main() {
     );
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
-    expect(find.text('اجلس للعب'), findsOneWidget);
-    expect(find.text('يلا'), findsOneWidget);
+    expect(find.bySemanticsLabel('اجلس للعب'), findsOneWidget);
+    expect(find.bySemanticsLabel('يلا'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('الإعداد ضد الكمبيوتر: ثلاث كوات للخصوم',
+      (WidgetTester tester) async {
+    await _setSmallScreen(tester);
+    await tester.pumpWidget(
+      const MaterialApp(home: SetupScreen(vsComputer: true)),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    // الكوات الثلاث في الحزمة بتسمية (اسم، مستوى).
+    expect(find.bySemanticsLabel('ود البلد، سهل'), findsOneWidget);
+    expect(find.bySemanticsLabel('الأستاذ، وسط'), findsOneWidget);
+    expect(find.bySemanticsLabel('الشيخ، صعب'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -85,7 +103,8 @@ void main() {
     );
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
-    expect(find.textContaining('ضع 3 أحجار'), findsOneWidget);
+    // التوزيع ضد الكمبيوتر: سطر الدور يسمّي التوزيع.
+    expect(find.text('دورك: ضع 3 أحجار'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -119,6 +138,7 @@ void main() {
     controller.debugSyncAfterExternalSetup();
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
+    // لاعبان: سطر الدور يسمّي اللاعب الحالي.
     expect(find.text('الدور: اللاعب 1'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });

@@ -1,29 +1,32 @@
-// شاشة اللعب v4: البرش كامل الشاشة. مقعد الخصم أعلى،
-// لوحة الرمل في الوسط، سطر الدور نصاً بلا صندوق،
-// صحون الطين والفوانيس، وصفحة النتيجة المقوّسة.
+// شاشة اللعب: شاشات الحزمة الجديدة (AlsijaGame + AlsijaResult)
+// موصولة بمحرّك اللعبة الحقيقي عبر TurnController — القواعد
+// والذكاء الاصطناعي والأصوات كما هي، بلا أي تغيير.
+//
+// التوزيع: النقر على خانة فاضية يضع حجراً (3 كل دور، الوسطى
+// ممنوعة — يمنعها المحرك نفسه). الحركة: اختيار حجر ثم وجهته،
+// والوجهات القانونية حلقات خضراء نابضة، والحجر المحدد يرتفع
+// ويكبر مع توهج ذهبي. التلميح يعرض الحركة المقترحة (اختيار +
+// وجهة + سهم ذهبي نابض).
+//
+// الحركات (انزلاق/أكل/سقوط/اهتزاز/موجة) كما في اللوحة الأصلية:
+// أحداث TurnController ترفع عدّادات AlsijaFx، وAlsijaGame تشغّل
+// الحركات ثم تستدعي onFxDone فينادي finishAnimation — فلا يتحرك
+// الذكاء الاصطناعي ولا يستقر الدور إلا بعد انتهاء الحركة.
 import 'dart:async';
-import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
 import '../game/seega_ai.dart';
+import '../game/seega_engine.dart';
 import '../game/sound_manager.dart';
 import '../game/turn_controller.dart';
 import '../l10n/strings.dart';
 import '../services/settings_store.dart';
 import '../theme/sudanese_theme.dart';
-import '../ui/painters/confetti.dart';
-import '../ui/painters/elder.dart';
-import '../ui/painters/lantern.dart';
-import '../ui/painters/mat.dart';
-import '../ui/painters/pebble.dart';
-import '../ui/painters/tabaq.dart';
-import '../ui/sand_board.dart';
+import '../ui/alsija_pebbles.dart';
+import '../ui/alsija_screens.dart';
 import '../ui/sheets.dart';
 import '../ui/widgets/arched_sheet.dart';
-import '../ui/widgets/bowl_counter.dart';
-import '../ui/widgets/plank_button.dart';
-import '../ui/widgets/wood_token.dart';
 
 class GameConfig {
   final int boardSize;
@@ -53,14 +56,18 @@ class GameScreen extends StatefulWidget {
   State<GameScreen> createState() => _GameScreenState();
 }
 
-class _GameScreenState extends State<GameScreen>
-    with TickerProviderStateMixin {
+class _GameScreenState extends State<GameScreen> {
   late final TurnController _controller;
-  final BoardFx _fx = BoardFx();
+  late final Listenable _rebuilder;
   int _seenNonce = 0;
 
-  late final AnimationController _tilt;
-  late final AnimationController _bow;
+  /// إشارات الحركات إلى AlsijaGame (انزلاق/أكل/سقوط/اهتزاز/
+  /// موجة/تلميح) — مثل BoardFx في اللوحة الأصلية.
+  final _fx = AlsijaFx();
+
+  /// حركة التلميح المعروضة حالياً (اختيار + وجهة).
+  SeegaMove? _hintMove;
+
   String? _pill;
   Timer? _pillTimer;
 
@@ -75,22 +82,13 @@ class _GameScreenState extends State<GameScreen>
           vsComputer: widget.config.vsComputer,
           difficulty: widget.config.difficulty,
         );
+    _rebuilder = Listenable.merge([_controller, AppSettings.instance]);
     _controller.addListener(_onControllerEvent);
-    _tilt = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 2),
-    )..repeat();
-    _bow = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 700),
-    );
   }
 
   @override
   void dispose() {
     _pillTimer?.cancel();
-    _tilt.dispose();
-    _bow.dispose();
     _controller.removeListener(_onControllerEvent);
     if (widget.debugController == null) _controller.dispose();
     super.dispose();
@@ -105,15 +103,36 @@ class _GameScreenState extends State<GameScreen>
       switch (event) {
         case ControllerEvent.placed:
           _fx.placedNonce++;
-          _fx.placedSquare = _controller.lastPlaced;
+          final placed = _controller.lastPlaced;
+          _fx.placedCell = placed == null
+              ? null
+              : (row: placed[0], column: placed[1]);
           break;
         case ControllerEvent.moved:
-          _fx.moveNonce++;
-          _fx.move = _controller.lastMoveResult;
+          // الانزلاق ثم الأكل في AlsijaGame؛ وfinishAnimation
+          // لا تُستدعى إلا بعد انتهائهما (عبر onFxDone).
+          final result = _controller.lastMoveResult;
+          if (result != null) {
+            _fx.slideNonce++;
+            _fx.slideFrom =
+                (row: result.move.fromRow, column: result.move.fromCol);
+            _fx.slideTo =
+                (row: result.move.toRow, column: result.move.toCol);
+            _fx.slideMover = result.mover == 1
+                ? AlsijaPiece.player
+                : AlsijaPiece.opponent;
+            _fx.slideCaptured = [
+              for (final sq in result.captured)
+                (row: sq[0], column: sq[1]),
+            ];
+          }
           break;
         case ControllerEvent.invalid:
           _fx.shakeNonce++;
-          _fx.shakeSquare = _controller.lastInvalidSquare;
+          final square = _controller.lastInvalidSquare;
+          _fx.shakeCell = square == null
+              ? null
+              : (row: square[0], column: square[1]);
           break;
         case ControllerEvent.placementEnded:
           _fx.waveNonce++;
@@ -123,11 +142,10 @@ class _GameScreenState extends State<GameScreen>
           _showPill(s.passTurn);
           break;
         case ControllerEvent.gameOver:
-          if (_controller.winner == 1) {
-            _bow.forward(from: 0);
-          }
-          break;
         case ControllerEvent.undo:
+          // أوقف أي حركة جارية وألغِ حالتها (تراجع/إعادة لعب).
+          _fx.clearNonce++;
+          break;
         case ControllerEvent.selected:
         case ControllerEvent.turnChanged:
         case null:
@@ -142,9 +160,13 @@ class _GameScreenState extends State<GameScreen>
     _pillTimer = Timer(const Duration(milliseconds: 1800), () {
       if (mounted) setState(() => _pill = null);
     });
+    if (mounted) setState(() {});
   }
 
-  void _onPitTap(int r, int c) {
+  void _onCellTap(int r, int c) {
+    if (_hintMove != null) {
+      setState(() => _hintMove = null);
+    }
     if (_controller.isPlacing) {
       _controller.placeStone(r, c);
     } else {
@@ -156,10 +178,28 @@ class _GameScreenState extends State<GameScreen>
     final move = _controller.hint();
     if (move != null) {
       setState(() {
+        _hintMove = move;
         _fx.hintNonce++;
-        _fx.hintMove = move;
+        _fx.hintFrom = (row: move.fromRow, column: move.fromCol);
+        _fx.hintTo = (row: move.toRow, column: move.toCol);
       });
     }
+  }
+
+  void _onUndo() {
+    if (_controller.undo()) {
+      setState(() {
+        _hintMove = null;
+        _fx.clearNonce++;
+      });
+    }
+  }
+
+  Future<void> _onSoundToggle() async {
+    final settings = AppSettings.instance;
+    final on = !settings.soundOn;
+    await settings.setSoundOn(on);
+    if (on) SoundManager.instance.tap();
   }
 
   String _nameFor(int player) {
@@ -169,29 +209,8 @@ class _GameScreenState extends State<GameScreen>
     return player == 1 ? s.you : s.computer;
   }
 
-  ElderKind _kindFor(Difficulty d) {
-    switch (d) {
-      case Difficulty.easy:
-        return ElderKind.young;
-      case Difficulty.medium:
-        return ElderKind.teacher;
-      case Difficulty.hard:
-        return ElderKind.elder;
-    }
-  }
-
-  int _capturedOf(int player) {
-    final engine = _controller.engine;
-    if (engine.placingPhase) return 0;
-    return engine.stonesPerPlayer - engine.count(3 - player);
-  }
-
-  int _leftOf(int player) {
-    final engine = _controller.engine;
-    if (engine.placingPhase) return engine.remainingToPlace(player);
-    return engine.count(player);
-  }
-
+  /// سطر الدور كما في الشاشة الأصلية: يسمّي اللاعب الحالي،
+  /// ويظهر حالة التوزيع (مع نقاط الأحجار الثلاثة في الواجهة).
   String _turnLine() {
     final controller = _controller;
     final engine = controller.engine;
@@ -208,6 +227,25 @@ class _GameScreenState extends State<GameScreen>
     return s.turnOf(_nameFor(engine.currentPlayer));
   }
 
+  int _capturedOf(int player) {
+    final engine = _controller.engine;
+    if (engine.placingPhase) return 0;
+    return engine.stonesPerPlayer - engine.count(3 - player);
+  }
+
+  int _leftOf(int player) {
+    final engine = _controller.engine;
+    if (engine.placingPhase) return engine.remainingToPlace(player);
+    return engine.count(player);
+  }
+
+  bool get _canHint =>
+      widget.config.vsComputer &&
+      _controller.isHumanTurn &&
+      !_controller.isPlacing;
+
+  // ---------------------------------------------------------- البناء
+
   @override
   Widget build(BuildContext context) {
     return PopScope(
@@ -216,353 +254,149 @@ class _GameScreenState extends State<GameScreen>
         if (!didPop) _confirmLeave();
       },
       child: AnimatedBuilder(
-        animation: AppSettings.instance,
+        animation: _rebuilder,
         builder: (context, child) {
-          final controller = _controller;
-          final engine = controller.engine;
-          final isGameOver = controller.phase == TurnPhase.gameOver;
-
-          final content = Scaffold(
-            body: Stack(
-              fit: StackFit.expand,
-              children: [
-                const RepaintBoundary(
-                  child: CustomPaint(
-                    painter: MatPainter(topThread: true, fringe: true),
-                  ),
-                ),
-                SafeArea(
-                  child: Column(
-                    children: [
-                      _topTokens(),
-                      const SizedBox(height: 2),
-                      _opponentBlock(),
-                      const SizedBox(height: 4),
-                      // ---- اللوحة ----
-                      Expanded(
-                        child: Center(
-                          child: ConstrainedBox(
-                            constraints: const BoxConstraints(
-                              maxWidth: 366,
-                              maxHeight: 366,
-                            ),
-                            child: AspectRatio(
-                              aspectRatio: 1,
-                              child: SandBoard(
-                                engine: engine,
-                                controller: controller,
-                                fx: _fx,
-                                p1Pebble: widget.config.p1Pebble,
-                                p2Pebble: widget.config.p2Pebble,
-                                strings: s,
-                                onTapPit: _onPitTap,
-                                onFxDone: () =>
-                                    controller.finishAnimation(),
-                              ),
-                            ),
-                          ),
-                        ),
+          final isGameOver =
+              _controller.phase == TurnPhase.gameOver;
+          if (isGameOver) return _resultScreen();
+          return Stack(
+            fit: StackFit.expand,
+            children: [
+              _gameWidget(interactive: true),
+              if (_pill != null)
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  top: MediaQuery.of(context).size.height * 0.42,
+                  child: Center(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 18,
+                        vertical: 10,
                       ),
-                      const SizedBox(height: 6),
-                      _turnLineWidget(),
-                      const SizedBox(height: 6),
-                      _playerZone(),
-                      const SizedBox(height: 4),
-                      _nameRow(),
-                      const SizedBox(height: 6),
-                    ],
-                  ),
-                ),
-                // رسالة عائمة.
-                if (_pill != null)
-                  Positioned(
-                    left: 0,
-                    right: 0,
-                    top: MediaQuery.of(context).size.height * 0.42,
-                    child: Center(
-                      child: TweenAnimationBuilder<double>(
-                        tween: Tween(begin: 0.8, end: 1.0),
-                        duration: const Duration(milliseconds: 300),
-                        curve: Curves.easeOutBack,
-                        builder: (context, scale, child) =>
-                            Transform.scale(scale: scale, child: child),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 18, vertical: 10),
-                          decoration: BoxDecoration(
-                            color: SudaneseTheme.earthBlack
-                                .withValues(alpha: 0.85),
-                            borderRadius: BorderRadius.circular(24),
-                          ),
-                          child: Text(
-                            _pill!,
-                            style: const TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
-                            ),
-                          ),
+                      decoration: BoxDecoration(
+                        color: SudaneseTheme.earthBlack
+                            .withValues(alpha: 0.85),
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      child: Text(
+                        _pill!,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
                         ),
                       ),
                     ),
                   ),
-                // شاشة النتيجة.
-                if (isGameOver) _resultOverlay(),
-              ],
-            ),
+                ),
+            ],
           );
-          return content;
         },
       ),
     );
   }
 
-  // ---------------------------------------------------------- الأزرار العلوية
-
-  Widget _topTokens() {
-    final settings = AppSettings.instance;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          // الترتيب RTL: الأول يميناً — الصوت يميناً والإيقاف يساراً
-          // كما في اللوحة.
-          WoodToken(
-            icon: settings.soundOn ? Icons.volume_up : Icons.volume_off,
-            size: 48,
-            tooltip: settings.soundOn ? s.soundOn : s.soundOff,
-            onPressed: () async {
-              final on = !settings.soundOn;
-              await settings.setSoundOn(on);
-              if (on) SoundManager.instance.tap();
-              setState(() {});
-            },
-          ),
-          WoodToken(
-            icon: Icons.pause,
-            size: 48,
-            tooltip: s.menu,
-            onPressed: _showPauseMenu,
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ---------------------------------------------------------- مقعد الخصم
-
-  Widget _opponentBlock() {
+  /// لوحة اللعب من حالة المحرك: 1 = لاعب، 2 = خصم، 0 = فارغ.
+  /// أثناء التوزيع بلا حلقات وجهات؛ أثناء الحركة: اختيار اللاعب
+  /// + وجهاته القانونية (أو حركة التلميح إن عُرضت).
+  Widget _gameWidget({required bool interactive}) {
     final controller = _controller;
     final engine = controller.engine;
-    final oppTurn = engine.currentPlayer == 2 &&
-        controller.phase != TurnPhase.gameOver;
-    final figure = widget.config.vsComputer
-        ? _OpponentFigure(
-            kind: _kindFor(widget.config.difficulty),
-            tilt: _tilt,
-            thinking: controller.isAiThinking,
-            bow: _bow,
-            bowing: controller.phase == TurnPhase.gameOver &&
-                controller.winner == 1,
-          )
-        : _P2Seat(
-            pebble: SudaneseTheme.pebbles[widget.config.p2Pebble],
-            name: s.player2,
-          );
-    final block = Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        SizedBox(
-          height: 112,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              figure,
-              Positioned(
-                left: 52,
-                top: 34,
-                child: AnimatedBuilder(
-                  animation: _tilt,
-                  builder: (context, child) => RepaintBoundary(
-                    child: CustomPaint(
-                      size: const Size(30, 40),
-                      painter: LanternPainter(
-                        lit: oppTurn,
-                        flicker: _tilt.value,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 2),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 28),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              // الترتيب RTL: الأول يميناً — «باقي» يميناً و«أكلت» يساراً
-              // كما في اللوحة.
-              BowlCounter(
-                pebble: SudaneseTheme.pebbles[widget.config.p2Pebble],
-                count: _leftOf(2),
-                label: s.remaining,
-              ),
-              BowlCounter(
-                // صحن «أكلت» فيه حجارة الخصم المأكولة — أي حجر
-                // اللاعب 1، لا حجر صاحب الصحن.
-                pebble: SudaneseTheme.pebbles[widget.config.p1Pebble],
-                count: _capturedOf(2),
-                label: s.captured,
-              ),
-            ],
-          ),
-        ),
-      ],
+    final size = engine.size;
+    final cells = List.generate(size, (r) => List.generate(size, (c) {
+          final v = engine.board[r][c];
+          if (v == 1) return AlsijaPiece.player;
+          if (v == 2) return AlsijaPiece.opponent;
+          return null;
+        }));
+    AlsijaCell? selected;
+    Set<AlsijaCell> targets = {};
+    if (_hintMove != null) {
+      selected = (row: _hintMove!.fromRow, column: _hintMove!.fromCol);
+      targets = {(row: _hintMove!.toRow, column: _hintMove!.toCol)};
+    } else if (!engine.placingPhase && controller.selectedTile != null) {
+      final sel = controller.selectedTile!;
+      selected = (row: sel[0], column: sel[1]);
+      targets = {
+        for (final m in engine.legalMoves(engine.currentPlayer))
+          if (m.fromRow == sel[0] && m.fromCol == sel[1])
+            (row: m.toRow, column: m.toCol),
+      };
+    }
+    return AlsijaGame(
+      cells: cells,
+      selected: selected,
+      targets: targets,
+      playerColor: alsijaColorForPebble(widget.config.p1Pebble).value,
+      opponentColor: alsijaColorForPebble(widget.config.p2Pebble).value,
+      playerRemaining: _leftOf(1),
+      opponentRemaining: _leftOf(2),
+      playerCaptured: _capturedOf(1),
+      opponentCaptured: _capturedOf(2),
+      playerTurn: engine.currentPlayer == 1,
+      soundEnabled: AppSettings.instance.soundOn,
+      opponent: opponentForDifficulty(widget.config.difficulty),
+      onCell: interactive ? _onCellTap : null,
+      onPause: interactive ? _showPauseMenu : null,
+      onSound: interactive ? _onSoundToggle : null,
+      onHint: interactive && _canHint ? _onHint : null,
+      onUndo: interactive && controller.canUndo ? _onUndo : null,
+      vsComputer: widget.config.vsComputer,
+      player1Name: _nameFor(1),
+      player2Name: _nameFor(2),
+      turnLabel: _turnLine(),
+      isPlacing: engine.placingPhase,
+      placedThisTurn: controller.placedThisTurn,
+      isAiThinking: controller.isAiThinking,
+      fx: _fx,
+      onFxDone: () => _controller.finishAnimation(),
     );
-    if (widget.config.vsComputer) return block;
-    return RotatedBox(quarterTurns: 2, child: block);
   }
 
-  // ---------------------------------------------------------- سطر الدور
+  // ---------------------------------------------------------- النتيجة
 
-  Widget _turnLineWidget() {
+  Widget _resultScreen() {
     final controller = _controller;
-    final engine = controller.engine;
-    final text = _turnLine();
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Flexible(
-          child: FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Text(
-              text,
-              style: SudaneseTheme.heading.copyWith(fontSize: 18),
-              textAlign: TextAlign.center,
-            ),
-          ),
-        ),
-        if (engine.placingPhase) ...[
-          const SizedBox(width: 10),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: List.generate(3, (i) {
-              final filled = i < controller.placedThisTurn;
-              final def = SudaneseTheme.pebbles[
-                  engine.currentPlayer == 1
-                      ? widget.config.p1Pebble
-                      : widget.config.p2Pebble];
-              return Container(
-                margin: const EdgeInsets.symmetric(horizontal: 2),
-                width: 11,
-                height: 11,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: filled ? def.base : SudaneseTheme.sandDark,
-                  border: Border.all(
-                      color: SudaneseTheme.earthBlack, width: 1),
-                ),
-              );
-            }),
-          ),
-        ],
-        if (controller.isAiThinking) ...[
-          const SizedBox(width: 8),
-          const _ThinkingDots(),
-        ],
-      ],
-    );
-  }
-
-  // ---------------------------------------------------------- منطقة اللاعب
-
-  Widget _playerZone() {
-    final controller = _controller;
-    final canHint = controller.isHumanTurn && !controller.isPlacing;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 28),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          // الترتيب RTL: الأول يميناً — «باقي» يميناً و«أكلت» يساراً
-          // كما في اللوحة؛ زرّا التراجع والتلميح بينهما.
-          BowlCounter(
-            pebble: SudaneseTheme.pebbles[widget.config.p1Pebble],
-            count: _leftOf(1),
-            label: s.remaining,
-          ),
-          if (widget.config.vsComputer) ...[
-            WoodToken(
-              icon: Icons.undo,
-              size: 52,
-              tooltip: s.undo,
-              onPressed: controller.canUndo
-                  ? () {
-                      controller.undo();
-                      setState(() {
-                        _fx.move = null;
-                        _fx.hintMove = null;
-                      });
-                    }
-                  : null,
-            ),
-            WoodToken(
-              icon: Icons.lightbulb_outline,
-              size: 52,
-              tooltip: s.hint,
-              onPressed: canHint ? _onHint : null,
-            ),
-          ],
-          BowlCounter(
-            // صحن «أكلت» فيه حجارة الخصم المأكولة — أي حجر
-            // اللاعب 2، لا حجر صاحب الصحن.
-            pebble: SudaneseTheme.pebbles[widget.config.p2Pebble],
-            count: _capturedOf(1),
-            label: s.captured,
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ---------------------------------------------------------- صف الاسم
-
-  Widget _nameRow() {
-    final engine = _controller.engine;
-    final myTurn = engine.currentPlayer == 1 &&
-        _controller.phase != TurnPhase.gameOver;
-    final name = widget.config.vsComputer ? s.you : s.player1;
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        RepaintBoundary(
-          child: CustomPaint(
-            size: const Size(26, 34),
-            painter: LanternPainter(lit: myTurn),
-          ),
-        ),
-        const SizedBox(width: 8),
-        FittedBox(
-          fit: BoxFit.scaleDown,
-          child: Text(
-            name,
-            style: SudaneseTheme.heading.copyWith(fontSize: 20),
-          ),
-        ),
-        const SizedBox(width: 8),
-        RepaintBoundary(
-          child: CustomPaint(
-            size: const Size(26, 26),
-            painter: PebblePainter(
-              def: SudaneseTheme.pebbles[widget.config.p1Pebble],
-            ),
-          ),
-        ),
-      ],
+    final winner = controller.winner;
+    final isDraw = winner == 0;
+    final AlsijaOutcome outcome;
+    if (isDraw) {
+      outcome = AlsijaOutcome.draw;
+    } else if (widget.config.vsComputer) {
+      outcome = winner == 1 ? AlsijaOutcome.win : AlsijaOutcome.loss;
+    } else {
+      // لاعبان: فوز أحدهما — عنوان الحزمة مثبّت («مبروووك!»)،
+      // واسم الفائز يظهر في بطاقة النتيجة أدناه.
+      outcome = AlsijaOutcome.win;
+    }
+    // لاعبان: بدلاً من بطاقات الجلسة (غير موجودة هنا) يظهر
+    // اسم الفائز؛ التعادل بلا بطاقة.
+    Widget? scoreCards;
+    if (!widget.config.vsComputer) {
+      scoreCards = isDraw
+          ? const SizedBox.shrink()
+          : Center(
+              child: Text(
+                s.playerWon(_nameFor(winner!)),
+                style: SudaneseTheme.title.copyWith(fontSize: 30),
+                textAlign: TextAlign.center,
+              ),
+            );
+    }
+    return AlsijaResult(
+      outcome: outcome,
+      wins: controller.sessionWins,
+      losses: controller.sessionLosses,
+      draws: controller.sessionDraws,
+      onReplay: () {
+        _hintMove = null;
+        _fx.clearNonce++;
+        _controller.restart();
+      },
+      onHome: () => Navigator.of(context).popUntil((r) => r.isFirst),
+      background: _gameWidget(interactive: false),
+      scoreCards: scoreCards,
     );
   }
 
@@ -587,8 +421,8 @@ class _GameScreenState extends State<GameScreen>
               Navigator.of(context).pop();
               _controller.restart();
               setState(() {
-                _fx.move = null;
-                _fx.hintMove = null;
+                _hintMove = null;
+                _fx.clearNonce++;
               });
             },
           ),
@@ -660,266 +494,6 @@ class _GameScreenState extends State<GameScreen>
       Navigator.of(context).pop();
     }
   }
-
-  // ---------------------------------------------------------- النتيجة
-
-  Widget _resultOverlay() {
-    final controller = _controller;
-    final winner = controller.winner;
-    final isDraw = winner == 0;
-    final isWin = winner == 1 ||
-        (!widget.config.vsComputer && winner != null && winner != 0);
-    final isLoss = widget.config.vsComputer && winner == 2;
-
-    String title;
-    String subtitle;
-    if (isDraw) {
-      title = s.draw;
-      subtitle = s.drawLine;
-    } else if (widget.config.vsComputer) {
-      if (winner == 1) {
-        title = s.victory;
-        subtitle = s.youWon;
-      } else {
-        title = s.computerWon;
-        subtitle = s.tryAgainLine;
-      }
-    } else {
-      title = s.playerWon(_nameFor(winner!));
-      subtitle = s.youWon;
-    }
-
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        // تعتيم اللوحة خلف الصفحة.
-        Container(color: Colors.black.withValues(alpha: 0.55)),
-        if (isWin) const ConfettiOverlay(),
-        Align(
-          alignment: Alignment.bottomCenter,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // ميدالية الطبق على حافة الصفحة العلوية.
-              Opacity(
-                opacity: isLoss ? 0.55 : 1.0,
-                child: const RepaintBoundary(
-                  child: CustomPaint(
-                    size: Size(118, 118),
-                    painter: TabaqPainter(),
-                  ),
-                ),
-              ),
-              Transform.translate(
-                offset: const Offset(0, -46),
-                child: ArchedPanel(
-                  padding:
-                      const EdgeInsets.fromLTRB(24, 78, 24, 26),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Text(
-                          title,
-                          style: SudaneseTheme.display.copyWith(
-                            fontSize: 40,
-                            color: isWin
-                                ? SudaneseTheme.tabaqRed
-                                : SudaneseTheme.ink,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        subtitle,
-                        style: SudaneseTheme.bodyBold,
-                        textAlign: TextAlign.center,
-                      ),
-                      if (widget.config.vsComputer) ...[
-                        const SizedBox(height: 14),
-                        Row(
-                          children: [
-                            _SessionChip(
-                              count: controller.sessionWins,
-                              label: s.wins,
-                            ),
-                            const SizedBox(width: 10),
-                            _SessionChip(
-                              count: controller.sessionLosses,
-                              label: s.losses,
-                            ),
-                            const SizedBox(width: 10),
-                            _SessionChip(
-                              count: controller.sessionDraws,
-                              label: s.draws,
-                            ),
-                          ],
-                        ),
-                      ],
-                      const SizedBox(height: 16),
-                      PlankButton(
-                        label: s.playAgain,
-                        caption: s.playAgainCaption,
-                        kind: PlankKind.red,
-                        onPressed: () {
-                          _controller.restart();
-                          setState(() {
-                            _fx.move = null;
-                            _fx.hintMove = null;
-                          });
-                        },
-                      ),
-                      const SizedBox(height: 10),
-                      PlankButton(
-                        label: s.backHome,
-                        kind: PlankKind.dark,
-                        onPressed: () => Navigator.of(context)
-                            .popUntil((r) => r.isFirst),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-/// شخصية الخصم (ضد الكمبيوتر): تميل رأسها أثناء التفكير
-/// وتنحني عند فوز اللاعب.
-class _OpponentFigure extends StatelessWidget {
-  final ElderKind kind;
-  final Animation<double> tilt;
-  final bool thinking;
-  final Animation<double> bow;
-  final bool bowing;
-
-  const _OpponentFigure({
-    required this.kind,
-    required this.tilt,
-    required this.thinking,
-    required this.bow,
-    required this.bowing,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: Listenable.merge([tilt, bow]),
-      builder: (context, child) {
-        // تنفّس هادئ طوال اللعب، وميل أوضح عندما يفكر الخصم.
-        final breath = math.sin(tilt.value * 2 * math.pi) * 0.018;
-        final tiltValue = breath +
-            (thinking ? math.sin(tilt.value * 2 * math.pi) * 0.085 : 0.0);
-        return RepaintBoundary(
-          child: CustomPaint(
-            size: const Size(92, 118),
-            painter: ElderPainter(
-              kind: kind,
-              tilt: tiltValue,
-              bow: bowing ? bow.value : 0,
-            ),
-          ),
-        );
-      },
-    );
-  }
-}
-
-/// مقعد اللاعب 2 (لاعبان): لوح قش فيه حجره واسمه.
-class _P2Seat extends StatelessWidget {
-  final PebbleDef pebble;
-  final String name;
-
-  const _P2Seat({required this.pebble, required this.name});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding:
-          const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: SudaneseTheme.straw.withValues(alpha: 0.9),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: SudaneseTheme.earthBlack, width: 1.5),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          RepaintBoundary(
-            child: CustomPaint(
-              size: const Size(30, 30),
-              painter: PebblePainter(def: pebble),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Text(
-            name,
-            style: SudaneseTheme.heading.copyWith(fontSize: 20),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// نقاط التفكير الثلاث.
-class _ThinkingDots extends StatefulWidget {
-  const _ThinkingDots();
-
-  @override
-  State<_ThinkingDots> createState() => _ThinkingDotsState();
-}
-
-class _ThinkingDotsState extends State<_ThinkingDots>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _c;
-
-  @override
-  void initState() {
-    super.initState();
-    _c = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 900),
-    )..repeat();
-  }
-
-  @override
-  void dispose() {
-    _c.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _c,
-      builder: (context, child) {
-        return Row(
-          mainAxisSize: MainAxisSize.min,
-          children: List.generate(3, (i) {
-            final phase = ((_c.value * 3 - i).clamp(0.0, 1.0));
-            return Container(
-              width: 7,
-              height: 7,
-              margin: const EdgeInsets.symmetric(horizontal: 2),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: SudaneseTheme.ink.withValues(
-                    alpha: 0.3 + 0.7 * (1 - phase)),
-              ),
-            );
-          }),
-        );
-      },
-    );
-  }
 }
 
 class _MenuRow extends StatelessWidget {
@@ -970,9 +544,8 @@ class _ConfirmButton extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
-          color: red
-              ? SudaneseTheme.tabaqRed
-              : SudaneseTheme.woodDark,
+          color:
+              red ? SudaneseTheme.tabaqRed : SudaneseTheme.woodDark,
           borderRadius: BorderRadius.circular(12),
           boxShadow: SudaneseTheme.hardShadow(),
         ),
@@ -982,39 +555,6 @@ class _ConfirmButton extends StatelessWidget {
             color: SudaneseTheme.cream,
           ),
           textAlign: TextAlign.center,
-        ),
-      ),
-    );
-  }
-}
-
-class _SessionChip extends StatelessWidget {
-  final int count;
-  final String label;
-
-  const _SessionChip({required this.count, required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        decoration: BoxDecoration(
-          color: SudaneseTheme.sand,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              '$count',
-              style: SudaneseTheme.display.copyWith(fontSize: 26),
-            ),
-            Text(
-              label,
-              style: SudaneseTheme.caption,
-            ),
-          ],
         ),
       ),
     );

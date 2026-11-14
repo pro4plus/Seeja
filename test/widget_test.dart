@@ -10,8 +10,10 @@ void main() {
     await tester.pump(const Duration(milliseconds: 2600));
     await tester.pump(const Duration(milliseconds: 500));
     await tester.pump(const Duration(milliseconds: 500));
-    // بعد البداية تظهر أزرار اللعب.
-    expect(find.text('العب ضد الكمبيوتر'), findsOneWidget);
-    expect(find.text('لاعبان على جهاز واحد'), findsOneWidget);
+    // بعد البداية تظهر أزرار اللعب (تسميات نصية في الحزمة الجديدة).
+    expect(find.bySemanticsLabel('العب ضد الكمبيوتر'),
+        findsOneWidget);
+    expect(find.bySemanticsLabel('لاعبان على جهاز واحد'),
+        findsOneWidget);
   });
 }

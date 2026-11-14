@@ -1,6 +1,6 @@
 name: alseeja
 description: لعبة السيجا السودانية باستخدام Flutter — لعب ضد الكمبيوتر بثلاثة مستويات أو لاعبين
-version: 4.0.0+1
+version: 4.1.0+3
 
 environment:
   sdk: ">=3.4.0 <4.0.0"
@@ -22,6 +22,7 @@ flutter:
   uses-material-design: true
 
   assets:
+    # حزمة التصميم (PNG فقط — الـ SVG مصادر لا تُضمَّن).
     - assets/sounds/ui_tap.wav
     - assets/sounds/select.wav
     - assets/sounds/place1.wav

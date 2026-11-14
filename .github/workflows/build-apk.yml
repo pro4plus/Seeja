@@ -12,6 +12,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      # ثبّت Java 17: إصدار Gradle في المشروع (8.3) لا يعمل مع
+      # Java 25 الافتراضية في صورة ubuntu-latest الحالية.
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: "3.35.7"

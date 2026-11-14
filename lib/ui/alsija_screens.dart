@@ -45,8 +45,10 @@ Widget _text(
   double size, {
   Color color = ink,
   FontWeight weight = FontWeight.w800,
+  int? maxLines,
 }) => Text(
   value,
+  maxLines: maxLines,
   textAlign: TextAlign.center,
   style: TextStyle(
     fontSize: size,
@@ -71,9 +73,19 @@ Widget _label(
   w,
   h,
   Center(
-    child: rotate
-        ? RotatedBox(quarterTurns: 2, child: _text(value, size, color: color))
-        : _text(value, size, color: color),
+    // The text always shrinks to its box (single line) instead of
+    // wrapping into a second line that the fixed box would clip.
+    // The FittedBox stays outside the RotatedBox so the fit is
+    // measured against the label box, not the swapped dimensions.
+    child: FittedBox(
+      fit: BoxFit.scaleDown,
+      child: rotate
+          ? RotatedBox(
+              quarterTurns: 2,
+              child: _text(value, size, color: color, maxLines: 1),
+            )
+          : _text(value, size, color: color, maxLines: 1),
+    ),
   ),
 );
 
@@ -283,16 +295,43 @@ Widget _plank(
           c.restore();
         }),
         Center(
-          child: FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _text(title, 47, color: cream),
-                if (subtitle != null)
-                  _text(subtitle, 29, color: cream, weight: FontWeight.w600),
-              ],
-            ),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              // Each line fits the plank's own inner width on its
+              // own: the angled plank narrows toward its top and
+              // bottom edges (33px slants), so its lines must fit
+              // the narrower width or the caption runs past the
+              // slanted edges; the plain plank's art is inset 8px.
+              final fitWidth = constraints.maxWidth - (angled ? 72 : 16);
+              return Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SizedBox(
+                      width: fitWidth,
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: _text(title, 47, color: cream, maxLines: 1),
+                      ),
+                    ),
+                    if (subtitle != null)
+                      SizedBox(
+                        width: fitWidth,
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: _text(
+                            subtitle,
+                            29,
+                            color: cream,
+                            weight: FontWeight.w600,
+                            maxLines: 1,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              );
+            },
           ),
         ),
       ],
@@ -785,7 +824,22 @@ class AlsijaHome extends StatelessWidget {
       (350.0, 153.0, _s.aboutGame, onAbout),
       (67.0, 282.0, _s.tiktokLink, onTikTok),
     ])
-      _at(x, 1310, w, 59, _press(text, tap, Center(child: _text(text, 30)))),
+      _at(
+        x,
+        1310,
+        w,
+        59,
+        _press(
+          text,
+          tap,
+          Center(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: _text(text, 30, maxLines: 1),
+            ),
+          ),
+        ),
+      ),
   ], home: true);
 }
 
@@ -1044,7 +1098,15 @@ class _SetupState extends State<AlsijaSetup> {
             shape: BoxShape.circle,
             border: Border.all(color: ink, width: 6),
           ),
-          child: Center(child: _text(strings.letsGo, 49, color: cream)),
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: _text(strings.letsGo, 49, color: cream, maxLines: 1),
+              ),
+            ),
+          ),
         ),
       ),
     ),

@@ -347,8 +347,9 @@ void main() {
     expect(controller.phase, TurnPhase.animating);
     await tester.pump(const Duration(milliseconds: 300));
     expect(controller.phase, TurnPhase.animating);
-    // بعد 560ms تنتهي الحركتان فيُستدعى finishAnimation.
-    await tester.pump(const Duration(milliseconds: 300));
+    // الانزلاق 240ms ثم الأكل 320ms = 560ms، لكن الأكل لا يبدأ إلا
+    // بعد إطار اكتمال الانزلاق، فيلزم ضخ 700ms إجمالاً.
+    await tester.pump(const Duration(milliseconds: 400));
     expect(controller.phase, TurnPhase.awaitingHuman);
     expect(engine.currentPlayer, 2);
     expect(find.text('الدور: اللاعب 2'), findsOneWidget);

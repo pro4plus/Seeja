@@ -1,5 +1,6 @@
-// تخطيط v4 (§9): كل شاشة يجب أن تتسع بلا تجاوز عند
+// تخطيط: كل شاشة يجب أن تتسع بلا تجاوز عند
 // عرض 360 بكسل وخط مكبّر 130%.
+// الشاشات الجديدة قماش ثابت 768×1376 مع FittedBox فيتسع دائماً.
 import 'package:alseeja/game/seega_ai.dart';
 import 'package:alseeja/game/turn_controller.dart';
 import 'package:alseeja/main.dart';
@@ -67,10 +68,10 @@ void main() {
     );
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
-    // الكوات الثلاث صور بتسميات نصية (اسم · مستوى).
-    expect(find.bySemanticsLabel('ود البلد · سهل'), findsOneWidget);
-    expect(find.bySemanticsLabel('الأستاذ · وسط'), findsOneWidget);
-    expect(find.bySemanticsLabel('الشيخ · صعب'), findsOneWidget);
+    // الكوات الثلاث في الحزمة بتسمية (اسم، مستوى).
+    expect(find.bySemanticsLabel('ود البلد، سهل'), findsOneWidget);
+    expect(find.bySemanticsLabel('الأستاذ، وسط'), findsOneWidget);
+    expect(find.bySemanticsLabel('الشيخ، صعب'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -102,7 +103,7 @@ void main() {
     );
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
-    expect(find.textContaining('ضع 3 أحجار'), findsOneWidget);
+    expect(find.text('دورك: اختر حجراً ثم وجهته'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -136,7 +137,7 @@ void main() {
     controller.debugSyncAfterExternalSetup();
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
-    expect(find.text('الدور: اللاعب 1'), findsOneWidget);
+    expect(find.text('دورك: اختر حجراً ثم وجهته'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

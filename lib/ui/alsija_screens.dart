@@ -850,7 +850,7 @@ class _SetupState extends State<AlsijaSetup> {
     ][i];
     final level = [strings.easy, strings.medium, strings.hard][i];
     return _press(
-      '${name}${widget.isArabic ? '، ' : ', '}$level',
+      '$name${widget.isArabic ? '، ' : ', '}$level',
       () => setState(() => opponent = option),
       Stack(
         fit: StackFit.expand,
